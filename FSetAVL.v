@@ -274,7 +274,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     end.
 
   Definition max (x y : Z) : Z :=
-    if Z_lt_ge_dec x y then fun _ => y else fun _ => x.
+    if Z_lt_ge_dec x y then y else x.
 
   (** Instead of writing [h = 1 + (max (height l) (height r))] we prefer 
       the following relation [height_of_node l r h] to ease the use of 
