@@ -92,10 +92,11 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
 
   Lemma flatten_e_elements :
     forall (x : elt) (l r : tree) (z : Z) (e : enumeration),
-    elements_tree (Node l x r z) ++ flatten_e e =
-    elements_tree l ++ flatten_e (More x r e).
+    elements_tree l ++ flatten_e (More x r e) =
+    elements_tree (Node l x r z) ++ flatten_e e.
   Proof.
-
+    intros; simpl.
+    apply compare_flatten_1.
   Qed.
 
   (** termination of [compare_aux] *)
@@ -197,9 +198,9 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     apply X.lt_trans with t1; auto.
     exists x; intuition.
     generalize H4; Measure_e; intros; Measure_e_t; omega.
-    unfold elements_tree; simpl.
-    (* ... *)
-  Admitted. (*Qed.*)
+    rewrite H5.
+    apply flatten_e_elements.
+  Defined.
 
   Definition compare2_aux :
     forall e1 e2 : enumeration,
