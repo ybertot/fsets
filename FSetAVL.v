@@ -3257,7 +3257,6 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     apply L.ME.Inf_In.
     inversion_clear H0.
     intros; elim (in_app_or _ _ _ H0); intuition.
-    apply H2; auto.
     apply H4; apply in_flatten_e; auto.
   Qed.
 
