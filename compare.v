@@ -102,39 +102,102 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     | More _ s r => 1 + measure_e_t s + measure_e r
     end.
 
- (** Induction principle over the sum of the measures for two lists *)
+  Ltac Measure_e_t := unfold measure_e_t in |- *; fold measure_e_t in |- *.
+  Ltac Measure_e := unfold measure_e in |- *; fold measure_e in |- *.
+
+  Lemma measure_e_t_0 : forall s : tree, measure_e_t s >= 0.
+  Proof.
+    simple induction s.
+    simpl in |- *; omega.
+    intros.
+    Measure_e_t; omega. (* BUG Simpl! *)
+  Qed.
+
+  Ltac Measure_e_t_0 s := generalize (measure_e_t_0 s); intro.
+
+  Lemma measure_e_0 : forall e : enumeration, measure_e e >= 0.
+  Proof.
+    simple induction e.
+    simpl in |- *; omega.
+    intros.
+    Measure_e; Measure_e_t_0 t0; omega.
+  Qed.
+
+  Ltac Measure_e_0 e := generalize (measure_e_0 e); intro.
+
+  (** Induction principle over the sum of the measures for two lists *)
 
   Definition compare2_rec2 :
-    forall P : list tree -> list tree -> Set,
-    (forall x x' : list tree,
-     (forall y y' : list tree,
-      measure_l y + measure_l y' < measure_l x + measure_l x' -> P y y') ->
-     P x x') -> forall x x' : list tree, P x x'.
+    forall P : enumeration -> enumeration -> Set,
+    (forall x x' : enumeration,
+     (forall y y' : enumeration,
+      measure_e y + measure_e y' < measure_e x + measure_e x' -> P y y') ->
+     P x x') -> forall x x' : enumeration, P x x'.
   Proof.
     intros P H x x'.
     apply
      well_founded_induction_type_2
       with
-        (R := fun yy' xx' : list tree * list tree =>
-              measure_l (fst yy') + measure_l (snd yy') <
-              measure_l (fst xx') + measure_l (snd xx')); 
+        (R := fun yy' xx' : enumeration * enumeration =>
+              measure_e (fst yy') + measure_e (snd yy') <
+              measure_e (fst xx') + measure_e (snd xx')); 
      auto.                      
     apply
      Wf_nat.well_founded_lt_compat
       with
-        (f := fun xx' : list tree * list tree =>
-              Zabs_nat (measure_l (fst xx') + measure_l (snd xx'))).
+        (f := fun xx' : enumeration * enumeration =>
+              Zabs_nat (measure_e (fst xx') + measure_e (snd xx'))).
     intros; apply Zabs.Zabs_nat_lt.
-    Measure_l_0 (fst x0); Measure_l_0 (snd x0); Measure_l_0 (fst y);
-     Measure_l_0 (snd y); intros; omega.
+    Measure_e_0 (fst x0); Measure_e_0 (snd x0); Measure_e_0 (fst y);
+     Measure_e_0 (snd y); intros; omega.
+  Qed.
 
- (** [cons t e] adds the elements of tree [t] on the head of 
-      enumeration [e] *)
+  (** [cons t e] adds the elements of tree [t] on the head of 
+      enumeration [e]. Code:
+ 
+  let rec cons s e = match s with
+  | Empty -> e
+  | Node(l, v, r, _) -> cons l (More(v, r, e))
+  *)
+
+  Definition cons :
+    forall (s : tree) (e : enumeration),
+    bst s ->
+    sorted_e e ->
+    (forall (x y : elt), In_tree x s -> In_tree_e y e -> X.lt x y) ->
+    { r : enumeration 
+    | sorted_e r /\
+      forall (x : elt), In_tree_e x r <-> (In_tree x s \/ In_tree_e x e) }.
+  Proof.
+    simple induction s; simpl in |- *; intuition.
+    (* s = Leaf *)
+    exists e; intuition.
+    inversion_clear H3.
+    (* s = Node t0 t1 t2 z *)
+
+  Qed.
 
   Definition compare2_aux :
     forall e1 e2 : enumeration,
     sorted_e e1 ->
     sorted_e e2 ->
-    leaf_invariant l1 l2 -> Compare L.lt L.eq (flatten_e e1) (flatten_e e2).
+    Compare L.lt L.eq (flatten_e e1) (flatten_e e2).
   Proof.
- 
+    intros e1 e2; pattern e1, e2 in |- *; apply compare2_rec2.
+    simple destruct x; simple destruct x'; intuition.
+    (* x = x' = End *)
+    constructor 2; unfold L.eq, L.Equal in |- *; intuition.
+    (* x = End x' = More *)
+    constructor 1; simpl in |- *; auto.
+    (* x = More x' = End *)
+    constructor 3; simpl in |- *; auto.
+    (* x = More e t0 e0, x' = More e3 t1 e4 *)
+    case (X.compare e e3); intro.
+    (* e < e3 *)
+    constructor 1; simpl; auto.
+    (* e = e3 *)
+
+    (* e > e3 *)
+    constructor 3; simpl; auto.
+  Qed.
+
