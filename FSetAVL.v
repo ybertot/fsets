@@ -2677,9 +2677,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     inversion_clear H0; trivial.
     induction  l as [| a0 l Hrecl]; simpl in |- *; intuition.
     induction  l2 as [| a0 l2 Hrecl2]; simpl in |- *; intuition. 
-    apply cons_leA; apply H2; auto.
-    apply cons_leA; auto.
-    inversion_clear H0; inversion_clear H4; auto.
+   inversion_clear H0; inversion_clear H4; auto.
   Qed.
 
   Lemma in_app :
