@@ -16,6 +16,7 @@
 Require Export FSetInterface.
 Require Export FSetBridge.
 Require Export FSetProperties.
+Require Export FSetEqProperties.
 Require Export FSetList.
 Require Export FSetRBT.
 Require Export FSetAVL.

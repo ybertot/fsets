@@ -43,7 +43,7 @@ COQSRC=-I $(COQTOP)/kernel -I $(COQTOP)/lib \
   -I $(CAMLP4LIB)
 ZFLAGS=$(OCAMLLIBS) $(COQSRC)
 OPT=
-COQFLAGS=-q $(OPT) $(COQLIBS) $(COQ_XML)
+COQFLAGS=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 COQC=$(COQBIN)coqc
 GALLINA=gallina
 COQDOC=coqdoc
@@ -52,7 +52,6 @@ CAMLOPTC=ocamlopt -c
 CAMLLINK=ocamlc
 CAMLOPTLINK=ocamlopt
 COQDEP=$(COQBIN)coqdep -c
-COQVO2XML=coq_vo2xml
 GRAMMARS=grammar.cma
 CAMLP4EXTEND=pa_extend.cmo pa_ifdef.cmo q_MLast.cmo
 PP=-pp "camlp4o -I . -I $(COQTOP)/parsing $(CAMLP4EXTEND) $(GRAMMARS) -impl"
@@ -77,6 +76,7 @@ VFILES=FSetBridge.v\
   FSetList.v\
   FSetRBT.v\
   FSetAVL.v\
+  FSetEqProperties.v\
   FSetProperties.v\
   FSet.v\
   extract.v
@@ -91,9 +91,11 @@ all: FSetBridge.vo\
   FSetList.vo\
   FSetRBT.vo\
   FSetAVL.vo\
+  FSetEqProperties.vo\
   FSetProperties.vo\
   FSet.vo\
-  extract.vo
+  extract.vo\
+  PrecedenceGraph
 
 spec: $(VIFILES)
 
@@ -109,17 +111,16 @@ all.ps: $(VFILES)
 all-gal.ps: $(VFILES)
 	$(COQDOC) -ps -g -o $@ `$(COQDEP) -sort -suffix .v $(VFILES)`
 
-xml:: .xml_time_stamp
-.xml_time_stamp: FSetBridge.vo\
-  FSetInterface.vo\
-  FSetList.vo\
-  FSetRBT.vo\
-  FSetAVL.vo\
-  FSetProperties.vo\
-  FSet.vo\
-  extract.vo
-	$(COQVO2XML) $(COQFLAGS) $(?:%.o=%)
-	touch .xml_time_stamp
+
+
+###################
+#                 #
+# Subdirectories. #
+#                 #
+###################
+
+PrecedenceGraph:
+	cd PrecedenceGraph ; $(MAKE) all
 
 ####################
 #                  #
@@ -127,7 +128,7 @@ xml:: .xml_time_stamp
 #                  #
 ####################
 
-.PHONY: all opt byte archclean clean install depend xml
+.PHONY: all opt byte archclean clean install depend html PrecedenceGraph
 
 .SUFFIXES: .v .vo .vi .g .html .tex .g.tex .g.html
 
@@ -164,23 +165,30 @@ include .depend
 	rm -f .depend
 	$(COQDEP) -i $(COQLIBS) *.v *.ml *.mli >.depend
 	$(COQDEP) $(COQLIBS) -suffix .html *.v >>.depend
-
-xml::
+	(cd PrecedenceGraph ; $(MAKE) depend)
 
 install:
 	mkdir -p `$(COQC) -where`/user-contrib
-	cp -f *.vo `$(COQC) -where`/user-contrib
+	cp -f $(VOFILES) `$(COQC) -where`/user-contrib
+	(cd PrecedenceGraph ; $(MAKE) install)
 
 Makefile: Make
 	mv -f Makefile Makefile.bak
 	$(COQBIN)coq_makefile -f Make -o Makefile
 
+	(cd PrecedenceGraph ; $(MAKE) Makefile)
+
 clean:
-	rm -f *.cmo *.cmi *.cmx *.o *.vo *.vi *.g *~
+	rm -f *.cmo *.cmi *.cmx *.o $(VOFILES) $(VIFILES) $(GFILES) *~
 	rm -f all.ps all-gal.ps $(HTMLFILES) $(GHTMLFILES)
+	(cd PrecedenceGraph ; $(MAKE) clean)
 
 archclean:
 	rm -f *.cmx *.o
+	(cd PrecedenceGraph ; $(MAKE) archclean)
+
+html:
+	(cd PrecedenceGraph ; $(MAKE) html)
 
 # WARNING
 #

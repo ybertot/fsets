@@ -14,7 +14,7 @@
 (* $Id$ *)
 
 (** This functor derives additional properties from [FSetInterface.S].
-    Contrary to the functor in [FSetProperties] it uses 
+    Contrary to the functor in [FSetEqProperties] it uses 
     predicates over sets instead of sets operations, i.e.
     [In x s] instead of [mem x s=true], 
     [Equal s s'] instead of [equal s s'=true], etc. *)

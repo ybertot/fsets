@@ -1,2 +1,2 @@
-FSetBridge.v FSetInterface.v FSetList.v FSetRBT.v FSetAVL.v FSetProperties.v FSet.v extract.v
+FSetBridge.v FSetInterface.v FSetList.v FSetRBT.v FSetAVL.v FSetEqProperties.v FSetProperties.v FSet.v extract.v PrecedenceGraph
 
