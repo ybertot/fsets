@@ -85,7 +85,7 @@ Module Properties (M: S).
      match s with
      | [] => []
      | y :: l =>
-         if ME.eq_dec x y then fun _ => l else fun _ => y :: remove_list x l
+         if ME.eq_dec x y then l else y :: remove_list x l
      end. 
 
    Lemma remove_list_correct :
