@@ -41,7 +41,7 @@ Module Raw (X: OrderedType).
 
   Definition empty : t := [].
 
-  Definition is_empty (l : t) : bool := if l then true else fun _ _ => false.
+  Definition is_empty (l : t) : bool := if l then true else false.
 
   (** ** The set operations. *)
 
