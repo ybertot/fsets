@@ -88,6 +88,16 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     apply H4; apply in_flatten_e; auto.
   Qed.
 
+  (** key lemma for correctness *)
+
+  Lemma flatten_e_elements :
+    forall (x : elt) (l r : tree) (z : Z) (e : enumeration),
+    elements_tree (Node l x r z) ++ flatten_e e =
+    elements_tree l ++ flatten_e (More x r e).
+  Proof.
+
+  Qed.
+
   (** termination of [compare_aux] *)
  
   Fixpoint measure_e_t (s : tree) : Z :=
@@ -166,16 +176,30 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     sorted_e e ->
     (forall (x y : elt), In_tree x s -> In_tree_e y e -> X.lt x y) ->
     { r : enumeration 
-    | sorted_e r /\
-      forall (x : elt), In_tree_e x r <-> (In_tree x s \/ In_tree_e x e) }.
+    | sorted_e r /\ 
+      measure_e r = measure_e_t s + measure_e e /\
+      flatten_e r = elements_tree s ++ flatten_e e
+      (* forall (x : elt), In_tree_e x r <-> (In_tree x s \/ In_tree_e x e) *)
+    }.
   Proof.
-    simple induction s; simpl in |- *; intuition.
+    simple induction s; intuition.
     (* s = Leaf *)
     exists e; intuition.
-    inversion_clear H3.
     (* s = Node t0 t1 t2 z *)
-
-  Qed.
+    clear H0.
+    case (H (More t1 t2 e)); clear H; intuition.
+    inversion_clear H1; auto.
+    constructor; inversion_clear H1; auto.
+    inversion_clear H0; intuition.
+    inversion_clear H1.
+    apply ME.lt_eq with t1; auto.
+    inversion_clear H1.
+    apply X.lt_trans with t1; auto.
+    exists x; intuition.
+    generalize H4; Measure_e; intros; Measure_e_t; omega.
+    unfold elements_tree; simpl.
+    (* ... *)
+  Admitted. (*Qed.*)
 
   Definition compare2_aux :
     forall e1 e2 : enumeration,
@@ -196,8 +220,46 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     (* e < e3 *)
     constructor 1; simpl; auto.
     (* e = e3 *)
-
+    case (cons t0 e0).
+    inversion_clear H0; auto.
+    inversion_clear H0; auto.
+    inversion_clear H0; auto.
+    intro c1; intuition.
+    case (cons t1 e4).
+    inversion_clear H1; auto.
+    inversion_clear H1; auto.
+    inversion_clear H1; auto.
+    intro c2; intuition.
+    case (H c1 c2); clear H; intuition.
+    Measure_e; omega.
+    constructor 1; simpl.
+    apply L.lt_cons_eq; auto.
+    rewrite H5 in l; rewrite H8 in l; auto.
+    constructor 2; simpl.
+    apply l_eq_cons; auto.
+    rewrite H5 in e6; rewrite H8 in e6; auto.
+    constructor 3; simpl.
+    apply L.lt_cons_eq; auto.
+    rewrite H5 in l; rewrite H8 in l; auto.
     (* e > e3 *)
     constructor 3; simpl; auto.
-  Qed.
+  Defined.
 
+  Definition compare2 : forall s1 s2 : t, Compare lt eq s1 s2.
+  Proof.
+    intros (s1, s1_bst, s1_avl) (s2, s2_bst, s2_avl); unfold lt, eq in |- *;
+     simpl in |- *.
+    case (cons s1 End); intuition.
+    inversion_clear H0.
+    case (cons s2 End); intuition.
+    inversion_clear H3.
+    simpl in H2; rewrite <- app_nil_end in H2.
+    simpl in H5; rewrite <- app_nil_end in H5.
+    case (compare2_aux x x0); intuition.
+    constructor 1; simpl in |- *.
+    rewrite H2 in l; rewrite H5 in l; auto.
+    constructor 2; apply L_eq_eq; simpl in |- *.
+    rewrite H2 in e; rewrite H5 in e; auto.
+    constructor 3; simpl in |- *.
+    rewrite H2 in l; rewrite H5 in l; auto.
+  Defined.
