@@ -1,7 +1,8 @@
 
 Restore State "toto".
 
-(* 
+(** A new comparison algorithm suggested by Xavier Leroy:
+
 type enumeration = End | More of elt * t * enumeration
 
 let rec cons s e = match s with
