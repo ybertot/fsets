@@ -1,0 +1,22 @@
+WWW=/users/demons/filliatr/WWW/fsets/
+GLOB=glob.dump
+EXTR=avl.mli avl.ml rbt.mli rbt.ml
+TARFILES=FSets/*.v FSets/.depend FSets/Make* \
+      FSets/PrecedenceGraph/*.v FSets/PrecedenceGraph/Make* \
+      FSets/PrecedenceGraph/.depend
+VFILES=FSetInterface.v FSetBridge.v FSetProperties.v \
+	FSetList.v FSetRBT.v FSetAVL.v FSet.v   
+
+all: $(GLOB)
+	cp $(EXTR) $(GLOB) FSet*.v $(WWW)/coq
+	cd $(WWW)/coq; coqdoc -toc -html -glob-from $(GLOB) -g $(VFILES)
+	cd $(WWW)/coq; coqdoc -ps -g -o ../fsets.ps $(VFILES)
+	cd ..; tar zcf $(WWW)/FSets.tar.gz $(TARFILES)
+
+$(GLOB): *.v
+	rm -f $@
+	make clean
+	make OPT="-dump-glob $@"
+
+
+
