@@ -7,8 +7,8 @@
 (***********************************************************************)
 
 (* Finite sets library.  
- * Authors: Pierre Letouzey and Jean-Christophe Filliâtre 
- * Institution: LRI, CNRS UMR 8623 - Université Paris Sud
+ * Authors: Pierre Letouzey and Jean-Christophe Filli\x{00E2}tre 
+ * Institution: LRI, CNRS UMR 8623 - Universit\x{00E9} Paris Sud
  *              91405 Orsay, France *)
 
 (* $Id$ *)
@@ -295,7 +295,7 @@ Module Properties (M: S).
      (st : Setoid_Theory A eqA) (i : A) (f : elt -> A -> A),
    compat_op E.eq eqA f ->
    transpose eqA f ->
-   x ∉ s -> Add x s s' -> eqA (fold f s' i) (f x (fold f s i)).
+   ~ In x s -> Add x s s' -> eqA (fold f s' i) (f x (fold f s i)).
   Proof.
   intros; elim (M.fold_1 s i f); intros l (Hl, (Hl1, Hl2)).
   elim (M.fold_1 s' i f); intros l' (Hl', (Hl'1, Hl'2)).
@@ -312,7 +312,7 @@ Module Properties (M: S).
 
   (** Similar specification for [cardinal]. *)
 
-  Lemma cardinal_fold : forall s : t, ∥s ∥ = fold (fun _ => S) s 0.
+  Lemma cardinal_fold : forall s : t, cardinal s = fold (fun _ => S) s 0.
   Proof.
   intros; elim (cardinal_1 s); intros l (Hl, (Hl1, Hl2)).
   elim (M.fold_1 s 0 (fun _ => S)); intros l' (Hl', (Hl'1, Hl'2)).
@@ -323,13 +323,13 @@ Module Properties (M: S).
   apply fold_right_equal with (eqA := eq (A:=nat)); auto; firstorder.
   Qed.
 
-  Lemma cardinal_1 : forall s : t, Empty s -> ∥s ∥ = 0.
+  Lemma cardinal_1 : forall s : t, Empty s -> cardinal s = 0.
   Proof.
   intros; rewrite cardinal_fold; apply fold_1; auto.
   Qed.
 
   Lemma cardinal_2 :
-   forall (s s' : t) (x : elt), x ∉ s -> Add x s s' -> ∥s' ∥ = S (∥s ∥).
+   forall (s s' : t) (x : elt), ~ In x s -> Add x s s' -> cardinal s' = S (cardinal s).
   Proof.
   intros; do 2 rewrite cardinal_fold.
   change S with ((fun _ => S) x) in |- *.
@@ -351,7 +351,7 @@ Module Properties (M: S).
     eapply add_3; eauto.
   Qed.
 
-  Lemma Add_remove : forall (s : t) (x : elt), x ∈ s -> Add x (remove x s) s. 
+  Lemma Add_remove : forall (s : t) (x : elt), In x s -> Add x (remove x s) s. 
   Proof. 
     intros; unfold Add in |- *; intuition.
     elim (ME.eq_dec x y); intros; auto.
@@ -362,13 +362,13 @@ Module Properties (M: S).
   Hint Resolve Add_add Add_remove. 
 
   Lemma Equal_remove :
-   forall (s s' : t) (x : elt), x ∈ s -> s ≡ s' -> remove x s ≡ remove x s'.
+   forall (s s' : t) (x : elt), In x s -> Equal s s' -> Equal (remove x s) (remove x s').
   Proof.
      unfold Equal in |- *; intros.
      elim (ME.eq_dec x a); intros; auto. 
      split; intros.
-     absurd (x ∈ remove x s); auto; apply In_1 with a; auto.
-     absurd (x ∈ remove x s'); auto; apply In_1 with a; auto. 
+     absurd (In x (remove x s)); auto; apply In_1 with a; auto.
+     absurd (In x (remove x s')); auto; apply In_1 with a; auto. 
      elim (H0 a); intros. 
      split; intros; apply remove_2; auto; [ apply H1 | apply H2 ];
       eapply remove_3; eauto.    
@@ -376,18 +376,18 @@ Module Properties (M: S).
 
   Hint Resolve Equal_remove.
 
-  Lemma cardinal_inv_1 : forall s : t, ∥s ∥ = 0 -> Empty s. 
+  Lemma cardinal_inv_1 : forall s : t, cardinal s = 0 -> Empty s. 
   Proof. 
     intros; generalize (choose_1 (s:=s)) (choose_2 (s:=s)).
     elim (choose s); intuition.
-    clear H1; assert (a ∈ s); auto.
+    clear H1; assert (In a s); auto.
     rewrite (cardinal_2 (s:=remove a s) (s':=s) (x:=a)) in H; auto.
     inversion H.
   Qed.
   Hint Resolve cardinal_inv_1.
  
   Lemma cardinal_inv_2 :
-   forall (s : t) (n : nat), ∥s ∥ = S n -> exists x : elt, x ∈ s.
+   forall (s : t) (n : nat), cardinal s = S n -> exists x : elt, In x s.
   Proof. 
     intros; generalize (choose_1 (s:=s)) (choose_2 (s:=s)).
     elim (choose s); intuition. 
@@ -396,7 +396,7 @@ Module Properties (M: S).
   Qed.
 
   Lemma Equal_cardinal_aux :
-   forall (n : nat) (s s' : t), ∥s ∥ = n -> s ≡ s' -> ∥s ∥ = ∥s' ∥.
+   forall (n : nat) (s s' : t), cardinal s = n -> Equal s s' -> cardinal s = cardinal s'.
   Proof.
      simple induction n.
      intros.  
@@ -408,32 +408,32 @@ Module Properties (M: S).
      generalize (H1 a) (H2 a); intuition.
      intros.
      elim (cardinal_inv_2 H0); intros.
-     assert (x ∈ s'). 
+     assert (In x s'). 
        generalize (H1 x); intuition.  
      generalize H0.
      rewrite (cardinal_2 (s:=remove x s) (s':=s) (x:=x)); auto.
      rewrite (cardinal_2 (s:=remove x s') (s':=s') (x:=x)); auto.
   Qed.
 
-  Lemma Equal_cardinal : forall s s' : t, s ≡ s' -> ∥s ∥ = ∥s' ∥.
+  Lemma Equal_cardinal : forall s s' : t, Equal s s' -> cardinal s = cardinal s'.
   Proof. 
     intros; eapply Equal_cardinal_aux; eauto.
   Qed.
 
   Hint Resolve Add_add Add_remove Equal_remove cardinal_inv_1 Equal_cardinal.
 
-  Lemma empty_cardinal : ∥∅ ∥ = 0.
+  Lemma empty_cardinal : cardinal empty = 0.
   Proof.
   rewrite cardinal_fold; auto.
   apply fold_1; auto.
   Qed.
 
-  Lemma empty_cardinal_2 : forall s : t, Empty s -> ∥s ∥ = 0.
+  Lemma empty_cardinal_2 : forall s : t, Empty s -> cardinal s = 0.
   Proof.
-  intros; replace 0 with (∥∅ ∥). 
+  intros; replace 0 with (cardinal empty). 
   apply Equal_cardinal. 
   unfold Empty in H; unfold Equal in |- *; firstorder.
-  absurd (a ∈ ∅); auto.
+  absurd (In a empty); auto.
   apply empty_cardinal.
   Qed.
 
@@ -442,15 +442,15 @@ Module Properties (M: S).
   Lemma cardinal_induction :
    forall P : t -> Prop,
    (forall s : t, Empty s -> P s) ->
-   (forall s s' : t, P s -> forall x : elt, x ∉ s -> Add x s s' -> P s') ->
-   forall (n : nat) (s : t), ∥s ∥ = n -> P s.
+   (forall s s' : t, P s -> forall x : elt, ~In x s -> Add x s s' -> P s') ->
+   forall (n : nat) (s : t), cardinal s = n -> P s.
   Proof.
   simple induction n.
   intros; apply H; auto.
   intros; elim (cardinal_inv_2 H2); intros. 
   apply H0 with (remove x s) x; auto.
   apply H1; auto.
-  assert (S (∥remove x s ∥) = S n0); auto. 
+  assert (S (cardinal (remove x s)) = S n0); auto. 
   rewrite <- H2; symmetry  in |- *.
   eapply cardinal_2; eauto.
   Qed.
@@ -458,7 +458,7 @@ Module Properties (M: S).
   Lemma set_induction :
    forall P : t -> Prop,
    (forall s : t, Empty s -> P s) ->
-   (forall s s' : t, P s -> forall x : elt, x ∉ s -> Add x s s' -> P s') ->
+   (forall s s' : t, P s -> forall x : elt, ~In x s -> Add x s s' -> P s') ->
    forall s : t, P s.
   Proof.
   intros; eapply cardinal_induction; eauto.
@@ -479,12 +479,12 @@ Module Properties (M: S).
   Variable Comp : compat_op E.eq eqA f. 
   Variable Assoc : transpose eqA f.
  
-  Lemma fold_empty : eqA (fold f ∅ i) i.
+  Lemma fold_empty : eqA (fold f empty i) i.
   Proof. 
   apply fold_1; auto.
   Qed.
 
-  Lemma fold_equal : s ≡ s' -> eqA (fold f s i) (fold f s' i).
+  Lemma fold_equal : Equal s s' -> eqA (fold f s i) (fold f s' i).
   Proof. 
      pattern s in |- *; apply set_induction; intros.
      apply (Seq_trans _ _ st) with i; auto.
@@ -498,7 +498,7 @@ Module Properties (M: S).
       elim (H3 y); intuition.
   Qed.
    
-  Lemma fold_add : x ∉ s -> eqA (fold f (add x s) i) (f x (fold f s i)).
+  Lemma fold_add : ~In x s -> eqA (fold f (add x s) i) (f x (fold f s i)).
   Proof. 
     intros; apply fold_2 with (eqA := eqA); auto.
   Qed.
@@ -507,17 +507,17 @@ Module Properties (M: S).
 
   (** properties of [Equal] *)
 
-  Lemma equal_refl : forall s : t, s ≡ s.
+  Lemma equal_refl : forall s : t, Equal s s.
   Proof.
   unfold Equal in |- *; intuition.
   Qed.
 
-  Lemma equal_sym : forall s s' : t, s ≡ s' -> s' ≡ s.
+  Lemma equal_sym : forall s s' : t, Equal s s' -> Equal s' s.
   Proof.
   unfold Equal in |- *; firstorder.
   Qed.
 
-  Lemma equal_trans : forall s u v : t, s ≡ u -> u ≡ v -> s ≡ v.
+  Lemma equal_trans : forall s u v : t, Equal s u -> Equal u v -> Equal s v.
   Proof.
   firstorder. 
   Qed.
@@ -527,41 +527,41 @@ Module Properties (M: S).
 
   (** properties of [Subset] *)
 
-  Lemma subset_refl : forall s : t, s ⊆ s. 
+  Lemma subset_refl : forall s : t, Subset s s. 
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
 
-  Lemma subset_antisym : forall s s' : t, s ⊆ s' -> s' ⊆ s -> s ≡ s'.
+  Lemma subset_antisym : forall s s' : t, Subset s s' -> Subset s' s -> Equal s s'.
   Proof.
   unfold Subset, Equal in |- *; intuition.
   Qed.
 
-  Lemma subset_trans : forall s t_ u : t, s ⊆ t_ -> t_ ⊆ u -> s ⊆ u.
+  Lemma subset_trans : forall s t_ u : t, Subset s t_ -> Subset t_ u -> Subset s u.
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
 
-  Lemma subset_equal : forall s s' : t, s ≡ s' -> s ⊆ s'.
+  Lemma subset_equal : forall s s' : t, Equal s s' -> Subset s s'.
   Proof.
   unfold Subset, Equal in |- *; firstorder.
   Qed.
 
-  Lemma subset_empty : forall s : t, ∅ ⊆ s.
+  Lemma subset_empty : forall s : t, Subset empty s.
   Proof.
   unfold Subset in |- *; intuition.
-  absurd (a ∈ ∅); auto.
+  absurd (In a empty); auto.
   Qed.
 
   Lemma subset_remove_3 :
-   forall (s1 s2 : t) (x : elt), s1 ⊆ s2 -> remove x s1 ⊆ s2.
+   forall (s1 s2 : t) (x : elt), Subset s1 s2 -> Subset (remove x s1) s2.
   Proof.
   unfold Subset in |- *; intuition.
   apply (H a).
   apply remove_3 with x; auto.
   Qed.
 
-  Lemma subset_diff : forall s1 s2 s3 : t, s1 ⊆ s3 -> diff s1 s2 ⊆ s3.
+  Lemma subset_diff : forall s1 s2 s3 : t, Subset s1 s3 -> Subset (diff s1 s2) s3.
   Proof.
   unfold Subset in |- *; intuition.
   apply (H a).
@@ -569,7 +569,7 @@ Module Properties (M: S).
   Qed.
 
   Lemma subset_add_3 :
-   forall (s1 s2 : t) (x : elt), x ∈ s2 -> s1 ⊆ s2 -> add x s1 ⊆ s2.
+   forall (s1 s2 : t) (x : elt), In x s2 -> Subset s1 s2 -> Subset (add x s1) s2.
   Proof.
   unfold Subset in |- *; intuition.
   case (ME.eq_dec x a); intuition.
@@ -578,12 +578,12 @@ Module Properties (M: S).
   apply add_3 with x; auto.
   Qed.
 
-  Lemma subset_add_2 : forall (s1 s2 : t) (x : elt), s1 ⊆ s2 -> s1 ⊆ add x s2.
+  Lemma subset_add_2 : forall (s1 s2 : t) (x : elt), Subset s1 s2 -> Subset s1 (add x s2).
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
 
-  Lemma in_subset : forall (s1 s2 : t) (x : elt), x ∈ s1 -> s1 ⊆ s2 -> x ∈ s2.
+  Lemma in_subset : forall (s1 s2 : t) (x : elt), In x s1 -> Subset s1 s2 -> In x s2.
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
@@ -594,16 +594,16 @@ Module Properties (M: S).
 
   (** properties of [empty] *)
 
-  Lemma empty_is_empty_1 : forall s : t, Empty s -> s ≡ ∅.
+  Lemma empty_is_empty_1 : forall s : t, Empty s -> Equal s empty.
   Proof.
   unfold Empty, Equal in |- *; firstorder.
-  absurd (a ∈ ∅); auto.
+  absurd (In a empty); auto.
   Qed.
 
-  Lemma empty_is_empty_2 : forall s : t, s ≡ ∅ -> Empty s.
+  Lemma empty_is_empty_2 : forall s : t, Equal s empty -> Empty s.
   Proof.
   unfold Empty, Equal in |- *; firstorder.
-  intro; absurd (a ∈ ∅); firstorder.
+  intro; absurd (In a empty); firstorder.
   Qed.
 
   Hint Resolve empty_is_empty_1 empty_is_empty_2: set.
@@ -614,7 +614,7 @@ Module Properties (M: S).
     generalize (add_1 s (x:=x) (y:=y)) (add_2 (s:=s) x (y:=y))
      (add_3 (s:=s) (x:=x) (y:=y)).
 
-  Lemma add_equal : forall (s : t) (x : elt), x ∈ s -> add x s ≡ s.
+  Lemma add_equal : forall (s : t) (x : elt), In x s -> Equal (add x s) s.
   Proof.
   unfold Equal in |- *; intuition.
   elim (ME.eq_dec x a); Add_ a x s; firstorder.
@@ -629,12 +629,12 @@ Module Properties (M: S).
     generalize (remove_1 (s:=s) (x:=x) (y:=a))
      (remove_2 (s:=s) (x:=x) (y:=a)) (remove_3 (s:=s) (x:=x) (y:=a)).
 
-  Lemma remove_equal : forall (s : t) (x : elt), x ∉ s -> remove x s ≡ s.
+  Lemma remove_equal : forall (s : t) (x : elt), ~ In x s -> Equal (remove x s) s.
   Proof.
   unfold Equal in |- *; intuition.
   eauto.
   elim (ME.eq_dec x a); Remove_ a x s; firstorder.
-  absurd (x ∈ s); auto.
+  absurd (In x s); auto.
   apply In_1 with a; auto.
   Qed.
 
@@ -643,7 +643,7 @@ Module Properties (M: S).
   (** properties of [add] and [remove] *)
 
   Lemma add_remove :
-   forall (s : t) (x : elt), x ∈ s -> add x (remove x s) ≡ s.
+   forall (s : t) (x : elt), In x s -> Equal (add x (remove x s)) s.
   Proof.
   unfold Equal in |- *; intuition.
   elim (ME.eq_dec x a); intuition.
@@ -653,11 +653,11 @@ Module Properties (M: S).
   Qed.
 
   Lemma remove_add :
-   forall (s : t) (x : elt), x ∉ s -> remove x (add x s) ≡ s.
+   forall (s : t) (x : elt), ~ In x s -> Equal (remove x (add x s)) s.
   Proof.
   unfold Equal in |- *; intuition.
   elim (ME.eq_dec x a); intuition.
-  absurd (a ∈ remove x (add x s)); auto.
+  absurd (In a (remove x (add x s))); auto.
   Remove_ a x (add x s); Add_ a x s; firstorder.
   elim (ME.eq_dec x a); intuition.
   elim H; apply In_1 with a; auto.
@@ -670,20 +670,20 @@ Module Properties (M: S).
   Ltac Singleton a x :=
     generalize (singleton_1 (x:=x) (y:=a)) (singleton_2 (x:=x) (y:=a)).
 
-  Lemma singleton_equal_add : forall x : elt, singleton x ≡ add x ∅.
+  Lemma singleton_equal_add : forall x : elt, Equal (singleton x) (add x empty).
   Proof.
   unfold Equal in |- *; intros; Singleton ipattern:a ipattern:x; intuition.
   apply H0; clear H H0.
-  Add_ a x ∅; intuition.
+  Add_ a x empty; intuition.
   elim (ME.eq_dec x a); intuition.
-  absurd (a ∈ ∅); auto.
+  absurd (In a empty); auto.
   Qed.
 
-  Lemma singleton_cardinal : forall x : elt, ∥singleton x ∥ = 1.
+  Lemma singleton_cardinal : forall x : elt, cardinal (singleton x) = 1.
   Proof.
   intros.
   rewrite (Equal_cardinal (singleton_equal_add x)).
-  replace 0 with (∥∅ ∥); auto with set.
+  replace 0 with (cardinal empty ); auto with set.
   apply cardinal_2 with x; auto with set.
   Qed.
 
@@ -695,36 +695,36 @@ Module Properties (M: S).
     generalize (union_1 (s:=s) (s':=s') (x:=a)) (union_2 (s:=s) s' (x:=a))
      (union_3 s (s':=s') (x:=a)).
 
-  Lemma union_sym : forall s s' : t, (s ⋃ s') ≡ (s' ⋃ s).
+  Lemma union_sym : forall s s' : t, Equal (union s s') (union s' s).
   Proof.
   unfold Equal in |- *; intuition; union ipattern:a ipattern:s ipattern:s';
    union ipattern:a ipattern:s' ipattern:s; intuition.
   Qed.
 
-  Lemma union_subset_equal : forall s s' : t, s ⊆ s' -> (s ⋃ s') ≡ s'.
+  Lemma union_subset_equal : forall s s' : t, Subset s s' -> Equal (union s s') s'.
   Proof.
   unfold Subset, Equal in |- *; intuition;
    union ipattern:a ipattern:s ipattern:s'; intuition.
   Qed.
 
-  Lemma union_equal_1 : forall s s' s'' : t, s ≡ s' -> (s ⋃ s'') ≡ (s' ⋃ s'').
+  Lemma union_equal_1 : forall s s' s'' : t, Equal s s' ->  Equal (union s s'') (union s' s'').
   Proof.
   unfold Equal in |- *; intuition; union ipattern:a ipattern:s ipattern:s'';
    union ipattern:a ipattern:s' ipattern:s''; firstorder.
   Qed.
 
-  Lemma union_equal_2 : forall s s' s'' : t, s' ≡ s'' -> (s ⋃ s') ≡ (s ⋃ s'').
+  Lemma union_equal_2 : forall s s' s'' : t, Equal s' s'' -> Equal (union s s') (union s s'').
   Proof.
   unfold Equal in |- *; intuition; union ipattern:a ipattern:s ipattern:s';
    union ipattern:a ipattern:s ipattern:s''; firstorder.
   Qed.
 
   Lemma union_assoc :
-   forall s s' s'' : t, ((s ⋃ s') ⋃ s'') ≡ (s ⋃ (s' ⋃ s'')).
+   forall s s' s'' : t, Equal (union (union s s') s'') (union s (union s' s'')).
   Proof.
-  unfold Equal in |- *; intuition; union ipattern:a (s ⋃ s') ipattern:s'';
+  unfold Equal in |- *; intuition; union ipattern:a (union s s') ipattern:s'';
    union ipattern:a ipattern:s ipattern:s';
-   union ipattern:a ipattern:s (s' ⋃ s'');
+   union ipattern:a ipattern:s (union s' s'');
    union ipattern:a ipattern:s' ipattern:s''; firstorder.
   Qed.
 
@@ -733,7 +733,7 @@ Module Properties (M: S).
   Hint Immediate union_sym.
 
   Lemma add_union_singleton :
-   forall (s : t) (x : elt), add x s ≡ (singleton x ⋃ s).
+   forall (s : t) (x : elt), Equal (add x s) (union (singleton x) s).
   Proof.
   unfold Equal in |- *; intuition; Add_ ipattern:a ipattern:x ipattern:s;
    Singleton ipattern:a ipattern:x; firstorder.
@@ -742,28 +742,28 @@ Module Properties (M: S).
   Qed.
 
   Lemma union_add :
-   forall (s s' : t) (x : elt), (add x s ⋃ s') ≡ add x (s ⋃ s').
+   forall (s s' : t) (x : elt), Equal (union (add x s) s') (add x (union s s')).
   Proof.
   unfold Equal in |- *; intuition.
   union a (add x s) s'; intuition.
   generalize (Add_add s x); unfold Add in |- *; firstorder.
-  generalize (Add_add (s ⋃ s') x); unfold Add in |- *; firstorder.
+  generalize (Add_add (union s s') x); unfold Add in |- *; firstorder.
   generalize (H0 a); clear H0; firstorder.
   union a s s'; intuition.
   Qed.
 
-  Lemma union_subset_1 : forall s s' : t, s ⊆ (s ⋃ s').
+  Lemma union_subset_1 : forall s s' : t, Subset s (union s s').
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
 
-  Lemma union_subset_2 : forall s s' : t, s' ⊆ (s ⋃ s').
+  Lemma union_subset_2 : forall s s' : t, Subset s' (union s s').
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
 
   Lemma subset_union :
-   forall s s' s'' : t, s ⊆ s'' -> s' ⊆ s'' -> (s ⋃ s') ⊆ s''.
+   forall s s' s'' : t, Subset s s'' -> Subset s' s'' ->  Subset (union s s') s''.
   Proof.
   unfold Subset in |- *; intuition.
   union a s s'; intuition.
@@ -778,26 +778,26 @@ Module Properties (M: S).
     generalize (inter_1 (s:=s) (s':=s') (x:=a))
      (inter_2 (s:=s) (s':=s') (x:=a)) (inter_3 (s:=s) (s':=s') (x:=a)).
 
-  Lemma inter_sym : forall s s' : t, (s ⋂ s') ≡ (s' ⋂ s).
+  Lemma inter_sym : forall s s' : t, Equal (inter s s') (inter s' s).
   Proof.
   unfold Equal in |- *; intros s s' a.
   Inter a s s'; Inter a s' s; intuition.
   Qed.
 
-  Lemma inter_subset_equal : forall s s' : t, s ⊆ s' -> (s ⋂ s') ≡ s.
+  Lemma inter_subset_equal : forall s s' : t, Subset s s' -> Equal (inter s s') s.
   Proof.
   unfold Equal in |- *; intros.
   Inter a s s'; intuition.
   Qed.
 
-  Lemma inter_equal_1 : forall s s' s'' : t, s ≡ s' -> (s ⋂ s'') ≡ (s' ⋂ s'').
+  Lemma inter_equal_1 : forall s s' s'' : t, Equal s s' -> Equal (inter s s'') (inter s' s'').
   Proof.
   unfold Equal in |- *; intuition.
   Inter a s s''; firstorder.
   Inter a s' s''; firstorder.
   Qed.
 
-  Lemma inter_equal_2 : forall s s' s'' : t, s' ≡ s'' -> (s ⋂ s') ≡ (s ⋂ s'').
+  Lemma inter_equal_2 : forall s s' s'' : t, Equal s' s'' -> Equal (inter s s') (inter s s'').
   Proof.
   unfold Equal in |- *; intuition.
   Inter a s s'; firstorder.
@@ -808,36 +808,36 @@ Module Properties (M: S).
   Hint Resolve inter_subset_equal inter_equal_1 inter_equal_2: set.
 
   Lemma inter_assoc :
-   forall s s' s'' : t, ((s ⋂ s') ⋂ s'') ≡ (s ⋂ (s' ⋂ s'')).
+   forall s s' s'' : t, Equal (inter (inter s s') s'') (inter s (inter s' s'')).
   Proof.
   unfold Equal in |- *; intuition.
-  Inter a (s ⋂ s') s''; Inter a s s'; firstorder.
-  Inter a s (s' ⋂ s''); Inter a s' s''; firstorder.
+  Inter a (inter s s') s''; Inter a s s'; firstorder.
+  Inter a s (inter s' s''); Inter a s' s''; firstorder.
   Qed.
 
   Lemma union_inter_1 :
-   forall s s' s'' : t, ((s ⋃ s') ⋂ s'') ≡ ((s ⋂ s'') ⋃ (s' ⋂ s'')).
+   forall s s' s'' : t, Equal (inter (union s s') s'') (union (inter s s'') (inter s' s'')).
   Proof.
   unfold Equal in |- *; intuition.
-  Inter a (s ⋃ s') s''; union a s s'; firstorder.
-  union a (s ⋂ s'') (s' ⋂ s''); Inter a s s''; Inter a s' s''; firstorder.
+  Inter a (union s s') s''; union a s s'; firstorder.
+  union a (inter s s'') (inter s' s''); Inter a s s''; Inter a s' s''; firstorder.
   Qed.
 
   Lemma union_inter_2 :
-   forall s s' s'' : t, ((s ⋂ s') ⋃ s'') ≡ ((s ⋃ s'') ⋂ (s' ⋃ s'')).
+   forall s s' s'' : t, Equal (union (inter s s') s'') (inter (union s s'') (union s' s'')).
   Proof.
   unfold Equal in |- *; intuition.
-  union a (s ⋂ s') s''; Inter a s s'; firstorder.
-  Inter a (s ⋃ s'') (s' ⋃ s''); union a s s''; union a s' s''; firstorder.
+  union a (inter s s') s''; Inter a s s'; firstorder.
+  Inter a (union s s'') (union s' s''); union a s s''; union a s' s''; firstorder.
   Qed.
 
   Lemma inter_add_1 :
-   forall (s s' : t) (x : elt), x ∈ s' -> (add x s ⋂ s') ≡ add x (s ⋂ s').
+   forall (s s' : t) (x : elt), In x s' -> Equal (inter (add x s) s') (add x (inter s s')).
   Proof.
   unfold Equal in |- *; intuition.
   Inter a (add x s) s'; Add_ a x s; firstorder.
   elim (ME.eq_dec x a); auto.
-  generalize (Add_add (s ⋂ s') x); unfold Add in |- *; firstorder.
+  generalize (Add_add (inter s s') x); unfold Add in |- *; firstorder.
   generalize (H1 a); clear H1; intuition.
   apply inter_3; auto.
   apply In_1 with x; auto.
@@ -848,12 +848,12 @@ Module Properties (M: S).
   Qed.
 
   Lemma inter_add_2 :
-   forall (s s' : t) (x : elt), x ∉ s' -> (add x s ⋂ s') ≡ (s ⋂ s').
+   forall (s s' : t) (x : elt), ~ In x s' -> Equal (inter (add x s) s') (inter s s').
   Proof.
   unfold Equal in |- *; intuition.
   Inter a (add x s) s'; Add_ a x s; firstorder.
   elim (ME.eq_dec x a); intuition.
-  absurd (x ∈ s'); auto.
+  absurd (In x s'); auto.
   apply In_1 with a; auto.
   Inter a s s'; intuition.
   Qed.
@@ -863,20 +863,20 @@ Module Properties (M: S).
 
   (** properties of [Subset] *)
 
-  Lemma inter_subset_1 : forall s s' : t, (s ⋂ s') ⊆ s.
+  Lemma inter_subset_1 : forall s s' : t, Subset (inter s s') s.
   Proof.
   unfold Subset in |- *; intuition.
   Inter a s s'; intuition.
   Qed.
 
-  Lemma inter_subset_2 : forall s s' : t, (s ⋂ s') ⊆ s'.
+  Lemma inter_subset_2 : forall s s' : t, Subset (inter s s') s'.
   Proof.
   unfold Subset in |- *; intros; Inter ipattern:a ipattern:s ipattern:s';
    intuition.
   Qed.
 
   Lemma inter_subset_3 :
-   forall s s' s'' : t, s'' ⊆ s -> s'' ⊆ s' -> s'' ⊆ (s ⋂ s').
+   forall s s' s'' : t, Subset s'' s -> Subset s'' s' -> Subset s'' (inter s s').
   Proof.
   unfold Subset in |- *; intuition.
   Qed.
@@ -889,21 +889,21 @@ Module Properties (M: S).
     generalize (diff_1 (s:=s) (s':=s') (x:=a))
      (diff_2 (s:=s) (s':=s') (x:=a)) (diff_3 (s:=s) (s':=s') (x:=a)).
 
-  Lemma diff_subset : forall s s' : t, diff s s' ⊆ s.
+  Lemma diff_subset : forall s s' : t, Subset (diff s s') s.
   Proof.
   unfold Subset in |- *; intuition.
   Diff a s s'; intuition.
   Qed.
 
-  Lemma diff_subset_equal : forall s s' : t, s ⊆ s' -> diff s s' ≡ ∅.
+  Lemma diff_subset_equal : forall s s' : t, Subset s s' -> Equal (diff s s') empty.
   Proof.
   unfold Subset, Equal in |- *; intuition.
   Diff a s s'; firstorder.
-  absurd (a ∈ ∅); auto.
+  absurd (In a empty); auto.
   Qed.
 
   Lemma remove_inter_singleton :
-   forall (s : t) (x : elt), remove x s ≡ diff s (singleton x).
+   forall (s : t) (x : elt), Equal (remove x s) (diff s (singleton x)).
   Proof.
   unfold Equal in |- *; intuition.
   Remove_ a x s; intuition.
@@ -911,25 +911,25 @@ Module Properties (M: S).
   Diff a s (singleton x); intuition.
   Qed.
 
-  Lemma diff_inter_empty : forall s s' : t, (diff s s' ⋂ (s ⋂ s')) ≡ ∅. 
+  Lemma diff_inter_empty : forall s s' : t, Equal (inter (diff s s') (inter s s')) empty. 
   Proof.
   unfold Equal in |- *; intuition.
-  Inter a (diff s s') (s ⋂ s'); intuition.
+  Inter a (diff s s') (inter s s'); intuition.
   Inter a s s'; Diff a s s'; intuition.
-  absurd (a ∈ ∅); auto.
+  absurd (In a empty); auto.
   Qed.
 
   (* TOMOVE *)
-  Lemma In_dec : forall (x : elt) (s : t), {x ∈ s} + {x ∉ s}.
+  Lemma In_dec : forall (x : elt) (s : t), {In x s} + {~ In x s}.
   Proof.
   intros x s; generalize (mem_1 (s:=s) (x:=x)) (mem_2 (s:=s) (x:=x));
    case (mem x s); intuition.
   Qed.
 
-  Lemma diff_inter_all : forall s s' : t, (diff s s' ⋃ (s ⋂ s')) ≡ s.
+  Lemma diff_inter_all : forall s s' : t, Equal (union (diff s s') (inter s s')) s.
   Proof.
   unfold Equal in |- *; intuition.
-  union a (diff s s') (s ⋂ s'); intuition.
+  union a (diff s s') (inter s s'); intuition.
   Diff a s s'; intuition.
   Inter a s s'; intuition.
   elim (In_dec a s'); auto.
@@ -962,25 +962,25 @@ Module Properties (M: S).
 
   (** properties of [cardinal] *)
 
-  Lemma empty_inter_1 : forall s s' : t, Empty s -> Empty (s ⋂ s').
+  Lemma empty_inter_1 : forall s s' : t, Empty s -> Empty (inter s s').
   Proof.
   unfold Empty in |- *; intuition; Inter ipattern:a ipattern:s ipattern:s';
    firstorder.
   Qed.
 
-  Lemma empty_inter_2 : forall s s' : t, Empty s' -> Empty (s ⋂ s').
+  Lemma empty_inter_2 : forall s s' : t, Empty s' -> Empty (inter s s').
   Proof.
   unfold Empty in |- *; intuition; Inter ipattern:a ipattern:s ipattern:s';
    firstorder.
   Qed.
 
-  Lemma empty_union_1 : forall s s' : t, Empty s -> (s ⋃ s') ≡ s'.
+  Lemma empty_union_1 : forall s s' : t, Empty s -> Equal (union s s') s'.
   Proof.
   unfold Equal, Empty in |- *; intuition;
    union ipattern:a ipattern:s ipattern:s'; firstorder.
   Qed.
 
-  Lemma empty_union_2 : forall s s' : t, Empty s -> (s' ⋃ s) ≡ s'.
+  Lemma empty_union_2 : forall s s' : t, Empty s -> Equal (union s' s) s'.
   Proof.
   unfold Equal, Empty in |- *; intuition;
    union ipattern:a ipattern:s' ipattern:s; firstorder.
@@ -992,7 +992,7 @@ Module Properties (M: S).
    Diff ipattern:a ipattern:s ipattern:s'; firstorder.
   Qed.
 
-  Lemma empty_diff_2 : forall s s' : t, Empty s -> diff s' s ≡ s'.
+  Lemma empty_diff_2 : forall s s' : t, Empty s -> Equal (diff s' s) s'.
   Proof.
   unfold Empty, Equal in |- *; intuition;
    Diff ipattern:a ipattern:s' ipattern:s; firstorder.
@@ -1002,7 +1002,7 @@ Module Properties (M: S).
     empty_diff_1 empty_diff_2: set.
 
   Lemma union_Add :
-   forall (s s' s'' : t) (x : elt), Add x s s' -> Add x (s ⋃ s'') (s' ⋃ s'').
+   forall (s s' s'' : t) (x : elt), Add x s s' -> Add x (union s s'') (union s' s'').
   Proof. 
   unfold Add in |- *; intuition. 
   union y s' s''; firstorder.   
@@ -1012,7 +1012,7 @@ Module Properties (M: S).
 
   Lemma inter_Add :
    forall (s s' s'' : t) (x : elt),
-   x ∈ s'' -> Add x s s' -> Add x (s ⋂ s'') (s' ⋂ s'').
+   In x s'' -> Add x s s' -> Add x (inter s s'') (inter s' s'').
   Proof. 
   unfold Add in |- *; intuition. 
   Inter y s' s''; firstorder.   
@@ -1025,7 +1025,7 @@ Module Properties (M: S).
 
   Lemma union_Equal :
    forall (s s' s'' : t) (x : elt),
-   x ∈ s'' -> Add x s s' -> (s ⋃ s'') ≡ (s' ⋃ s'').
+   In x s'' -> Add x s s' -> Equal (union s s'') (union s' s'').
   Proof. 
   unfold Add, Equal in |- *; intuition. 
   union a s s''; firstorder. 
@@ -1037,17 +1037,17 @@ Module Properties (M: S).
 
   Lemma inter_Add_2 :
    forall (s s' s'' : t) (x : elt),
-   x ∉ s'' -> Add x s s' -> (s ⋂ s'') ≡ (s' ⋂ s'').
+   ~In x s'' -> Add x s s' -> Equal (inter s s'') (inter s' s'').
   Proof.
   unfold Add, Equal in |- *; intuition. 
   Inter a s s''; firstorder. 
   elim (H0 a); clear H0; Inter a s' s''; firstorder. 
-  absurd (x ∈ s''); auto. 
+  absurd (In x s''); auto. 
   apply In_1 with a; auto. 
   Qed.
 
   Lemma not_in_union :
-   forall (x : elt) (s s' : t), x ∉ s -> x ∉ s' -> x ∉ (s ⋃ s'). 
+   forall (x : elt) (s s' : t), ~In x s -> ~In x s' -> ~In x (union s s'). 
   Proof.
   intuition. 
   union x s s'; firstorder. 
@@ -1083,41 +1083,41 @@ Module Properties (M: S).
    compat_op E.eq (eq (A:=_)) f ->
    transpose (eq (A:=_)) f ->
    forall s s' : t,
-   fold f (s ⋃ s') (fold f (s ⋂ s') i) = fold f s (fold f s' i).
+   fold f (union s s') (fold f (inter s s') i) = fold f s (fold f s' i).
   Proof.
   intro A.
   set (st := gen_st A) in *.
   intros; pattern s in |- *; apply set_induction.
   intros; rewrite (fold_1 st (fold f s' i) f H1).
-  assert (H2 : Empty (s0 ⋂ s')). auto with set.
+  assert (H2 : Empty (inter s0 s')). auto with set.
   rewrite (fold_1 st i f H2).
-  assert (H3 : (s0 ⋃ s') ≡ s'). auto with set.
+  assert (H3 : Equal (union s0 s') s'). auto with set.
   rewrite (fold_equal st i H H0 H3); auto.
   intros.
-  assert (H4 : Add x (s0 ⋃ s') (s'0 ⋃ s')). 
+  assert (H4 : Add x (union s0 s') (union s'0 s')). 
   auto with set. 
   case (In_dec x s'); intro.
   (* In x s' *)
-  assert (Add x (s0 ⋂ s') (s'0 ⋂ s')).
+  assert (Add x (inter s0 s') (inter s'0 s')).
   auto with set.
-  assert (x ∉ (s0 ⋂ s')).
+  assert (~In x (inter s0 s')).
   Inter x s0 s'; intuition.
   rewrite (fold_2 st i H H0 H6 H5).
   rewrite (fold_2 st (fold f s' i) H H0 H2 H3).
-  assert ((s'0 ⋃ s') ≡ (s0 ⋃ s')).
+  assert (Equal (union s'0 s') (union s0 s')).
   apply equal_sym; eauto with set. 
-  rewrite (fold_equal st (f x (fold f (s0 ⋂ s') i)) H H0 H7).
+  rewrite (fold_equal st (f x (fold f (inter s0 s') i)) H H0 H7).
   rewrite fold_commutes; auto.
   (* ~(In x s') *)
   rewrite (fold_2 st (fold f s' i) H H0 H2 H3).
-  assert ((s'0 ⋂ s') ≡ (s0 ⋂ s')). 
+  assert (Equal (inter s'0 s') (inter s0 s')). 
   apply equal_sym; eauto with set. 
   rewrite (fold_equal st i H H0 H5).
-  assert (Add x (s0 ⋃ s') (s'0 ⋃ s')). 
+  assert (Add x (union s0 s') (union s'0 s')). 
   auto with set. 
-  assert (x ∉ (s0 ⋃ s')). 
+  assert (~In x (union s0 s')). 
   auto with set. 
-  rewrite (fold_2 st (fold f (s0 ⋂ s') i) H H0 H7 H6).
+  rewrite (fold_2 st (fold f (inter s0 s') i) H H0 H7 H6).
   auto. 
   Qed.
 
@@ -1125,11 +1125,11 @@ Module Properties (M: S).
    forall (A : Set) (f : elt -> A -> A) (i : A),
    compat_op E.eq (eq (A:=A)) f ->
    transpose (eq (A:=A)) f ->
-   forall s s' : t, fold f (diff s s') (fold f (s ⋂ s') i) = fold f s i.
+   forall s s' : t, fold f (diff s s') (fold f (inter s s') i) = fold f s i.
   Proof.
   intros.
   assert (st := gen_st A).
-  rewrite <- (fold_union_inter i H H0 (diff s s') (s ⋂ s')).
+  rewrite <- (fold_union_inter i H H0 (diff s s') (inter s s')).
   rewrite (fold_equal st i H H0 (diff_inter_empty s s')).
   rewrite (fold_empty st).
   apply fold_equal with (eqA := eq (A:=A)); auto.
@@ -1137,12 +1137,12 @@ Module Properties (M: S).
   Qed.
 
   Lemma diff_inter_cardinal :
-   forall s s' : t, ∥diff s s' ∥ + ∥s ⋂ s' ∥ = ∥s ∥.
+   forall s s' : t, cardinal (diff s s')  + cardinal (inter s s') = cardinal s .
   Proof.
   intro s; pattern s in |- *; apply set_induction; intuition.
   assert (Empty (diff s0 s')); auto with set.  
   rewrite (empty_cardinal_2 H0). 
-  assert (Empty (s0 ⋂ s')); auto with set.  
+  assert (Empty (inter s0 s')); auto with set.  
   rewrite (empty_cardinal_2 H1).
   rewrite (empty_cardinal_2 H); auto. 
   intros.
@@ -1151,7 +1151,7 @@ Module Properties (M: S).
   apply fold_diff_inter; auto.
   Qed.
 
-  Lemma subset_cardinal : forall s s' : t, s ⊆ s' -> ∥s ∥ <= ∥s' ∥.
+  Lemma subset_cardinal : forall s s' : t, Subset s s' -> cardinal s <= cardinal s' .
   Proof.
   intros.
   rewrite <- (diff_inter_cardinal s' s).
@@ -1160,7 +1160,7 @@ Module Properties (M: S).
   Qed.
 
   Lemma union_inter_cardinal :
-   forall s s' : t, ∥s ⋃ s' ∥ + ∥s ⋂ s' ∥ = ∥s ∥ + ∥s' ∥.
+   forall s s' : t, cardinal (union s s') + cardinal (inter s s')  = cardinal s  + cardinal s' .
   Proof.
   intros.
   do 4 rewrite cardinal_fold.
@@ -1168,18 +1168,18 @@ Module Properties (M: S).
   apply fold_union_inter; auto.
   Qed.
 
-  Lemma union_cardinal : forall s s' : t, ∥s ⋃ s' ∥ <= ∥s ∥ + ∥s' ∥.
+  Lemma union_cardinal : forall s s' : t, cardinal (union s s') <= cardinal s  + cardinal s' .
   Proof.
     intros; generalize (union_inter_cardinal s s'); intros; omega.
   Qed.
 
-  Lemma add_cardinal_1 : forall (s : t) (x : elt), x ∈ s -> ∥add x s ∥ = ∥s ∥.
+  Lemma add_cardinal_1 : forall (s : t) (x : elt), In x s -> cardinal (add x s) = cardinal s .
   Proof.
   auto with set.  
   Qed.
 
   Lemma add_cardinal_2 :
-   forall (s : t) (x : elt), x ∉ s -> ∥add x s ∥ = S (∥s ∥).
+   forall (s : t) (x : elt), ~In x s -> cardinal (add x s)  = S (cardinal s).
   Proof.
   intros.
   do 2 rewrite cardinal_fold.
