@@ -52,12 +52,27 @@ Module Type S.
   (** [mem x m] returns [true] if [m] contains a binding for [x], 
       and [false] otherwise. *)
 
+(* bugée?: *)
   Parameter eq : t elt -> t elt -> Prop.
+(* plutôt ça? attention refl,trans et sym sont
+   conditionnée par refl trans et sym de l'égalité sur les éléments *)
+(* Parameter eq : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.*)
   Parameter lt : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.
+
+(* 
+  Parameter compare : 
+    forall eq_elt lt_elt : elt -> elt -> Prop, 
+      (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
+      forall m m' : t elt, Compare (lt lt_elt) (eq eq_elt) m m'.
+ *)
+
+(* bugée ?: *)
   Parameter compare : 
     forall lt_elt : elt -> elt -> Prop, 
     (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
     forall m m' : t elt, Compare (lt lt_elt) eq m m'.
+
+
   (** Total ordering between maps. The first (in Coq: second) argument is 
       a total ordering used to compare data associated with equal keys 
       in the two maps. *)
