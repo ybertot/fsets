@@ -3435,8 +3435,6 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     rewrite H2 in l; rewrite H5 in l; auto.
   Defined.
 
-  Write State "toto".
-
 End Make.
 
 
