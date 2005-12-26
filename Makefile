@@ -73,6 +73,7 @@ COQLIBS=-I .
 
 VFILES=FSetBridge.v\
   FSetInterface.v\
+  FMapInterface.v\
   FSetList.v\
   FSetRBT.v\
   FSetAVL.v\
@@ -88,6 +89,7 @@ GHTMLFILES=$(VFILES:.v=.g.html)
 
 all: FSetBridge.vo\
   FSetInterface.vo\
+  FMapInterface.vo\
   FSetList.vo\
   FSetRBT.vo\
   FSetAVL.vo\
@@ -163,8 +165,8 @@ include .depend
 
 .depend depend:
 	rm -f .depend
-	$(COQDEP) -i $(COQLIBS) *.v *.ml *.mli >.depend
-	$(COQDEP) $(COQLIBS) -suffix .html *.v >>.depend
+	$(COQDEP) -i $(COQLIBS) $(VFILES) *.ml *.mli >.depend
+	$(COQDEP) $(COQLIBS) -suffix .html $(VFILES) >>.depend
 	(cd PrecedenceGraph ; $(MAKE) depend)
 
 install:

@@ -25,7 +25,7 @@ Open Scope Z_scope.
 
 Set Firstorder Depth 3.
 
-Module Make (X: OrderedType) <: Sdep with Module E := X.
+Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Module E := X.
   Module ME := OrderedTypeFacts X.
@@ -417,7 +417,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     exists t_empty.
     unfold In in |- *; red in |- *; intros.
     inversion H.
-  Defined.
+  Qed.
 
   (** * Emptyness test *)
 
@@ -428,7 +428,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     left; auto.
     right; intuition.
     apply (H t1); auto.
-  Defined.
+  Qed.
 
   (** * Appartness *)
 
@@ -465,7 +465,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     absurd (X.eq t1 x); auto.
     inversion Hs0.
     absurd (In_tree x t0); eauto.
-  Defined.
+  Qed.
 
   (** * Singleton set *)
 
@@ -490,7 +490,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
      exists (t_intro (singleton_tree x) (singleton_bst x) (singleton_avl x)).
     unfold In, singleton_tree in |- *; simpl in |- *; intuition.
     inversion_clear H; auto; inversion H0.
-  Defined.
+  Qed.
 
   (** * Helper functions *)
 
@@ -517,7 +517,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     intuition.
     MaxCase (height l) (height r); intuition.
     inversion_clear H5; intuition.
-  Defined.
+  Qed.
 
   (** [bal l x r] acts as [create], but performs one step of
       rebalancing if necessary, i.e. assumes [|height l - height r| <= 3]. *)
@@ -763,7 +763,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     generalize z z0; unfold hl, hr in |- *; MaxCase (height l) (height r);
      intros; omega.
     intuition; inversion_clear H3; intuition.
-  Defined.
+  Qed.
 
   (** * Insertion *)
 
@@ -830,7 +830,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     clear s'_h1; intro.
     generalize (s'_h2 y) (H0 y); clear s'_h2 H0; intuition.
     inversion_clear H11; intuition.
-  Defined.
+  Qed.
 
   Definition add : forall (x : elt) (s : t), {s' : t | Add x s s'}.
   Proof.
@@ -838,7 +838,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     case (add_tree x s); trivial.
     intros s' (s'_bst, (s'_avl, Hs')).
     exists (t_intro s' s'_bst s'_avl); intuition.
-  Defined.
+  Qed.
 
   (** * Join
 
@@ -934,7 +934,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     case (create (Node t0 t1 t2 z) x (Node r1 t3 r0 z0)); simpl in |- *;
      intuition.
     exists x0; intuition.
-  Defined.
+  Qed.
 
   (** * Extraction of minimum and maximum element *)
 
@@ -992,7 +992,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     inversion_clear H0; firstorder.
     apply InLeft; firstorder.
     firstorder.
-  Defined.
+  Qed.
 
   Definition remove_max :
     forall s : tree,
@@ -1048,7 +1048,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     inversion_clear H0; firstorder.
     apply InRight; firstorder.
     firstorder.
-  Defined.
+  Qed.
 
   (** * Merging two trees
 
@@ -1105,7 +1105,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     clear H3 H9 H11 H15; AVL H0; AVL H2; AVL H8; AVL H13.
     simpl in H7, H14, H12; simpl in |- *; intuition omega.
     clear H7 H12 H14; firstorder.
-  Defined.
+  Qed.
 
   (** Variant where we remove from the biggest subtree *)
 
@@ -1166,7 +1166,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     simpl in H7, H14, H12; simpl in |- *.
     intuition omega.
     clear H7 H12; firstorder.
-  Defined.
+  Qed.
 
   (** * Deletion *)
 
@@ -1255,7 +1255,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     apply ME.lt_eq with x; auto.
     generalize (H9 y) (H5 y); clear H5 H9; intuition.
     inversion_clear H8; generalize (H9 y) (H5 y); clear H5 H9; intuition.
-  Defined.
+  Qed.
 
   Definition remove :
     forall (x : elt) (s : t),
@@ -1264,7 +1264,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     intros x (s, Hs, Hrb); case (remove_tree x s); trivial.
     intros s'; intuition; clear H0.
     exists (t_intro s' H H1); intuition.
-  Defined.
+  Qed.
 
  (** * Minimum element *)
 
@@ -1301,7 +1301,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     (* non minimum for [s1] => absurd *)
     intro; right; intuition.
     apply (n t2); auto.
-  Defined.
+  Qed.
 
   (** * Maximum element *)
 
@@ -1338,7 +1338,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     (* non maximum for [s0] => absurd *)
     intro; right; intuition.
     apply (n t2); auto.
-  Defined.
+  Qed.
 
   (** * Any element *)
 
@@ -1348,7 +1348,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
      intuition.
     right; intros; inversion H.
     left; exists t1; auto.
-  Defined.
+  Qed.
 
   (** * Concatenation
 
@@ -1393,7 +1393,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     exists s'.
     do 2 (split; trivial).
     clear H5 H10; firstorder.
-  Defined.
+  Qed.
 
   (** * Splitting 
 
@@ -1512,7 +1512,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     inversion_clear H1; auto.
     absurd (X.eq x t1); auto.
     absurd (X.lt x t1); auto.
-  Defined.
+  Qed.
 
   (** * Intersection
 <<
@@ -1592,7 +1592,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     absurd (X.lt t0 x); inversion_clear s1_bst; auto.
     case (X.compare x t0); intuition.
     absurd (X.lt x t0); inversion_clear s1_bst; auto.
-  Defined.
+  Qed.
 
   (** * Difference
 <<
@@ -1678,7 +1678,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     inversion_clear H8; intuition.
     clear a0 H4; generalize (a x) (H3 x); clear a H3; intuition.
     clear a H3; generalize (a0 x) (H4 x); clear a0 H4; intuition.
-  Defined.
+  Qed.
 
   (** * Elements *)
 
@@ -1793,7 +1793,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     apply elements_tree_sort; auto.
     apply elements_tree_1; auto.
     apply elements_tree_2; auto.
-  Defined.
+  Qed.
 
   (** * Cardinal *)
 
@@ -2073,7 +2073,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
      clear s'_y a0 a H4 H5; intuition.
     case (X.compare x0 t4); intuition.
     inversion_clear H21; intuition.
-  Defined.
+  Qed.
 
   (** * Filter
 <<
@@ -2262,7 +2262,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     right; decompose [and] H20; auto.
     gintuition.
     inversion_clear H17; gintuition; elim H33; apply (HP t1); auto.
-  Defined.
+  Qed.
 
   Definition partition :
     forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x}) (s : t),
@@ -2437,7 +2437,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     elim (ME.lt_not_gt (x:=a) (y:=t1)); auto.
     apply X.lt_trans with t4; inversion_clear s2_bst; auto.
     inversion_clear s1_bst; auto.
-  Defined.
+  Qed.
 
   (** [for_all] and [exists] *)
 
@@ -2460,7 +2460,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
      clear Hrecs0; right; firstorder.
      (* ~(P t0) *)
      clear Hrecs0 Hrecs1; right; intros; firstorder.
-  Defined.
+  Qed.
 
   Definition exists_ :
     forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x}) (s : t),
@@ -2483,7 +2483,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     right; intros; intro.
     elim H0; intuition.
     inversion_clear H4; firstorder.
-  Defined.
+  Qed.
 
   (** * Fold *)
 
@@ -2539,7 +2539,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     split; auto.
     intros x; generalize (elements_tree_1 s x) (elements_tree_2 s x).
     generalize (H2 x); unfold In in |- *; firstorder.
-  Defined.
+  Qed.
 
   (** * Comparison *)
 
@@ -3135,7 +3135,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     constructor 1; rewrite <- compare_flatten_1; auto. 
     constructor 2; rewrite <- compare_flatten_1; auto. 
     constructor 3; rewrite <- (compare_flatten_1 (Node t0 t6 t7 z1)); auto. 
-  Defined.
+  Qed.
 
   Lemma flatten_elements :
    forall s : tree, flatten (s :: []) = elements_tree s.
@@ -3158,7 +3158,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     constructor 2.
     apply L_eq_eq; simpl in |- *; repeat rewrite <- flatten_elements; auto.
     constructor 3; simpl in |- *; repeat rewrite <- flatten_elements; auto.
-  Defined.
+  Qed.
 
   (** * Equality test *)
 
@@ -3168,7 +3168,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     right; apply lt_not_eq; auto.
     left; auto.
     right; intro; apply (lt_not_eq s' s); auto; apply eq_sym; auto.
-  Defined.
+  Qed.
 
 
   (** A new comparison algorithm suggested by Xavier Leroy:
@@ -3370,7 +3370,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     generalize H4; Measure_e; intros; Measure_e_t; omega.
     rewrite H5.
     apply flatten_e_elements.
-  Defined.
+  Qed.
 
   Definition compare2_aux :
     forall e1 e2 : enumeration,
@@ -3414,7 +3414,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     rewrite H5 in l; rewrite H8 in l; auto.
     (* e > e3 *)
     constructor 3; simpl; auto.
-  Defined.
+  Qed.
 
   Definition compare2 : forall s1 s2 : t, Compare lt eq s1 s2.
   Proof.
@@ -3433,7 +3433,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     rewrite H2 in e; rewrite H5 in e; auto.
     constructor 3; simpl in |- *.
     rewrite H2 in l; rewrite H5 in l; auto.
-  Defined.
+  Qed.
 
 End Make.
 

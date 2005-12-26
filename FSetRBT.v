@@ -26,7 +26,7 @@ Open Scope Z_scope.
 
 Set Firstorder Depth 3.
 
-Module Make (X: OrderedType) <: Sdep with Module E := X.
+Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Module E := X.
   Module ME := OrderedTypeFacts X.
@@ -360,7 +360,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     exists t_empty.
     unfold In in |- *; red in |- *; intros.
     inversion H.
-  Defined.
+  Qed.
 
   (** * Emptyness test *)
 
@@ -371,7 +371,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     left; auto.
     right; intuition.
     apply (H t1); auto.
-  Defined.
+  Qed.
 
   (** * Appartness *)
 
@@ -408,7 +408,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     absurd (X.eq t1 x); auto.
     inversion Hs0.
     absurd (In_tree x t0); eauto.
-  Defined.
+  Qed.
 
   (** * Singleton set *)
 
@@ -433,7 +433,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
       (t_intro (singleton_tree x) (singleton_bst x) (singleton_rbtree x)).
     unfold In, singleton_tree in |- *; simpl in |- *; intuition.
     inversion_clear H; auto; inversion H0.
-  Defined.
+  Qed.
 
   (** * Insertion *)
 
@@ -557,7 +557,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     (* s = Node black t0 t1 t2 *)
     constructor 1; inversion_clear 1; intros.
     constructor; intuition.
-  Defined.
+  Qed.
 
   (** [lbalance c x l r] acts as a black node constructor,
       solving a possible red-red conflict on [l], using the following
@@ -602,7 +602,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     generalize (i y0); inversion_clear H3; intuition; inversion_clear H4;
      intuition.
     (* bug Firstorder *) generalize (i y0); intuition.
-  Defined.
+  Qed.
 
   (** [rbalance l x r] is similar to [lbalance], solving a possible red-red
       conflict on [r]. The balancing schema is similar:
@@ -645,7 +645,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     generalize (i y0); inversion_clear H3; intuition; inversion_clear H4;
      intuition.
     (* bug Firstorder *) generalize (i y0); intuition.
-  Defined.
+  Qed.
 
   (** [insert x s] inserts [x] in tree [s], resulting in a possible top red-red
       conflict when [s] is red. Its code is:
@@ -756,7 +756,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     generalize (H2 y); generalize (H5 y); intuition.
     generalize (H2 y); generalize (H5 y); intuition.
     inversion H6; generalize (H2 y); generalize (H5 y); intuition.
-  Defined.
+  Qed.
 
 
   (** Finally [add x s] calls [insert] and recolors the root as black:
@@ -797,7 +797,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     elim Hrb; clear Hrb; intros n Hrb.
     exists n; firstorder. 
     exists (t_intro (Node black t0 t1 t2) H s'rbtree); intuition.
-  Defined.
+  Qed.
 
   (** * Deletion *)
 
@@ -933,7 +933,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     generalize (H3 y); clear H3; intuition.
     constructor 2; firstorder with In_color.
     inversion_clear H1; firstorder with In_color.
-  Defined.
+  Qed.
 
 
   (** [UnbalancedRight n t]: [t] is a tree of black height [S n]
@@ -1068,7 +1068,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     generalize (H3 y); clear H3; intuition.
     constructor 3; firstorder with In_color.
     inversion_clear H1; firstorder with In_color.
-  Defined.
+  Qed.
 
   (** [remove_min s] extracts the minimum elements of [s] and indicates
       whether the black height has decreased. *)
@@ -1220,7 +1220,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     firstorder.
     generalize (H6 y); clear H6; intuition.
     inversion_clear H7; firstorder.
-  Defined.
+  Qed.
 
   (** [blackify] colors the root node in [Black] *)
 
@@ -1242,7 +1242,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
      [ exists (Node black t0 t1 t2, false)
      | exists (Node black t0 t1 t2, true) ]; intuition try inversion H0; auto.
     apply bst_color with red; trivial.
-  Defined.
+  Qed.
 
   (** [remove_aux x s] removes [x] from [s] and indicates whether the black
       height has decreased. *)
@@ -1497,7 +1497,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
       apply ME.lt_eq with x; auto.
       generalize (H4 y); clear H4; inversion_clear H2; intuition.
       generalize (H4 y); clear H4; inversion_clear H6; intuition.
-  Defined.
+  Qed.
 
   (** [remove] is just a call to [remove_aux] *)
 
@@ -1512,7 +1512,7 @@ Module Make (X: OrderedType) <: Sdep with Module E := X.
     elim Hrb; clear Hrb; intros n Hn; induction  b as [| ]; firstorder.
     exists (t_intro s' H s'rbtree); unfold In in |- *; simpl in |- *;
      intuition.
-  Defined.
+  Qed.
 
   (** * From lists to red-black trees *)
   
@@ -1672,7 +1672,7 @@ Unset Implicit Arguments.
   rewrite <- (Zlength_cons x l'').
   rewrite (olai_length o1); unfold Zpred in |- *; omega.
   omega. 
-  Defined.
+  Qed.
 
   Definition of_list :
     forall l : list elt,
@@ -1814,7 +1814,7 @@ Unset Implicit Arguments.
     apply elements_tree_sort; auto.
     apply elements_tree_1; auto.
     apply elements_tree_2; auto.
-  Defined.
+  Qed.
 
   (** * Isomorphism with [FSetList] *)
 
@@ -1826,7 +1826,7 @@ Unset Implicit Arguments.
   intros (l, Hl).
   elim (of_list l Hl); intros s Hls. 
   exists s; unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *; firstorder.
-  Defined.
+  Qed.
 
   Definition to_slist :
     forall s : t, {l : Lists.t | forall x : elt, In x s <-> Lists.In x l}. 
@@ -1834,7 +1834,7 @@ Unset Implicit Arguments.
   intro s; elim (elements s); intros l (Hl1, Hl2).
   exists (Lists.Build_slist Hl1).
   unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *; firstorder.
-  Defined.
+  Qed.
 
   (** * Union *)
 
@@ -1852,7 +1852,7 @@ Unset Implicit Arguments.
    firstorder.
   elim (Hr x); intros A _; apply A; apply (Lists.union_3 l (s':=l') (x:=x));
    firstorder.
-  Defined.
+  Qed.
 
   (** * Intersection *)
 
@@ -1871,7 +1871,7 @@ Unset Implicit Arguments.
    apply (Lists.inter_2 (s:=l) (s':=l') (x:=x)); firstorder.
   elim (Hr x); intros A _; apply A;
    apply (Lists.inter_3 (s:=l) (s':=l') (x:=x)); firstorder.
-  Defined.
+  Qed.
 
   (** * Difference *)
 
@@ -1889,7 +1889,7 @@ Unset Implicit Arguments.
   elim (Lists.diff_2 (s:=l) (s':=l') (x:=x)); firstorder.  
   elim (Hr x); intros A _; apply A;
    apply (Lists.diff_3 (s:=l) (s':=l') (x:=x)); firstorder.
-  Defined.
+  Qed.
 
   (** * Equality test *)
 
@@ -1906,7 +1906,7 @@ Set Firstorder Depth 5.
   left; intros; generalize (H2 (refl_equal true)); firstorder.
   right; intros; intro. 
   absurd (false = true); [ auto with bool | firstorder ].
-  Defined.
+  Qed.
 
   (** * Inclusion test *)
 
@@ -1922,7 +1922,7 @@ Set Firstorder Depth 5.
   left; intros; generalize (H2 (refl_equal true)); firstorder.  
   right; intros; intro. 
   absurd (false = true); [ auto with bool | firstorder ].
-  Defined.
+  Qed.
 
   (** * Fold *)
 
@@ -1977,7 +1977,7 @@ Set Firstorder Depth 5.
     split; auto.
     intros x; generalize (elements_tree_1 s x) (elements_tree_2 s x).
     generalize (H2 x); unfold In in |- *; firstorder.
-  Defined.
+  Qed.
 
   (** * Cardinal *)
 
@@ -2090,7 +2090,7 @@ Set Firstorder Depth 5.
     (* non minimum for [s1] => absurd *)
     intro; right; intuition.
     apply (n t2); auto.
-  Defined.
+  Qed.
 
   (** * Maximum element *)
 
@@ -2127,7 +2127,7 @@ Set Firstorder Depth 5.
     (* non maximum for [s0] => absurd *)
     intro; right; intuition.
     apply (n t2); auto.
-  Defined.
+  Qed.
 
   (** * Any element *)
 
@@ -2137,7 +2137,7 @@ Set Firstorder Depth 5.
      intuition.
     right; intros; inversion H.
     left; exists t1; auto.
-  Defined.
+  Qed.
 
   (** * Comparison *)
   
@@ -2219,7 +2219,7 @@ Set Firstorder Depth 5.
     constructor 3; trivial.
     constructor 2; trivial.
     constructor 1; trivial.
-  Defined.
+  Qed.
 
 End Make.
 
