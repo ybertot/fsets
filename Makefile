@@ -71,12 +71,14 @@ COQLIBS=-I .
 #                                 #
 ###################################
 
-VFILES=FSetBridge.v\
+VFILES=Int.v\
+  FSetBridge.v\
   FSetInterface.v\
   FMapInterface.v\
   FSetList.v\
   FSetRBT.v\
   FSetAVL.v\
+  FSetAVL2.v\
   FSetEqProperties.v\
   FSetProperties.v\
   FSet.v\
@@ -87,12 +89,14 @@ GFILES=$(VFILES:.v=.g)
 HTMLFILES=$(VFILES:.v=.html)
 GHTMLFILES=$(VFILES:.v=.g.html)
 
-all: FSetBridge.vo\
+all: Int.vo\
+  FSetBridge.vo\
   FSetInterface.vo\
   FMapInterface.vo\
   FSetList.vo\
   FSetRBT.vo\
   FSetAVL.vo\
+  FSetAVL2.vo\
   FSetEqProperties.vo\
   FSetProperties.vo\
   FSet.vo\

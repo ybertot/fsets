@@ -1,27 +1,42 @@
-extract.vo: extract.v FSet.vo
-extract.vi: extract.v FSet.vo
-FSetAVL.vo: FSetAVL.v FSetInterface.vo FSetList.vo
-FSetAVL.vi: FSetAVL.v FSetInterface.vo FSetList.vo
+avl.cmo: avl.ml avl.cmi
+avl.cmx: avl.ml avl.cmi
+rbt.cmo: rbt.ml rbt.cmi
+rbt.cmx: rbt.ml rbt.cmi
+avl.cmi: avl.mli
+rbt.cmi: rbt.mli
+Int.vo: Int.v
+Int.vi: Int.v
 FSetBridge.vo: FSetBridge.v FSetInterface.vo
 FSetBridge.vi: FSetBridge.v FSetInterface.vo
-FSetEqProperties.vo: FSetEqProperties.v FSetProperties.vo
-FSetEqProperties.vi: FSetEqProperties.v FSetProperties.vo
 FSetInterface.vo: FSetInterface.v
 FSetInterface.vi: FSetInterface.v
+FMapInterface.vo: FMapInterface.v FSetInterface.vo
+FMapInterface.vi: FMapInterface.v FSetInterface.vo
 FSetList.vo: FSetList.v FSetInterface.vo
 FSetList.vi: FSetList.v FSetInterface.vo
-FSetProperties.vo: FSetProperties.v FSetInterface.vo
-FSetProperties.vi: FSetProperties.v FSetInterface.vo
 FSetRBT.vo: FSetRBT.v FSetInterface.vo FSetList.vo FSetBridge.vo
 FSetRBT.vi: FSetRBT.v FSetInterface.vo FSetList.vo FSetBridge.vo
+FSetAVL.vo: FSetAVL.v FSetInterface.vo FSetList.vo
+FSetAVL.vi: FSetAVL.v FSetInterface.vo FSetList.vo
+FSetAVL2.vo: FSetAVL2.v FSetInterface.vo FSetList.vo Int.vo
+FSetAVL2.vi: FSetAVL2.v FSetInterface.vo FSetList.vo Int.vo
+FSetEqProperties.vo: FSetEqProperties.v FSetProperties.vo
+FSetEqProperties.vi: FSetEqProperties.v FSetProperties.vo
+FSetProperties.vo: FSetProperties.v FSetInterface.vo
+FSetProperties.vi: FSetProperties.v FSetInterface.vo
 FSet.vo: FSet.v FSetInterface.vo FSetBridge.vo FSetProperties.vo FSetEqProperties.vo FSetList.vo FSetRBT.vo FSetAVL.vo
 FSet.vi: FSet.v FSetInterface.vo FSetBridge.vo FSetProperties.vo FSetEqProperties.vo FSetList.vo FSetRBT.vo FSetAVL.vo
-extract.html: extract.v FSet.html
-FSetAVL.html: FSetAVL.v FSetInterface.html FSetList.html
+extract.vo: extract.v FSet.vo
+extract.vi: extract.v FSet.vo
+Int.html: Int.v
 FSetBridge.html: FSetBridge.v FSetInterface.html
-FSetEqProperties.html: FSetEqProperties.v FSetProperties.html
 FSetInterface.html: FSetInterface.v
+FMapInterface.html: FMapInterface.v FSetInterface.html
 FSetList.html: FSetList.v FSetInterface.html
-FSetProperties.html: FSetProperties.v FSetInterface.html
 FSetRBT.html: FSetRBT.v FSetInterface.html FSetList.html FSetBridge.html
+FSetAVL.html: FSetAVL.v FSetInterface.html FSetList.html
+FSetAVL2.html: FSetAVL2.v FSetInterface.html FSetList.html Int.html
+FSetEqProperties.html: FSetEqProperties.v FSetProperties.html
+FSetProperties.html: FSetProperties.v FSetInterface.html
 FSet.html: FSet.v FSetInterface.html FSetBridge.html FSetProperties.html FSetEqProperties.html FSetList.html FSetRBT.html FSetAVL.html
+extract.html: extract.v FSet.html
