@@ -8,6 +8,11 @@ Require Export Sorting.
 Require Export Setoid.
 Set Implicit Arguments.
 Unset Strict Implicit.
+Implicit Arguments equivalence.
+Implicit Arguments reflexive.
+Implicit Arguments transitive.
+Implicit Arguments symmetric.
+Implicit Arguments antisymmetric.
 
 Require Import FSetInterface. 
 
@@ -53,24 +58,25 @@ Module Type S.
       and [false] otherwise. *)
 
 (* bugée?: *)
-  Parameter eq : t elt -> t elt -> Prop.
+(*   Parameter eq : t elt -> t elt -> Prop. *)
 (* plutôt ça? attention refl,trans et sym sont
    conditionnée par refl trans et sym de l'égalité sur les éléments *)
-(* Parameter eq : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.*)
+  Parameter eq : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.
   Parameter lt : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.
 
-(* 
-  Parameter compare : 
-    forall eq_elt lt_elt : elt -> elt -> Prop, 
-      (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
-      forall m m' : t elt, Compare (lt lt_elt) (eq eq_elt) m m'.
- *)
-
 (* bugée ?: *)
+(* 
   Parameter compare : 
     forall lt_elt : elt -> elt -> Prop, 
     (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
     forall m m' : t elt, Compare (lt lt_elt) eq m m'.
+ *)
+
+  Parameter compare : 
+    forall eq_elt lt_elt : elt -> elt -> Prop, 
+      (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
+      forall m m' : t elt, Compare (lt lt_elt) (eq eq_elt) m m'.
+
 
 
   (** Total ordering between maps. The first (in Coq: second) argument is 
@@ -124,6 +130,14 @@ Module Type S.
    (In a m <-> In a m') /\
    (MapsTo a e m -> MapsTo a e' m' -> f e e' = true). 
 
+
+
+  Section Eq. 
+    Variable eq_elt: elt -> elt -> Prop.
+    (** Specification of [eq] *)
+    Parameter eq_equiv: equivalence eq_elt -> equivalence (eq eq_elt).
+  End Eq.
+
 (*  Definition Add (x : key) (s s' : t) :=
     forall y : key, In y s' <-> E.eq y x \/ In y s.
   Definition For_all (P : key -> Prop) (s : t) :=
@@ -133,21 +147,18 @@ Module Type S.
 
   (** Specification of [MapsTo] *)
   Parameter MapsTo_1 : E.eq x y -> MapsTo x e m -> MapsTo y e m.
+  
 
-  (** Specification of [eq] *)
-  Parameter eq_refl : eq m m. 
-  Parameter eq_sym : eq m m' -> eq m' m.
-  Parameter eq_trans : eq m m' -> eq m' m'' -> eq m m''.
- 
+
+
   (** Specification of [lt] *)
   Section Lt. 
   Variable lt_elt : elt -> elt -> Prop. 
-  Parameter lt_trans : 
-    (forall e e' e'', lt_elt e e' -> lt_elt e' e'' -> lt_elt e e'') -> 
-    lt lt_elt m m' -> lt lt_elt m' m'' -> lt lt_elt m m''.
+  Variable eq_elt : elt -> elt -> Prop. 
+  Parameter lt_trans :  transitive lt_elt. (* plus? *)
   Parameter lt_not_eq : 
     (forall e e', lt_elt e e' -> e<>e') ->  
-    lt lt_elt m m' -> ~ eq m m'.
+    lt lt_elt m m' -> ~ eq eq_elt m m'.
   End Lt.
 
   (** Specification of [mem] *)
