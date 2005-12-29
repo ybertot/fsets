@@ -6,14 +6,13 @@
   (*         *       GNU Lesser General Public License Version 2.1       *)
   (***********************************************************************)
 
-  (* Finite sets library.  
+  (* Finite maps library.  
    * Authors: Pierre Letouzey and Pierre Courtieu 
    * Institution:  *)
 
-  (** This file proposes an implementation of the non-dependant 
-      interface [FMapInterface.S] using lists of
-      pairs ordered (increasing) with respect to
-      left projection. *)
+  (** This file proposes an implementation of the non-dependant interface
+   [FMapInterface.S] using lists of pairs ordered (increasing) with respect to
+   left projection. *)
 
 Require Import FMapInterface.
 Require Import FSetInterface. 
@@ -21,25 +20,19 @@ Require Import FSetInterface.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-  (** Usual syntax for lists. *)
+(** Usual syntax for lists. *)
 Notation "[]" := nil (at level 0).
 
 
 (* Comment définir un OrderedType sur les paires à partir d'un OrderedType et
-   d'un type quelconque en prenant l'ordre sur la projection gauche. *)
-
-(* Type quelconque *)
-Module Type TypeAlone.
-  Parameter t:Set.
-End TypeAlone.
+   d'un type quelconque en prenant l'ordre sur la projection gauche sans tomber
+ sur la limitation section/module? *)
 
 Module OrderedTypePair(X:OrderedType).
 
   Module E := X. (* À quoi cela sert-il? *)
   Module ME := OrderedTypeFacts X.
   Definition key := X.t.
-(*   Definition elt := Elt.t. *)
-
     
   Section Elt.
     Variable elt:Set.
@@ -85,6 +78,16 @@ Module OrderedTypePair(X:OrderedType).
 End OrderedTypePair.
       
 (*
+  Ce que je sais faire c'est mettre le type des valeurs dans un module tout
+ seul, et fabriquer un orderedtype avec un ordered type et ce type tout seul
+ dans son module. Ensuire les facts arrivent aussi facilement. Problème: le type
+ des valeurs n'est plus quantifié, et donc on ne colle pas avec la signature
+ voulue quand on passe aux map (et le map n'est plus typable comme on veut).
+
+Module Type TypeAlone.
+  Parameter t:Set.
+End TypeAlone.
+
 Module OrderedTypePairValid (X:OrderedType) (Elt:TypeAlone): OrderedType.
   Module E:=X.
   Module MOTP:=OrderedTypePair X.
