@@ -51,14 +51,35 @@ Module PairLeftOrderedType(X:OrderedType).
     Definition eq (c1 c2: key * elt):Prop :=
       let (x,y) := c1 in let (x',y') := c2 in  E.eq x x' /\ eq_elt y y'.
 
+    Definition eq_key (c1 c2: key * elt):Prop :=
+      let (x,y) := c1 in let (x',y') := c2 in  E.eq x x'.
+
     Definition lt (c1 c2: key * elt):Prop :=
       let (x,y) := c1 in let (x',y') := c2 in  E.lt x x'.
+
+
+    Lemma eq_eq_key : forall e e', eq e e' -> eq_key e e'.
+      intros e e'.
+      case e. case e'. simpl.
+      intros k e0 k0 e1 hyp.
+      decompose [and] hyp;auto. 
+      (* do not use intuition here, because it produces a dependency on
+         eq_elt_equiv above*)
+    Qed.
 
     Lemma eq_refl : forall e, eq e e.
       intro e. case e;simpl; auto.
     Qed.
 
-    Lemma eq_sym : forall e e', eq e e' -> eq e' e.
+    Lemma eq_key_refl : forall e, eq_key e e.
+      intro e. case e;simpl; auto.
+    Qed.
+
+    Lemma eq_sym : forall e e', eq_key e e' -> eq_key e' e.
+      intros e e'. case e. case e'. simpl;intuition.
+    Qed.
+
+    Lemma eq_key_sym : forall e e', eq_key e e' -> eq_key e' e.
       intros e e'. case e. case e'. simpl;intuition.
     Qed.
 
@@ -66,10 +87,21 @@ Module PairLeftOrderedType(X:OrderedType).
       intros e e' e''. case e. case e'. case e''. simpl;intuition;eauto.
     Qed.
 
+    Lemma eq_key_trans : forall e e' e'', eq_key e e' -> eq_key e' e'' -> eq_key e e''.
+      intros e e' e''. case e. case e'. case e''. simpl;intuition;eauto.
+    Qed.
+
     Lemma lt_not_eq : forall e e', lt e e' -> ~eq e e'.
       intros e e'. case e. case e'. simpl.
       intros k e0 k0 e1 H.
       intro abs;destruct abs.
+      elim (E.lt_not_eq H); assumption.
+    Qed.
+
+    Lemma lt_not_eq_key : forall e e', lt e e' -> ~eq_key e e'.
+      intros e e'. case e. case e'. simpl.
+      intros k e0 k0 e1 H.
+      intro abs.
       elim (E.lt_not_eq H); assumption.
     Qed.
 
@@ -81,14 +113,17 @@ Module PairLeftOrderedType(X:OrderedType).
 End PairLeftOrderedType.
 
 
+
 Module Raw (X:OrderedType).
   Module E := X. (* À quoi cel sert-il? *)
   Module ME := OrderedTypeFacts X.
 
   Module PE := PairLeftOrderedType X.
 
+
   Definition key := X.t.
-  Definition t := fun elt:Set => list (key*elt).
+  Definition t := fun elt => list (PE.t elt). 
+(*   fun elt : Set => (X.t * elt)%type.  *)
 
   Section Elt.
 
@@ -96,25 +131,57 @@ Module Raw (X:OrderedType).
     Variables eq_elt lt_elt: elt -> elt -> Prop.
     Variable eq_elt_equiv : equivalence eq_elt.
     Variable lt_elt_order : order lt_elt.
-    
-    Definition eqkey := @PE.eq elt eq_elt.
 
-    Hint Unfold eqkey.
+    Hint Resolve 
+      (equiv_refl _ _ eq_elt_equiv)
+      (equiv_trans _ _ eq_elt_equiv)
+      (equiv_sym _ _ eq_elt_equiv).
+    
+    Definition eq_key := @PE.eq_key elt.
+    Definition eq_key_elt := @PE.eq elt eq_elt.
+
+    Hint Unfold eq_key_elt eq_key.
 
     Definition ltkey := @PE.lt elt.
-    Definition MapsTo := fun k e => InList eqkey (k,e).
+    Definition MapsTo := fun k e => InList eq_key_elt (k,e).
 
     Hint Unfold MapsTo.
+    Hint Constructors InList.
+
+    Lemma InList_eq_key_el_eq_key : 
+      forall x m,InList eq_key_elt x m -> InList eq_key x m.
+      intros x m H.
+      induction H;auto.
+      apply InList_cons_hd.
+      eapply (@PE.eq_eq_key elt eq_elt). assumption.
+    Qed.
+      
+    Hint Resolve InList_eq_key_el_eq_key.
 
     Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m. 
 
+    Lemma InList_In_eq_key : forall k e l, InList eq_key (k,e) l -> In k l.
+      intros k e l H.
+      induction H.
+      destruct y.
+      exists e0.
+      unfold MapsTo.
+      apply InList_cons_hd.
+      split;auto.
+      induction IHInList.
+      exists x.
+      unfold MapsTo. 
+      apply InList_cons_tl. 
+      assumption.
+    Qed.
+    Hint Resolve InList_In_eq_key.
 
 
-    Lemma InList_In : forall k e l, InList eqkey (k,e) l -> In k l.
+    (* could also be proved as a corollary of previous lemma *)
+    Lemma InList_In : forall k e l, InList eq_key_elt (k,e) l -> In k l.
       intros k e l H. exists e;auto.
     Qed.
     Hint Resolve InList_In.
-
 
     Definition Empty m := forall (a : key)(e:elt) , ~ MapsTo a e m.
 
@@ -149,24 +216,34 @@ Module Raw (X:OrderedType).
 
     Hint Resolve (@PE.lt_not_eq elt) (@PE.eq_sym elt) (@PE.eq_trans elt) (@PE.lt_trans elt) (ME.lt_eq).
 
-    Hint Resolve InList_cons_hd InList_cons_tl.
 
-    Lemma eqkey_no_ltkey : forall x x',eqkey x x' -> ~ltkey x x'.
+
+    Lemma eq_key_no_ltkey : forall x x',eq_key x x' -> ~ltkey x x'.
       intros x x' abs1 abs2.
       destruct x;destruct x'.
       simpl in abs1.
-      destruct abs1.
       absurd (E.eq k k0); auto.
     Qed.
 
-    Hint Resolve eqkey_no_ltkey. 
+    Hint Resolve eq_key_no_ltkey. 
+
+
+    Lemma eq_key_elt_no_ltkey : forall x x',eq_key_elt x x' -> ~ltkey x x'.
+      intros x x' abs1.
+      destruct x;destruct x'.
+      destruct abs1.
+      apply eq_key_no_ltkey;assumption.
+    Qed.
+
+    Hint Resolve eq_key_elt_no_ltkey. 
+
 
     Lemma ltkey_trans : forall e e' e'', ltkey e e' -> ltkey e' e'' -> ltkey e e''.
       intros e e' e''.
       case e. case e'. case e'';simpl;eauto. 
     Qed.
 
-    Lemma ltkey_eqkey : forall e e' e'', ltkey e e' -> eqkey e' e'' -> ltkey e e''.
+    Lemma ltkey_eq_key : forall e e' e'', ltkey e e' -> eq_key e' e'' -> ltkey e e''.
       intros e e' e''.
       case e. case e'. case e''.
       intros k e0 k0 e1 k1 e2 ltk eqk.
@@ -175,27 +252,52 @@ Module Raw (X:OrderedType).
       eapply ME.lt_eq;eauto.
     Qed.
 
-    Hint Resolve ltkey_eqkey.
+    Hint Resolve ltkey_eq_key.
 
-    Lemma eqkey_ltkey : forall e e' e'', ltkey e e'' -> eqkey e e' -> ltkey e' e''.
+    Lemma eq_key_ltkey : forall e e' e'', ltkey e e'' -> eq_key e e' -> ltkey e' e''.
       intros e e' e''.
       case e. case e'. case e''.
       simpl.
       intros k e0 k0 e1 k1 e2 ltk eqk.
-      decompose [and] eqk;clear eqk.
       assert (PE.E.eq k0 k1);eauto.
       eapply ME.eq_lt;eauto.
     Qed.
 
-    Hint Resolve ltkey_eqkey.
+    Hint Resolve eq_key_ltkey.
+      
 
-    Lemma eqkey_sym : forall e e', eqkey e e' -> eqkey e' e.
+    Lemma eq_key_refl : forall e, eq_key e e.
+      intro e. case e. simpl; eauto.
+    Qed.
+
+    Lemma eq_key_elt_refl : forall e, eq_key_elt e e.
+      intro e. case e. simpl; eauto.
+    Qed.
+
+    Lemma eq_key_sym : forall e e', eq_key e e' -> eq_key e' e.
       intros e e'. case e. case e';eauto.
     Qed.
 
-    Lemma eqkey_trans : forall e e' e'', eqkey e e' -> eqkey e' e'' -> eqkey e e''.
-      intros e e' e''. case e. case e'. case e''. eauto.
+    Lemma eq_key_elt_sym : forall e e', eq_key_elt e e' -> eq_key_elt e' e.
+      intros e e'. case e. case e';simpl.
+      intros k e0 k0 e1 hyp.
+      decompose [and] hyp.
+      eauto.    
     Qed.
+
+    Lemma eq_key_trans : forall e e' e'', eq_key e e' -> eq_key e' e'' -> eq_key e e''.
+      intros e e' e''. case e. case e'. case e''. simpl. eauto.
+    Qed.
+
+    Lemma eq_key_elt_trans : forall e e' e'', 
+      eq_key_elt e e' -> eq_key_elt e' e'' -> eq_key_elt e e''.
+      intros e e' e''. case e. case e'. case e''. simpl.
+      intros k e0 k0 e1 k1 e2 hyp1 hyp2.
+      elim hyp1. elim hyp2. eauto.
+    Qed.
+
+    Hint Resolve eq_key_trans eq_key_elt_trans eq_key_sym eq_key_elt_sym eq_key_refl 
+      eq_key_elt_refl.
 
     Notation Sort := (sort (ltkey)).
 
@@ -227,21 +329,18 @@ Module Raw (X:OrderedType).
       
     Hint Resolve lt_sort_tl2.
 
-
-
-
-    Lemma sort_in_tl : forall e l e', Sort (e::l) -> InList eqkey e' l -> ltkey e e'.
+    Lemma sort_in_tl : forall e l e', Sort (e::l) -> InList eq_key e' l -> ltkey e e'.
       intros e l e' sorted Hin.
       induction Hin;eauto.
 
-      apply ltkey_eqkey with y;eauto.
+      apply ltkey_eq_key with y;eauto.
       inversion sorted.
       subst.
       inversion H3;eauto.
     Qed.
 
-    Lemma sort_in : forall l e e', Sort (e::l) -> InList eqkey e' (e::l) 
-      -> ltkey e e' \/ eqkey e e'.
+    Lemma sort_in : forall l e e', Sort (e::l) -> InList eq_key e' (e::l) 
+      -> ltkey e e' \/ eq_key e e'.
       intros l e e' sorted Hin.
       inversion Hin;eauto.
       left.
@@ -255,7 +354,7 @@ Module Raw (X:OrderedType).
       intro abs. inversion abs. inversion H0. 
       intro Hin. subst.
       inversion Hin.
-      assert (ltkey b (k,x) \/ eqkey b (k,x)).
+      assert (ltkey b (k,x) \/ eq_key b (k,x)).
       eapply sort_in with l0. auto.
       auto.
       decompose [or] H1;clear H1.
@@ -269,20 +368,80 @@ Module Raw (X:OrderedType).
       destruct b.
       simpl in H2.
       simpl in H.
-      destruct H2.
-      absurd (eqkey (k0,e0) (k, x) ); simpl;eauto.
-      intro abs;destruct abs.
-      elim (E.lt_not_eq H); eauto.
+(*       destruct H2. *)
+      absurd (eq_key (k0,e0) (k, x) ); simpl;eauto.
+(*       intro abs;destruct abs. *)
+(*       elim (E.lt_not_eq H); eauto. *)
     Qed.
+
+
+
+    Lemma sort_lt_notin2 : forall l k e (sorted : Sort l), 
+      lelistA ltkey (k,e) l -> ~(exists e:elt, InList eq_key (k,e) l).
+      intros l k e sorted Hlt.
+      inversion Hlt.
+      intro abs. inversion abs. inversion H0. 
+      intro Hin. subst.
+      inversion Hin.
+      assert (ltkey b (k,x) \/ eq_key b (k,x)).
+      eapply sort_in with l0. auto.
+      auto.
+      decompose [or] H1;clear H1.
+      assert (ltkey (k,x) b).
+      apply ltkey_right_l with e;assumption.
+      absurd (ltkey b (k, x));auto.
+      destruct b.
+      simpl.
+      apply ME.lt_not_gt;auto.
+
+      destruct b.
+      simpl in H2.
+      simpl in H.
+(*       destruct H2. *)
+      absurd (eq_key (k0,e0) (k, x) ); simpl;eauto.
+(*       intro abs;destruct abs. *)
+(*       elim (E.lt_not_eq H); eauto. *)
+    Qed.
+
 
     Hint Resolve sort_lt_notin.
 
+    Lemma sorted_unique: forall l, Sort l -> Unique eq_key l.
+      intros l sorted.
+      induction sorted;auto.
+      apply Unique_cons;auto.
+      destruct a;auto.
+      assert (abs:~In k l).
+      eapply sort_lt_notin with e;auto.
+      intro abs2.
+      elim abs.
+      eauto.
+    Qed.
+
+    Lemma sorted_unique2: forall l, Sort l -> Unique eq_key_elt l.
+      intros l sorted.
+      induction sorted;auto.
+      apply Unique_cons;auto.
+      destruct a;auto.
+      assert (abs:~In k l).
+      eapply sort_lt_notin with e;auto.
+      intro abs2.
+      elim abs.
+      eauto.
+    Qed.
+
+    Lemma sorted_unique_key_eq: forall l, Unique eq_key l -> Unique eq_key_elt l.
+      intros l unique.
+      induction unique;auto.
+    Qed.
+      
+
     Lemma lelist_eq : forall x x' l, 
-      eqkey x x' -> lelistA ltkey x l -> lelistA ltkey x' l.
+      eq_key x x' -> lelistA ltkey x l -> lelistA ltkey x' l.
       intros x x' l H H0.
       induction H0;auto.
       assert (ltkey x' b).
-      eapply eqkey_ltkey with x;auto.
+      eapply eq_key_ltkey with x;auto.
       eauto.
     Qed.
 
@@ -356,16 +515,49 @@ Ltac Equal_inv m x e e' :=
     Qed.
 
     Lemma In_inv2 : forall x x' l, 
-      InList eqkey x (x' :: l) -> eqkey x x' \/ InList eqkey x l.
+      InList eq_key x (x' :: l) -> eq_key x x' \/ InList eq_key x l.
+      intros x x' l inlist.
+      inversion inlist;auto.
+    Qed.
+
+    Lemma In_inv3 : forall x x' l, 
+      InList eq_key_elt x (x' :: l) -> eq_key_elt x x' \/ InList eq_key_elt x l.
       intros x x' l inlist.
       inversion inlist;auto.
     Qed.
 
     Definition empty : t elt := [].
 
+    (** Specification of [empty] *)
+    Lemma empty_1 : Empty empty.
+      unfold Empty,empty,MapsTo.
+      intros a e.
+      intro abs.
+      inversion abs.
+    Qed.
+
+    Hint Resolve empty_1.
+
     Definition is_empty (l : t elt) : bool := if l then true else false.
 
-      (** ** The set operations. *)
+    (** Specification of [is_empty] *)
+    Lemma is_empty_1 :forall m, Empty m -> is_empty m = true. 
+      unfold Empty,MapsTo.
+      intros m.
+      case m;auto.
+      intros p l inlist.
+      destruct p.
+      absurd (InList eq_key_elt (k, e) ((k, e) :: l));auto.
+    Qed.
+
+
+    Lemma is_empty_2 : forall m, is_empty m = true -> Empty m.
+      intros m.
+      case m;auto.
+      intros p l abs.
+      inversion abs.
+    Qed.
+
 
     Fixpoint mem (k : key) (s : t elt) {struct s} : bool :=
       match s with
@@ -378,11 +570,6 @@ Ltac Equal_inv m x e e' :=
           end
       end.
 
-
-
-      
-      
-    
     Lemma mem_1 : forall x m, Sort m -> In x m -> mem x m = true.
       intros x m.      
       functional induction mem x m;intros sorted belong;trivial.
@@ -406,7 +593,6 @@ Ltac Equal_inv m x e e' :=
       exists e. 
       eapply InList_cons_hd.
       simpl;split;auto.
-      apply (equiv_refl _ _ eq_elt_equiv).
       induction H; eauto.
     Save.
 
@@ -422,13 +608,11 @@ Ltac Equal_inv m x e e' :=
 	  end
       end.
 
-    (** Specification of [find] *)
     Lemma find_2 :  forall x m e, find x m = Some e -> MapsTo x e m.
       intros x m. unfold MapsTo.
       functional induction find x m;simpl;intros e' eqfind; inversion eqfind; auto.
       eapply InList_cons_hd.
-      simpl;split;auto.
-      apply (equiv_refl _ _ eq_elt_equiv).
+      simpl;split;eauto.
     Qed.
 
 
@@ -469,16 +653,18 @@ Ltac Equal_inv m x e e' :=
 
 
     Lemma aux' : forall k k' e e' l, 
-      InList eqkey (k, e) ((k', e') :: l) -> ~ E.eq k k' -> InList eqkey (k, e) l.
+      InList eq_key (k, e) ((k', e') :: l) -> ~ E.eq k k' -> InList eq_key (k, e) l.
       intros k k' e e' l H H0.
       elim (@In_inv2 (k,e) (k',e') l);auto.
       simpl;intuition.
     Qed.
 
     Lemma aux'' : forall x x' l, 
-      InList eqkey x (x' :: l) -> ~ eqkey x x' -> InList eqkey x l.
+      InList eq_key_elt x (x' :: l) -> ~ eq_key x x' -> InList eq_key_elt x l.
       intros x x' l H H0.
-      elim (@In_inv2 x x' l);intuition.
+      elim (@In_inv3 x x' l);intuition.
+      absurd (eq_key x x');auto.
+      eapply (PE.eq_eq_key eq_elt);assumption.
     Qed.
 
     Hint Resolve aux'' aux'.
@@ -489,13 +675,13 @@ Ltac Equal_inv m x e e' :=
       functional induction add x e' m;simpl;auto.
       intros y' e' eqky' mapsto.
       
-      assert (InList eqkey (y', e') l);auto;intuition. 
+      assert (InList eq_key_elt (y', e') l);auto;intuition. 
       solve [ (* eauto is too slow *)
 	(eapply aux' with k' y; try assumption; intro;eauto) 
 	| idtac "falling back to eauto, you should adapt the script. " ; eauto ] .  
 
       intros y' e' eqky' mapsto.
-      elim (@In_inv2 (y',e') (k',y) l);auto.
+      elim (@In_inv3 (y',e') (k',y) l);auto.
     Qed.
       
     Lemma add_3 : forall x e' m e y,
@@ -508,7 +694,6 @@ Ltac Equal_inv m x e e' :=
 
       intros e y' eqky' Hinlist.
       eapply aux'';eauto.
-      simpl;intuition.
 
       intros e' y' eqky' Hinlist.
       eauto.
@@ -517,24 +702,7 @@ Ltac Equal_inv m x e e' :=
       inversion Hinlist;eauto.
     Qed.
       
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    (*   Definition singleton (x : elt) : t elt := x :: [].  *)
+   (* Definition singleton (x : elt) : t elt := x :: [].  *)
 
     Fixpoint remove (k : key) (s : t elt) {struct s} : t elt :=
       match s with
@@ -547,23 +715,71 @@ Ltac Equal_inv m x e e' :=
           end
       end.  
 
-    (* Utile?
-      Fixpoint union (s : t elt) : t elt -> t :=
-	match s with
-	| [] => fun s' => s'
-	| (k,x) :: l =>
-            (fix union_aux (s' : t elt) : t elt :=
-               match s' with
-               | [] => s
-               | (k',x') :: l' =>
-		   match E.compare k k' with
-		   | FSetInterface.Lt _ => (k,x) :: union l s'
-		   | FSetInterface.Eq _ => (k,x) :: union l l'
-		   | FSetInterface.Gt _ => (k',x') :: union_aux l'
-		   end
-               end)
-	end.
-     *)
+
+    Lemma eq_key_lelist :forall x x' l, 
+      eq_key x x' -> lelistA ltkey x l -> lelistA ltkey x' l.
+    Proof.
+      intros x x' l eqxx' lelxl.
+      inversion lelxl;eauto.
+    Qed.
+
+      
+
+   (** Specification of [remove] *)
+    Lemma remove_1 :forall x y m, Sort m -> E.eq y x -> ~ In y (remove x m).
+      intros x y m.
+      functional induction remove x m;simpl;intros.
+
+      intro abs. inversion abs. inversion H1.
+
+      subst.
+      eapply sort_lt_notin with x.
+      eauto.
+      apply cons_leA;simpl.
+      eapply ME.lt_eq;eauto.
+      
+      eapply sort_lt_notin with x. eauto. 
+      inversion H.
+      eapply eq_key_lelist with (k',x) ;simpl;auto.
+      intuition; eauto.
+
+      assert (notin:~ In y (remove k l)). apply H;eauto.
+      intro abs.
+      inversion abs.
+      unfold MapsTo in H2.
+      elim notin.
+      inversion H2; eauto. 
+      simpl in H4.
+      decompose [and] H4.
+      absurd (PE.E.eq y k');eauto.
+      Qed.
+      
+      
+    Lemma remove_2 : forall x y e m, 
+      Sort m -> ~ E.eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
+      intros x y e m. unfold MapsTo.
+      functional induction remove x m;auto.
+      intros sorted noteqky inlist.
+      elim (@In_inv3 (y, e) (k', x) l);auto;simpl;intuition;eauto.
+      intros sorted noteqky inlist.
+      elim (@In_inv3 (y, e) (k', x) l); auto. 
+      intro inlist2.
+
+      assert (InList eq_key_elt (y, e) (remove k l));auto.
+      apply H;auto.
+      eauto.
+    Qed.
+
+
+    Lemma remove_3 : forall x y e m, Sort m -> MapsTo y e (remove x m) -> MapsTo y e m.
+      intros x y e m. unfold MapsTo.
+      functional induction remove x m;auto.
+      intros sorted inlist.
+      elim (@In_inv3 (y, e) (k', x) (remove k l)); auto.
+      intros inlist2.
+      eauto.
+    Qed.
+      
 
 
     Fixpoint equal (compare:elt -> elt -> bool) (s : t elt) {struct s} : t elt -> bool :=
@@ -579,128 +795,121 @@ Ltac Equal_inv m x e e' :=
 	end.
 
 
+    (** Specification of [MapsTo] *)
+    Lemma MapsTo_1 : forall x y e m, E.eq x y -> MapsTo x e m -> MapsTo y e m.
+      unfold MapsTo.
+      intros x y e m eqxy inlist.
+      induction inlist;eauto.
 
+      apply InList_cons_hd;auto.
+      eapply eq_key_elt_trans with (x, e);auto.
+      simpl;intuition;auto.
+    Qed.
 
-
-
-(*
-
-    Section Iterators.
-      Variable elt' : Set. 
-      Axiom map : (elt -> elt') -> t elt -> t elt'.
-      Axiom mapi : (key -> elt -> elt') -> t elt -> t elt'.
-      Axiom fold : forall A: Set, (key -> elt -> A -> A) -> t elt -> A -> A.
-    End Iterators.
-*)
-    Section Spec. 
-      
-      Variable m m' m'' : t elt.
-      Variable x y z : key.
-      Variable e e' : elt.
 
 (* 
-      Definition ltfst (c1 c2: Raw.key * elt):Prop :=
-	match c1,c2 with
-	  | (x,y),(x',y') => E.lt x x'
-	end.
+    Definition compare (elt_eq:forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e'): 
+      forall m m' : t elt, Compare (lt lt_elt) (eq eq_elt) m m'.
  *)
 
 
-      Section Eq_elt.
-	Variables eq_elt lt_elt: elt -> elt -> Prop.
-	Variable eq_elt_refl : FMapInterface.Eq_elt.eq_elt_refl eq_elt.
-
-	Definition compare : 
-	  (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
-	  forall m m' : t elt, Compare (lt lt_elt) (eq eq_elt) m m'.
-
-      Lemma eq_refl : eq eq_elt m m.
-	unfold eq, Equal.
-	intros a e0 e'0.
-
-	
-	exact eq_refl.
-
-      Axiom eq_sym : eq m m' -> eq m' m.
-      Axiom eq_trans : eq m m' -> eq m' m'' -> eq m m''.
+    Fixpoint fold (A:Set) (acc:A) (f:key -> elt -> A -> A) (m:t elt) {struct m} : A :=
+      match m with
+	| [] => acc
+	| (k,e)::m' => f k e (fold acc f m')
+      end.
 
 
-      (** Specification of [MapsTo] *)
-      Lemma MapsTo_1 : E.eq x y -> MapsTo x e m -> MapsTo y e m.
-	unfold E.eq.
-	intros hyp1 hyp2.
-	unfold MapsTo in hyp2.
-	induction hyp2.
-	generalize H.
-	case y0.
-	intros k e0 H0.
-	assert (X.eq y x).
-	apply X. tran
+    
+    Axiom XXX: forall x l, 
+      lelistA ltkey x l -> forall e, InList eq_key_elt e l -> ltkey x e.
+    Axiom YYY: forall x l, 
+      (forall e, InList eq_key_elt e l -> ltkey x e) -> lelistA ltkey x l.
+    Axiom ZZZ: forall x l, 
+      Sort (x::l) -> forall e, InList eq_key_elt e l -> ltkey x e.
+    Axiom TTT: forall x x' l, InList eq_key_elt x l -> InList eq_key_elt x (x'::l).
 
-	
-	unfold eqkey in H0.
-	unfold MapsTo.
-	apply InList_cons_hd.
-	unfold eqkey.
-
-	eapply H0.
-	
-
-	
-
-      
-	(** Specification of [lt] *)
-      Section Lt. 
-	Variable lt_elt : elt -> elt -> Prop. 
-	Axiom lt_trans : 
-	  (forall e e' e'', lt_elt e e' -> lt_elt e' e'' -> lt_elt e e'') -> 
-	  lt lt_elt m m' -> lt lt_elt m' m'' -> lt lt_elt m m''.
-	Axiom lt_not_eq : 
-	  (forall e e', lt_elt e e' -> e<>e') ->  
-	  lt lt_elt m m' -> ~ eq m m'.
-      End Lt.
-
-	(** Specification of [mem] *)
-      Axiom mem_1 : In x m -> mem x m = true.
-      Axiom mem_2 : mem x m = true -> In x m. 
-      
-	(** Specification of [empty] *)
-      Axiom empty_1 : Empty empty.
-
-	(** Specification of [is_empty] *)
-      Axiom is_empty_1 : Empty m -> is_empty m = true. 
-      Axiom is_empty_2 : is_empty m = true -> Empty m.
-      
-	(** Specification of [add] *)
-      Axiom add_1 : E.eq y x -> MapsTo y e (add x e m).
-      Axiom add_2 : ~ E.eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
-      Axiom add_3 : ~ E.eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
-
-	(** Specification of [remove] *)
-      Axiom remove_1 : E.eq y x -> ~ In y (remove x m).
-      Axiom remove_2 : ~ E.eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
-      Axiom remove_3 : MapsTo y e (remove x m) -> MapsTo y e m.
-
-	(** Specification of [find] *)
-      Axiom find_1 : MapsTo x e m -> find x m = Some e. 
-      Axiom find_2 : find x m = Some e -> MapsTo x e m.
-
-
-      Definition key_eq := 
-	fun (p p':key*elt) => E.eq (fst p) (fst p').
-      
-      Definition key_elt_eq := 
-	fun (p p':key*elt) => E.eq (fst p) (fst p') /\ (snd p) = (snd p').
+(*       Definition eq_key_elt := eq_key_elt. *)
+(* 	fun (p p':key*elt) => E.eq (fst p) (fst p') /\ (snd p) = (snd p'). *)
 
 	(** Specification of [fold] *)  
-      Axiom
-	fold_1 :
-	forall (A : Set) (i : A) (f : key -> elt -> A -> A),
+      Lemma fold_1' :
+	forall (A : Set) (acc : A) (f : key -> elt -> A -> A) (m: t elt),
+          Sort m -> 
 	  exists l : list (key*elt),
-            Unique key_eq l /\
-            (forall (k:key)(x:elt), MapsTo k x m <-> InList key_elt_eq (k,x) l) 
+            Sort l /\
+            (forall (k:key)(x:elt), MapsTo k x m <-> InList eq_key_elt (k,x) l) 
             /\
-            fold f m i = fold_right (fun p => f (fst p) (snd p)) i l.
+            fold acc f m = fold_right (fun p => f (fst p) (snd p)) acc l.
+        intros A acc f m.
+        functional induction fold A acc f m ;intro sorted;subst.
+        exists (@nil (PE.t elt)). 
+	split;[|split;[intros ;split|]];subst;auto.
+
+	clear eq_elt_equiv lt_elt_order.
+	elim H;eauto.
+	clear H. intros x hyp.
+	decompose [and] hyp. clear hyp.
+        exists ((k, e) ::x);intuition.
+
+(* 	apply sorted_unique. *)
+	apply cons_sort;auto.
+	assert (lelistA ltkey (k, e) m').
+
+	inversion sorted;auto.
+
+	apply YYY.
+	intros e' hyp.
+	destruct e'.
+	elim (H1 k0 e0);intros .
+	assert (InList eq_key_elt (k0, e0) m').
+	apply H4;assumption.
+	eapply ZZZ with m';auto.
+
+	unfold MapsTo in H0.
+	inversion H0.
+	auto.
+	apply InList_cons_tl.
+	
+	elim (H1 k0 x0);intros .
+	auto.
+
+	inversion H0.
+	auto.
+	unfold MapsTo.
+	apply InList_cons_tl.
+	
+	elim (H1 k0 x0);intros .
+	unfold MapsTo in H7.
+	auto.
+
+	rewrite H2.
+	simpl.
+	trivial.
+      Qed.
+	
+
+
+
+	
+
+      Lemma fold_1 :
+	forall (A : Set) (acc : A) (f : key -> elt -> A -> A) (m: t elt),
+          Sort m -> 
+	  exists l : list (key*elt),
+            Unique eq_key l /\
+            (forall (k:key)(x:elt), MapsTo k x m <-> InList eq_key_elt (k,x) l) 
+            /\
+            fold acc f m = fold_right (fun p => f (fst p) (snd p)) acc l.
+	intros A acc f m H.
+	elim (@fold_1' A acc f m H).
+	clear eq_elt_equiv lt_elt_order.
+	intros x H0.	
+	exists x;intuition;auto.
+	apply sorted_unique;auto.
+      Qed.
+        
+
 
 	(** Specification of [equal] *) 
       Variable f: elt->elt->bool.
@@ -731,6 +940,23 @@ Ltac Equal_inv m x e e' :=
 
 End Raw.
 
+
+(*
+
+    Section Iterators.
+      Variable elt' : Set. 
+      Axiom map : (elt -> elt') -> t elt -> t elt'.
+      Axiom mapi : (key -> elt -> elt') -> t elt -> t elt'.
+      Axiom fold : forall A: Set, (key -> elt -> A -> A) -> t elt -> A -> A.
+    End Iterators.
+*)
+
+(* 
+      Definition ltfst (c1 c2: Raw.key * elt):Prop :=
+	match c1,c2 with
+	  | (x,y),(x',y') => E.lt x x'
+	end.
+ *)
 
 Module Make (X: OrderedType) <: S with Module E := X.
   Module E := X.
