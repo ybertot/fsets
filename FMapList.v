@@ -76,7 +76,7 @@ Module PairLeftOrderedType(X:OrderedType).
     Qed.
 
     Lemma eq_sym : forall e e', eq_key e e' -> eq_key e' e.
-      intros e e'. case e. case e'. simpl;intuition.
+      intros e e'. case e. case e'. simpl. intuition.
     Qed.
 
     Lemma eq_key_sym : forall e e', eq_key e e' -> eq_key e' e.
@@ -151,27 +151,40 @@ Module Raw (X:OrderedType).
 
     Lemma InList_eq_key_el_eq_key : 
       forall x m,InList eq_key_elt x m -> InList eq_key x m.
-      intros x m H.
-      induction H;auto.
+      intros x m hyp. induction hyp;auto.
     Qed.
       
     Hint Resolve InList_eq_key_el_eq_key.
 
     Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m. 
 
+    Lemma notin_empty : forall k, ~ In k [].
+      intros k abs.
+      inversion abs.
+      inversion H.
+    Qed.
+
+    Hint Resolve notin_empty.
+
+
+    Hint Extern 2 (eq_key_elt ?a ?b) => split.
+
+    Ltac dec_eq_key_elt :=
+      match goal with
+	H:(eq_key_elt ?a ?b) |- ?c 
+	  => let x:= fresh "eqk" in 
+	    let y := fresh "eqe" in (elim H;intros x y)
+      end.
+
+    Hint Extern 2 (eq_key_elt ?a ?b) => split.
+
     Lemma InList_In_eq_key : forall k e l, InList eq_key (k,e) l -> In k l.
-      intros k e l H.
+      intros k e l H. clear lt_elt_order.
       induction H.
       destruct y.
-      exists e0.
-      unfold MapsTo.
-      apply InList_cons_hd.
-      split;auto.
+      exists e0;eauto.
       induction IHInList.
-      exists x.
-      unfold MapsTo. 
-      apply InList_cons_tl. 
-      assumption.
+      exists x;eauto.
     Qed.
     Hint Resolve InList_In_eq_key.
 
@@ -188,9 +201,7 @@ Module Raw (X:OrderedType).
       (In a m <-> In a m') /\
       (MapsTo a e m -> MapsTo a e' m' -> eq e e'). 
 
-
     Definition eq := Equal.
-
     
     Inductive lt (ltelt: elt -> elt -> Prop) : t elt -> t elt -> Prop :=
       | lt_nil : forall (k: key) (x : elt) (s : t elt), lt ltelt [] ((k,x) :: s)
@@ -201,7 +212,6 @@ Module Raw (X:OrderedType).
         forall k x k' y (s s' : t elt), 
 	  E.eq k k' -> ltelt x y -> lt ltelt ((k,x) :: s) ((k',y) :: s').
     Hint Constructors lt.
-
 
     Lemma ltkey_right_r : forall x k e e', ltkey x (k,e) -> ltkey x (k,e').
       intros x. case x. trivial.
@@ -230,8 +240,7 @@ Module Raw (X:OrderedType).
     Lemma eq_key_elt_no_ltkey : forall x x',eq_key_elt x x' -> ~ltkey x x'.
       intros x x' abs1.
       destruct x;destruct x'.
-      destruct abs1.
-      apply eq_key_no_ltkey;assumption.
+      destruct abs1;auto.
     Qed.
 
     Hint Resolve eq_key_elt_no_ltkey. 
@@ -247,7 +256,6 @@ Module Raw (X:OrderedType).
       case e. case e'. case e''.
       intros k e0 k0 e1 k1 e2 ltk eqk.
       simpl in *.
-      intuition; simpl. 
       eapply ME.lt_eq;eauto.
     Qed.
 
@@ -263,7 +271,6 @@ Module Raw (X:OrderedType).
     Qed.
 
     Hint Resolve eq_key_ltkey.
-      
 
     Lemma eq_key_refl : forall e, eq_key e e.
       intro e. case e. simpl; eauto.
@@ -472,7 +479,6 @@ Module Raw (X:OrderedType).
       intro abs.
       absurd (In x l);auto.
       eapply sort_lt_notin with e;auto.      
-      intuition.
       eapply lelist_eq with (k,e);simpl;auto.
     Qed.
 
@@ -607,9 +613,7 @@ Ltac Equal_inv m x e e' :=
     Lemma mem_2 : forall x m, Sort m -> mem x m = true -> In x m. 
       intros x m;unfold In,MapsTo.
       functional induction mem x m; intros sorted hyp;try ((inversion hyp);fail).
-      exists e. 
-      eapply InList_cons_hd.
-      simpl;split;auto.
+      exists e;eauto. 
       induction H; eauto.
     Save.
 
@@ -628,8 +632,6 @@ Ltac Equal_inv m x e e' :=
     Lemma find_2 :  forall x m e, find x m = Some e -> MapsTo x e m.
       intros x m. unfold MapsTo.
       functional induction find x m;simpl;intros e' eqfind; inversion eqfind; auto.
-      eapply InList_cons_hd.
-      simpl;split;eauto.
     Qed.
 
 
@@ -660,35 +662,27 @@ Ltac Equal_inv m x e e' :=
       intros m x e.
       unfold MapsTo.
       functional induction add x e m;simpl;auto.
-      intros y eqyk.
-      apply InList_cons_hd;simpl;intuition;auto.
-      intros y' eqy'k.
-      apply InList_cons_hd;simpl;intuition;auto.
-      intros y' eqy'k.
-      apply InList_cons_hd;simpl;intuition;auto.
     Qed.
 
 
     Lemma aux' : forall k k' e e' l, 
       InList eq_key (k, e) ((k', e') :: l) -> ~ E.eq k k' -> InList eq_key (k, e) l.
       intros k k' e e' l H H0.
-      elim (@In_inv2 (k,e) (k',e') l);auto.
-      simpl;intuition.
+      elim (@In_inv2 (k,e) (k',e') l);intros;auto.
+      elim H0;auto.
     Qed.
 
     Lemma aux'' : forall x x' l, 
       InList eq_key_elt x (x' :: l) -> ~ eq_key x x' -> InList eq_key_elt x l.
       intros x x' l H H0.
-      elim (@In_inv3 x x' l);intuition.
-      absurd (eq_key x x');auto.
+      induction (@In_inv3 x x' l);auto. 
+      elim H0;auto.
     Qed.
 
     Lemma aux''' : forall x x' l, 
       InList eq_key x l -> eq_key x x' -> InList eq_key x' l.
       intros x x' l H H0.
-      induction H.
-      apply InList_cons_hd;eauto.
-      apply InList_cons_tl;auto.
+      induction H;eauto.
     Qed.
 
 
@@ -712,18 +706,8 @@ Ltac Equal_inv m x e e' :=
     Lemma add_3 : forall x e' m e y,
       ~ E.eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
       intros x e' m. unfold MapsTo.
-      functional induction add x e' m;simpl.
-      intros e y eqky Hinlist.
-      inversion Hinlist;simpl in *;subst;auto.
-      elim eqky;intuition.
-
-      intros e y' eqky' Hinlist.
-      eapply aux'';eauto.
-
+      functional induction add x e' m;simpl;eauto.
       intros e' y' eqky' Hinlist.
-      eauto.
-
-      intros e y' eqky' Hinlist.
       inversion Hinlist;eauto.
     Qed.
       
@@ -748,14 +732,11 @@ Ltac Equal_inv m x e e' :=
       inversion lelxl;eauto.
     Qed.
 
-      
 
    (** Specification of [remove] *)
     Lemma remove_1 :forall x y m, Sort m -> E.eq y x -> ~ In y (remove x m).
       intros x y m.
-      functional induction remove x m;simpl;intros.
-
-      intro abs. inversion abs. inversion H1.
+      functional induction remove x m;simpl;intros;auto.
 
       subst.
       eapply sort_lt_notin with x.
@@ -817,7 +798,6 @@ Ltac Equal_inv m x e e' :=
 
       apply InList_cons_hd;auto.
       eapply eq_key_elt_trans with (x, e);auto.
-      simpl;intuition;auto.
     Qed.
 
 
@@ -1006,13 +986,6 @@ Ltac Equal_inv m x e e' :=
 	eapply unique_in_eq_key2 with (x::l);simpl;eauto.
       Qed.	
 
-      Lemma notin_empty : forall k, ~ In k [].
-	intros k abs.
-	inversion abs.
-	inversion H.
-      Qed.
-
-      Hint Resolve notin_empty.
 
       Lemma equal_1 : forall m m', Sort m -> Sort m' 
 	-> Equal eq_elt m m' -> equal m m' = true.
@@ -1060,10 +1033,6 @@ Ltac Equal_inv m x e e' :=
 	apply hyp2;auto.
 
 	absurd (eq_elt x x');auto.
-	apply hyp2.
-	eauto.
-	unfold MapsTo.
-	apply InList_cons_hd;simpl;eauto.
 	
 	absurd (In k' ((k, x) :: l)).
 	eapply sort_lt_notin with x';auto.
@@ -1074,15 +1043,13 @@ Ltac Equal_inv m x e e' :=
       Lemma equal_2 :forall m m', Sort m -> Sort m' -> 
 	equal m m' = true -> Equal eq_elt m m.
 	intros m m'. unfold Equal.
-      	functional induction equal m m';simpl;auto;subst;intro eq1;auto;
-	  intuition.
+      	functional induction equal m m';simpl;auto;subst;intro eq1;auto
+	  ; intros hyp hyp2 a e' e''; try (inversion hyp2;fail)
+	    ;(split;[split;auto|]);intros H1 H2. 
 	inversion H1.
 	eapply ZZZ with a ((k, x) :: l);auto.
         apply sorted_unique;auto.
       Qed.
-    
-
-
 
     End Elt.
 
