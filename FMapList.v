@@ -124,15 +124,11 @@ Module Raw (X:OrderedType).
 (*   fun elt : Set => (X.t * elt)%type.  *)
 
   Definition mapsto := 
-    fun (A:Set) (eq_elt: A -> A -> Prop) (k:key) e => InList (PE.eq eq_elt) (k,e).
+    fun (A:Set) (eq_elt: A -> A -> Prop) (k:key) (e:A) => InList (PE.eq eq_elt) (k,e).
 
+  Definition belong (A:Set) (eq_elt:A -> A -> Prop) (k:key) (m: t A) : Prop :=
+    exists e:A, mapsto eq_elt k e m. 
 
-(*   Parameter mapsto : forall (A:Set) (eq_elt:A -> A -> Prop), key  -> A -> t A -> Prop. *)
-
-(* 
-  Definition belong (A:Set) (eq_elt:A -> A -> Prop) (k:key)(m: t A) : Prop
-    := exists e:A, mapsto eq_elt k e m. 
- *)
 
   Section Elt.
 
@@ -158,17 +154,19 @@ Module Raw (X:OrderedType).
     Definition MapsTo := fun k e => InList eq_key_elt (k,e).
 (*     Definition MapsTo := fun k e => InList (@PE.eq elt eq_elt) (k,e). *)
 
-    Hint Unfold MapsTo mapsto eq_key_elt eq_key.
-    Hint Constructors InList.
+(*     Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m. *)
+(*     Definition In (k:key)(m: t elt) : Prop := exists e:elt, mapsto eq_elt k e m. *)
+    Definition In (k:key)(m: t elt) := belong eq_elt k m.
+
 
     Lemma InList_eq_key_el_eq_key : 
       forall x m,InList eq_key_elt x m -> InList eq_key x m.
       intros x m hyp. induction hyp;auto.
     Qed.
       
+    Hint Unfold MapsTo mapsto eq_key_elt eq_key belong In.
+    Hint Constructors InList.
     Hint Resolve InList_eq_key_el_eq_key.
-
-    Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m. 
 
     Lemma notin_empty : forall k, ~ In k [].
       intros k abs.
@@ -607,23 +605,23 @@ Ltac Equal_inv m x e e' :=
 
     Lemma mem_1 : forall x m, Sort m -> In x m -> mem x m = true.
       intros x m.      
-      functional induction mem x m;intros sorted belong;trivial.
+      functional induction mem x m;intros sorted belong1;trivial.
       
-      inversion belong. inversion H.
+      inversion belong1. inversion H.
       
       absurd (In k ((k', e) :: l));try assumption.
       eapply sort_lt_notin with e;auto.
 
       apply H.
       elim (sort_inv sorted);auto.
-      elim (In_inv belong);auto.
+      elim (In_inv belong1);auto.
       intro abs.
       absurd (E.eq k k');auto.
     Qed. 
 
 
     Lemma mem_2 : forall x m, Sort m -> mem x m = true -> In x m. 
-      intros x m;unfold In,MapsTo,mapsto.
+      intros x m;unfold In,MapsTo,belong,mapsto.
       functional induction mem x m; intros sorted hyp;try ((inversion hyp);fail).
       exists e;eauto. 
       induction H; eauto.
@@ -1074,6 +1072,7 @@ Ltac Equal_inv m x e e' :=
       Lemma map_1 : forall (x:key)(e:elt)(m:t elt)(f:elt->elt'), 
         MapsTo x e m -> 
         exists e', eq_elt e e' /\ mapsto (@Logic.eq elt') x (f e') (map f m).
+      Proof.
 	intros x e m f.
 	functional induction map f m.
 	intro abs. inversion abs.
@@ -1096,22 +1095,92 @@ Ltac Equal_inv m x e e' :=
 	exists x0;auto.
       Qed.
 
-	
-      
 
-      Parameter map_2 :forall (x:key)(m:t elt)(f:elt->elt'), 
+      Lemma map_2 :forall (x:key)(m:t elt)(f:elt->elt'), 
         belong (@Logic.eq elt') x (map f m) -> In x m.
+	unfold belong,mapsto.
+	intros x m f. 
+	functional induction map f m.
+	intros hyp.
+	inversion hyp.
+	inversion H.
+
+	intros hyp.
+	inversion hyp. clear hyp.
+	inversion H0.
+	simpl in H2.
+	elim H2. clear H2.
+	eauto.
+
+	elim H;eauto.
+	intros x1 H4.
+	exists x1;auto.
+      Qed.
+
+
+      Fixpoint mapi (f: key -> elt -> elt') (m:t elt) {struct m} : t elt' :=
+	match m with
+	  | [] => []
+	  | (k,e)::m' => (k,f k e) :: mapi f m'
+	end.
 
 
     (** Specification of [mapi] *)
-      Parameter mapi_1 : forall (x:key)(e:elt)(m:t elt)
+      Lemma mapi_1 : forall (x:key)(e:elt)(m:t elt)
         (f:key->elt->elt'), MapsTo x e m -> 
         exists x', exists e', 
 	  E.eq x' x /\ mapsto (@Logic.eq elt') x (f x' e') (mapi f m).
+      Proof.
+	intros x e m f.
+	functional induction mapi f m.
+	intro abs. inversion abs.
 
-      Parameter mapi_2 : forall (x:key)(m:t elt) (f:key->elt->elt'),
+	intros mapsto1.
+	inversion mapsto1.
+	subst.
+	exists k.
+	exists e0.
+	split.
+	elim H1;auto.
+	unfold mapsto.
+	apply InList_cons_hd.
+	split;auto.
+	elim H1;auto.
+
+	subst.
+	elim H;eauto. clear H.
+	intros x0 H.
+	elim H. clear H.
+	intros x1 hyp.
+	elim hyp. clear hyp.
+	intros H0 H2.
+	exists x0. 
+	exists x1.
+	auto.
+      Qed.
+
+      Lemma mapi_2 : forall (x:key)(m:t elt) (f:key->elt->elt'),
 	belong (@Logic.eq elt') x (mapi f m) -> In x m.
+	unfold belong,mapsto.
+	intros x m f. 
+	functional induction mapi f m.
+	intros hyp.
+	inversion hyp.
+	inversion H.
 
+	intros hyp.
+	elim hyp. clear hyp.
+	intros x0 hyp.
+	inversion hyp.
+	simpl in H1.
+	elim H1. clear H1.
+	eauto.
+
+	subst.
+	elim H;eauto.
+	intros x1 H0.
+	exists x1;auto.
+      Qed.
 
     End Elt.
 
