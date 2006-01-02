@@ -1062,17 +1062,20 @@ Ltac Equal_inv m x e e' :=
       Qed.
 
 
-      Fixpoint map (elt':Set) (f:elt -> elt') (m:t elt) {struct m} : t elt' :=
+
+      Variable elt':Set.
+      
+      Fixpoint map (f:elt -> elt') (m:t elt) {struct m} : t elt' :=
 	match m with
 	  | [] => []
 	  | (k,e)::m' => (k,f e) :: map f m'
 	end.
 
-      Lemma map_1 : forall (elt':Set)(x:key)(e:elt)(m:t elt)(f:elt->elt'), 
+      Lemma map_1 : forall (x:key)(e:elt)(m:t elt)(f:elt->elt'), 
         MapsTo x e m -> 
         exists e', eq_elt e e' /\ mapsto (@Logic.eq elt') x (f e') (map f m).
-	intros elt' x e m f.
-	functional induction map elt' f m.
+	intros x e m f.
+	functional induction map f m.
 	intro abs. inversion abs.
 	intros mapsto1.
 	inversion mapsto1.
@@ -1097,7 +1100,7 @@ Ltac Equal_inv m x e e' :=
       
 
       Parameter map_2 :forall (x:key)(m:t elt)(f:elt->elt'), 
-	belong (@Logic.eq elt') x (map f m) -> In x m.
+        belong (@Logic.eq elt') x (map f m) -> In x m.
 
 
     (** Specification of [mapi] *)
@@ -1112,43 +1115,9 @@ Ltac Equal_inv m x e e' :=
 
     End Elt.
 
-  Section Iterators_facts.
-    Variable elt elt':Set.
-
-      (** Specification of [map] *)
-    Axiom map_1 : forall (x:key)(e:elt)(m:t elt)(f:elt->elt'), 
-      MapsTo eq_elt x e m -> MapsTo eq_elt x (f e) (map f m).
-    
-    Axiom map_2 : forall (elt':Set)(x:key)(m: t elt)(f:elt->elt'), 
-      In x (map f m) -> In x m.
-
-	  (** Specification of [mapi] *)
-    Axiom mapi_1 : forall (elt':Set)(x:key)(e:elt)(m: t elt)
-      (f:key->elt->elt'), MapsTo x e m -> 
-      exists y, E.eq y x /\ MapsTo x (f y e) (mapi f m).
-    Axiom mapi_2 : forall (elt':Set)(x:key)(m: t elt)
-      (f:key->elt->elt'), In x (mapi f m) -> In x m.
-  End Iterators_facts.
-
 End Raw.
 
 
-(*
-
-    Section Iterators.
-      Variable elt' : Set. 
-      Axiom map : (elt -> elt') -> t elt -> t elt'.
-      Axiom mapi : (key -> elt -> elt') -> t elt -> t elt'.
-      Axiom fold : forall A: Set, (key -> elt -> A -> A) -> t elt -> A -> A.
-    End Iterators.
-*)
-
-(* 
-      Definition ltfst (c1 c2: Raw.key * elt):Prop :=
-	match c1,c2 with
-	  | (x,y),(x',y') => E.lt x x'
-	end.
- *)
 
 Module Make (X: OrderedType) <: S with Module E := X.
   Module E := X.
