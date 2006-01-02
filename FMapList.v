@@ -141,6 +141,7 @@ Module Raw (X:OrderedType).
     Definition eq_key_elt := @PE.eq elt eq_elt.
 
     Hint Unfold eq_key_elt eq_key.
+    Hint Resolve (@PE.eq_eq_key elt eq_elt).
 
     Definition ltkey := @PE.lt elt.
     Definition MapsTo := fun k e => InList eq_key_elt (k,e).
@@ -152,8 +153,6 @@ Module Raw (X:OrderedType).
       forall x m,InList eq_key_elt x m -> InList eq_key x m.
       intros x m H.
       induction H;auto.
-      apply InList_cons_hd.
-      eapply (@PE.eq_eq_key elt eq_elt). assumption.
     Qed.
       
     Hint Resolve InList_eq_key_el_eq_key.
@@ -329,6 +328,24 @@ Module Raw (X:OrderedType).
       
     Hint Resolve lt_sort_tl2.
 
+    Lemma all_lt_lelist: forall x l, 
+      (forall e, InList eq_key_elt e l -> ltkey x e) -> lelistA ltkey x l.
+      intros x l H. destruct l;auto.
+    Qed.
+
+    Hint Resolve all_lt_lelist.
+
+(*    Lemma sorted_hd_all_lt: forall x l e, 
+      Sort (x::l) -> InList eq_key_elt e l -> ltkey x e.
+      intros x l e sorted inl.
+      induction inl;eauto.
+      assert (ltkey x y);eauto.
+      inversion sorted.
+      inversion H3;auto.
+    Qed.
+
+    Hint Resolve sorted_hd_all_lt.
+*)
     Lemma sort_in_tl : forall e l e', Sort (e::l) -> InList eq_key e' l -> ltkey e e'.
       intros e l e' sorted Hin.
       induction Hin;eauto.
@@ -448,10 +465,10 @@ Module Raw (X:OrderedType).
     Hint Resolve lelist_eq.
 
     Lemma sorted_in_cons_not_eq : forall x l k e (sorted:Sort ((k,e)::l)) (Hin: In x l),
-      In x ((k,e)::l) -> ~E.eq x k.
+      ~E.eq x k.
       intros x l k e sorted.
       inversion sorted.
-      intros Hin H3.
+      intros Hin.
       intro abs.
       absurd (In x l);auto.
       eapply sort_lt_notin with e;auto.      
@@ -664,8 +681,16 @@ Ltac Equal_inv m x e e' :=
       intros x x' l H H0.
       elim (@In_inv3 x x' l);intuition.
       absurd (eq_key x x');auto.
-      eapply (PE.eq_eq_key eq_elt);assumption.
     Qed.
+
+    Lemma aux''' : forall x x' l, 
+      InList eq_key x l -> eq_key x x' -> InList eq_key x' l.
+      intros x x' l H H0.
+      induction H.
+      apply InList_cons_hd;eauto.
+      apply InList_cons_tl;auto.
+    Qed.
+
 
     Hint Resolve aux'' aux'.
 
@@ -782,17 +807,6 @@ Ltac Equal_inv m x e e' :=
       
 
 
-    Fixpoint equal (compare:elt -> elt -> bool) (s : t elt) {struct s} : t elt -> bool :=
-      fun s' : t elt =>
-	match s, s' with
-	  | [], [] => true
-	  | (k,x) :: l, (k',x') :: l' =>
-            match E.compare k k' with
-              | FSetInterface.Eq _ => if compare x x' then equal compare l l' else false
-              | _ => false
-            end
-	  | _, _ => false
-	end.
 
 
     (** Specification of [MapsTo] *)
@@ -821,13 +835,6 @@ Ltac Equal_inv m x e e' :=
 
 
     
-    Axiom XXX: forall x l, 
-      lelistA ltkey x l -> forall e, InList eq_key_elt e l -> ltkey x e.
-    Axiom YYY: forall x l, 
-      (forall e, InList eq_key_elt e l -> ltkey x e) -> lelistA ltkey x l.
-    Axiom ZZZ: forall x l, 
-      Sort (x::l) -> forall e, InList eq_key_elt e l -> ltkey x e.
-    Axiom TTT: forall x x' l, InList eq_key_elt x l -> InList eq_key_elt x (x'::l).
 
 (*       Definition eq_key_elt := eq_key_elt. *)
 (* 	fun (p p':key*elt) => E.eq (fst p) (fst p') /\ (snd p) = (snd p'). *)
@@ -858,13 +865,13 @@ Ltac Equal_inv m x e e' :=
 
 	inversion sorted;auto.
 
-	apply YYY.
+	apply all_lt_lelist.
 	intros e' hyp.
 	destruct e'.
 	elim (H1 k0 e0);intros .
 	assert (InList eq_key_elt (k0, e0) m').
 	apply H4;assumption.
-	eapply ZZZ with m';auto.
+	eapply sort_in_tl with m';auto.
 
 	unfold MapsTo in H0.
 	inversion H0.
@@ -911,21 +918,180 @@ Ltac Equal_inv m x e e' :=
         
 
 
-	(** Specification of [equal] *) 
-      Variable f: elt->elt->bool.
-      Axiom equal_1 : Equal f m m' -> equal f m m' = true.
-      Axiom equal_2 : equal f m m' = true -> Equal f m m.
+      (** Specification of [equal] *) 
+      Variable fcompare: elt->elt->bool.
+      Variable fcompare_ok1:forall e e', fcompare e e' = true -> eq_elt e e'.
+      Variable fcompare_ok2:forall e e', fcompare e e' = false -> ~eq_elt e e'.
 
+      Fixpoint equal (s : t elt) {struct s} : t elt -> bool :=
+	fun s' : t elt =>
+	  match s, s' with
+	    | [], [] => true
+	    | (k,x) :: l, (k',x') :: l' =>
+              match E.compare k k' with
+		| FSetInterface.Eq _ => if fcompare x x' then equal l l' else false
+		| _ => false
+              end
+	    | _, _ => false
+	  end.
+
+      Axiom XXX: forall x e l, In x l -> In x (e::l).
+      Axiom YYY: forall a k x l, (In a ((k, x) :: l)) -> ~E.eq a k -> (In a l).
+
+      Lemma InList_eq_key : forall x x' l,
+	InList eq_key x l -> eq_key x x' -> InList eq_key x' l.
+	intros x x' l H H0.
+	induction H;eauto.
+      Qed.
+	
+
+      Lemma unique_in_eq_key : forall x x' l, Unique eq_key (x'::l)
+	-> InList eq_key_elt x (x'::l) -> eq_key x x' -> eq_key_elt x x'.
+	intros x x' l uniq inl eqk.
+	inversion inl;auto.
+	subst.
+	inversion uniq.
+	elim H2.
+	assert ( inl2 : InList eq_key x l );auto.
+	eapply InList_eq_key with x;auto.
+      Qed.
+
+      Lemma unique_in_eq_key2 : forall x x' l, Unique eq_key l
+	-> InList eq_key_elt x l -> InList eq_key_elt x' l 
+	-> eq_key x x' -> eq_key_elt x x'.
+	intros x x' l uniq inl1 inl2 eqk.
+	induction inl1.
+	inversion inl2.
+	eauto.
+	absurd (InList eq_key y l).
+	inversion uniq.
+	assumption.
+
+	subst.
+	eapply InList_eq_key with x'. auto. eauto.
+
+	apply IHinl1.
+	inversion uniq;auto.
+	eapply aux'' with y;auto.
+	intro abs.
+	absurd (InList eq_key x' l);eauto 5.
+	2: eapply InList_eq_key with x;auto.
+	intro abs2.
+	inversion uniq.
+	elim H1.
+	eapply InList_eq_key with x';auto.
+      Qed.
+
+
+      Lemma ZZZ : forall a e e' l, 
+	Unique eq_key l -> MapsTo a e l -> MapsTo a e' l -> eq_elt e e'.
+	unfold MapsTo.
+	intros a e e' l sorted inl1 inl2.
+
+(*
+	assert (Unique eq_key l). apply sorted_unique;auto. *)
+	induction sorted.
+	inversion inl1. 
+
+	elim (@In_inv3 (a, e) x l);auto;intro hyp.
+	assert (eq2:eq_key_elt (a, e) (a,e')).
+	eapply eq_key_elt_trans with x;auto.
+	apply eq_key_elt_sym.
+	eapply unique_in_eq_key with l;auto.
+	simpl in hyp.
+	destruct x;intuition.
+	simpl in eq2;intuition.
+
+	assert ( eqk : eq_key_elt (a,e) (a,e'));try (simpl in *;intuition;fail).
+	eapply unique_in_eq_key2 with (x::l);simpl;eauto.
+      Qed.	
+
+      Lemma notin_empty : forall k, ~ In k [].
+	intros k abs.
+	inversion abs.
+	inversion H.
+      Qed.
+
+      Hint Resolve notin_empty.
+
+      Lemma equal_1 : forall m m', Sort m -> Sort m' 
+	-> Equal eq_elt m m' -> equal m m' = true.
+	intros m m'. unfold Equal.
+	functional induction equal m m';simpl;auto;subst
+	  ; intros sorted1 sorted2 big
+	    ; [destruct t0 as [k x];elim (big k x x) |elim (big k x x)|elim (big k x x)
+
+	      |apply H;eauto;clear H;intros a e' e'';elim(big a e' e'')
+
+	      |elim (big k x x')|elim (big k' x x)];clear big
+	      ; try (intros hyp1 hyp2;elim hyp1 ; clear hyp1; intros in1 in2).
+
+
+	absurd (In k []);eauto. 
+	absurd (In k []);eauto.
+	absurd (In k ((k', x') :: l')).
+	eapply sort_lt_notin with x;auto. 
+	eauto.
+
+	split.
+	split.
+	intro inal.
+	assert (noteqak : ~ E.eq a k).
+	eapply sorted_in_cons_not_eq with l x;auto.
+
+	assert (In a ((k', x') :: l')).
+	apply in1.
+	apply XXX;auto.
+	eapply YYY with k' x';auto.
+	intro abs.
+	elim noteqak; eauto.
+
+	intro inal'.
+	assert (noteqak : ~ E.eq a k').
+	eapply sorted_in_cons_not_eq with l' x';auto.
+	assert (In a ((k, x) :: l)).
+	apply in2.
+	apply XXX;auto.
+	eapply YYY with k x;auto.
+	intro abs.
+	elim noteqak; eauto.
+
+	intros mapsto1 mapsto2.
+	apply hyp2;auto.
+
+	absurd (eq_elt x x');auto.
+	apply hyp2.
+	eauto.
+	unfold MapsTo.
+	apply InList_cons_hd;simpl;eauto.
+	
+	absurd (In k' ((k, x) :: l)).
+	eapply sort_lt_notin with x';auto.
+	eauto.
+      Qed.
+
+
+      Lemma equal_2 :forall m m', Sort m -> Sort m' -> 
+	equal m m' = true -> Equal eq_elt m m.
+	intros m m'. unfold Equal.
+      	functional induction equal m m';simpl;auto;subst;intro eq1;auto;
+	  intuition.
+	inversion H1.
+	eapply ZZZ with a ((k, x) :: l);auto.
+        apply sorted_unique;auto.
+      Qed.
     
-    End Spec. 
-  End Elt.
+
+
+
+    End Elt.
 
   Section Iterators_facts.
     Variable elt elt':Set.
 
       (** Specification of [map] *)
     Axiom map_1 : forall (x:key)(e:elt)(m:t elt)(f:elt->elt'), 
-      MapsTo x e m -> MapsTo x (f e) (map f m).
+      MapsTo eq_elt x e m -> MapsTo eq_elt x (f e) (map f m).
     
     Axiom map_2 : forall (elt':Set)(x:key)(m: t elt)(f:elt->elt'), 
       In x (map f m) -> In x m.

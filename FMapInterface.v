@@ -116,15 +116,25 @@ Module Type S.
 	where [k1] ... [kN] are the keys of all bindings in [m] 
 	(in increasing order), and [d1] ... [dN] are the associated data. *)
 
+    Parameter mapsto : forall (A:Set) (eq_elt:A -> A -> Prop),
+      key  -> A -> t A -> Prop.
+
+    Definition belong (A:Set) (eq_elt:A -> A -> Prop) (k:key)(m: t A) : Prop
+      := exists e:A, mapsto eq_elt k e m. 
+
     Section Spec. 
       
       Variable m m' m'' : t elt.
       Variable x y z : key.
       Variable e e' : elt.
+      Variable eq_elt: elt -> elt -> Prop.
+      Parameter eq_equiv: equivalence eq_elt -> equivalence (eq eq_elt).
 
-      Parameter MapsTo : 
-	forall (eq_elt:elt -> elt -> Prop), key  -> elt -> t elt -> Prop.
-      Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m. 
+      Notation MapsTo := (mapsto eq_elt).
+
+      Notation In := (belong eq_elt).
+(*       Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m.  *)
+
       Definition Empty m := forall (a : key)(e:elt) , ~ MapsTo a e m.
 
       Definition Equal f m m' := forall (a : key) (e e': elt), 
@@ -133,11 +143,6 @@ Module Type S.
 
 
 
-      Section Eq. 
-	Variable eq_elt: elt -> elt -> Prop.
-      (** Specification of [eq] *)
-	Parameter eq_equiv: equivalence eq_elt -> equivalence (eq eq_elt).
-      End Eq.
 
   (*  Definition Add (x : key) (s s' : t) :=
       forall y : key, In y s' <-> E.eq y x \/ In y s.
@@ -153,7 +158,6 @@ Module Type S.
     (** Specification of [lt] *)
       Section Lt. 
 	Variable lt_elt : elt -> elt -> Prop. 
-	Variable eq_elt : elt -> elt -> Prop. 
 	Parameter eq_elt_equiv: equivalence eq_elt.
 	Parameter lt_trans :  transitive lt_elt. (* plus? order? *)
 	Parameter lt_not_eq : 
@@ -183,7 +187,8 @@ Module Type S.
       Parameter remove_3 : MapsTo y e (remove x m) -> MapsTo y e m.
 
     (** Specification of [find] *)
-      Parameter find_1 : MapsTo x e m -> find x m = Some e' -> eq_elt e e'. 
+      Parameter find_1 : forall eq_elt: elt -> elt -> Prop,
+	MapsTo x e m -> find x m = Some e' -> eq_elt e e'. 
       Parameter find_2 : find x m = Some e -> MapsTo x e m.
 
 
@@ -204,26 +209,32 @@ Module Type S.
             fold f m i = fold_right (fun p => f (fst p) (snd p)) i l.
 
     (** Specification of [equal] *) 
-      Variable f: elt->elt->bool.
-      Parameter equal_1 : Equal f m m' -> equal f m m' = true.
-      Parameter equal_2 : equal f m m' = true -> Equal f m m.
+      Variable fcompare: elt->elt->bool.
+      Parameter equal_1 : Equal fcompare m m' -> equal fcompare m m' = true.
+      Parameter equal_2 : equal fcompare m m' = true -> Equal fcompare m m.
 
-    
+      Parameter map_1 : forall (x:key)(e:elt)(m:t elt)(f:elt->elt'), 
+        MapsTo x e m -> 
+        exists e', eq_elt e e' /\ mapsto (@Logic.eq elt') x (f e') (map f m).
+
+      Parameter map_2 :forall (x:key)(m:t elt)(f:elt->elt'), 
+	belong (@Logic.eq elt') x (map f m) -> In x m.
+
+
+    (** Specification of [mapi] *)
+      Parameter mapi_1 : forall (x:key)(e:elt)(m:t elt)
+        (f:key->elt->elt'), MapsTo x e m -> 
+        exists x', exists e', 
+	  E.eq x' x /\ mapsto (@Logic.eq elt') x (f x' e') (mapi f m).
+
+      Parameter mapi_2 : forall (x:key)(m:t elt) (f:key->elt->elt'),
+	belong (@Logic.eq elt') x (mapi f m) -> In x m.
+
     End Spec. 
   End Types. 
 
   (** Specification of [map] *)
-  Parameter map_1 : forall (elt elt':Set)(x:key)(e:elt)(m:t elt)(f:elt->elt'), 
-   MapsTo x e m -> MapsTo x (f e) (map f m).
-  Parameter map_2 : forall (elt elt':Set)(x:key)(m:t elt)(f:elt->elt'), 
-   In x (map f m) -> In x m.
 
-  (** Specification of [mapi] *)
-  Parameter mapi_1 : forall (elt elt':Set)(x:key)(e:elt)(m:t elt)
-   (f:key->elt->elt'), MapsTo x e m -> 
-     exists y, E.eq y x /\ MapsTo x (f y e) (mapi f m).
-  Parameter mapi_2 : forall (elt elt':Set)(x:key)(m:t elt)
-   (f:key->elt->elt'), In x (mapi f m) -> In x m.
 
   
   Notation "∅" := empty.
