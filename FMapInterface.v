@@ -160,16 +160,16 @@ Module Type S.
    End Types. 
 
     (** Specification of [map] *)
-      Parameter map_1 : forall (elt elt':Set)(x:key)(e:elt)(m:t elt)(f:elt->elt'), 
+      Parameter map_1 : forall (elt elt':Set)(m: t elt)(x:key)(e:elt)(f:elt->elt'), 
         MapsTo x e m -> MapsTo x (f e) (map f m).
-      Parameter map_2 : forall (elt elt':Set)(x:key)(m:t elt)(f:elt->elt'), 
+      Parameter map_2 : forall (elt elt':Set)(m: t elt)(x:key)(f:elt->elt'), 
         In x (map f m) -> In x m.
  
     (** Specification of [mapi] *)
-      Parameter mapi_1 : forall (elt elt':Set)(x:key)(e:elt)(m:t elt)
+      Parameter mapi_1 : forall (elt elt':Set)(m: t elt)(x:key)(e:elt)
         (f:key->elt->elt'), MapsTo x e m -> 
         exists y, E.eq y x /\ MapsTo x (f y e) (mapi f m).
-      Parameter mapi_2 : forall (elt elt':Set)(x:key)(m:t elt)
+      Parameter mapi_2 : forall (elt elt':Set)(m: t elt)(x:key)
         (f:key->elt->elt'), In x (mapi f m) -> In x m.
 
   Notation "∅" := empty.
