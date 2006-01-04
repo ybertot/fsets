@@ -1,6 +1,18 @@
+(***********************************************************************)
+(*  v      *   The Coq Proof Assistant  /  The Coq Development Team    *)
+(* <O___,, *        INRIA-Rocquencourt  &  LRI-CNRS-Orsay              *)
+(*   \VV/  *************************************************************)
+(*    //   *      This file is distributed under the terms of the      *)
+(*         *       GNU Lesser General Public License Version 2.1       *)
+(***********************************************************************)
+
+(* Finite maps library.  
+ * Authors: Pierre Courtieu and Pierre Letouzey 
+ * Institutions: CÃ©dric (CNAM) & PPS (UniversitÃ© Paris 7) *)
+
 (* $Id$ *)
 
-(** Map interface *)
+(** This file proposes an interface for finite maps *)
 
 Require Export Bool.
 Require Export List.
@@ -17,10 +29,15 @@ Implicit Arguments antisymmetric.
 Require Import FSetInterface. 
 
 
-(** * Non-dependent signature
+(** When compared with Ocaml Map, this signature has been split in three: 
+   - The first part [S] contains the usual operators (add, find, ...)
+     It only requires a ordered key type, the data type can be arbitrary. 
+   - The second part [S2] extends [S] with an [equal] operator on maps. 
+     Here, the data type should have a decidable equality. 
+   - Finally, [S3] extends [S] with a complete comparison fonction. For 
+     that, the data type should have a decidable total ordering. 
+*)      
 
-    Signature [S] presents sets as purely informative programs 
-    together with axioms *)
 
 Module Type S.
 
@@ -57,38 +74,6 @@ Module Type S.
     (** [mem x m] returns [true] if [m] contains a binding for [x], 
 	and [false] otherwise. *)
 
-  (* bugée?: *)
-  (*   Parameter eq : t elt -> t elt -> Prop. *)
-  (* plutôt ça? attention refl,trans et sym sont
-     conditionnée par refl trans et sym de l'égalité sur les éléments *)
-    Parameter eq : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.
-    Parameter lt : (elt -> elt -> Prop) -> t elt -> t elt -> Prop.
-
-  (* bugée ?: *)
-  (* 
-    Parameter compare : 
-      forall lt_elt : elt -> elt -> Prop, 
-      (forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
-      forall m m' : t elt, Compare (lt lt_elt) eq m m'.
-   *)
-
-    Parameter compare : 
-      forall eq_elt lt_elt : elt -> elt -> Prop, 
-	(forall e e', Compare lt_elt (Logic.eq (A:=elt)) e e') -> 
-	forall m m' : t elt, Compare (lt lt_elt) (eq eq_elt) m m'.
-
-
-
-    (** Total ordering between maps. The first (in Coq: second) argument is 
-	a total ordering used to compare data associated with equal keys 
-	in the two maps. *)
-
-    Parameter equal : (elt -> elt -> bool) -> t elt -> t elt -> bool.
-    (** [equal cmp m1 m2] tests whether the maps [m1] and [m2] are equal, 
-	that is, contain equal keys and associate them with equal data. 
-	[cmp] is the equality predicate used to compare the data associated 
-	with the keys. *)
-
     (** Coq comment: [iter] is useless in a purely functional world *)
     (** val iter : (key -> 'a -> unit) -> 'a t -> unit *)
     (** iter f m applies f to all bindings in map m. f receives the key as 
@@ -116,55 +101,26 @@ Module Type S.
 	where [k1] ... [kN] are the keys of all bindings in [m] 
 	(in increasing order), and [d1] ... [dN] are the associated data. *)
 
-    Parameter mapsto : forall (A:Set) (eq_elt:A -> A -> Prop),
-      key  -> A -> t A -> Prop.
-
-    Definition belong (A:Set) (eq_elt:A -> A -> Prop) (k:key)(m: t A) : Prop
-      := exists e:A, mapsto eq_elt k e m. 
-
     Section Spec. 
       
       Variable m m' m'' : t elt.
       Variable x y z : key.
       Variable e e' : elt.
-      Variable eq_elt: elt -> elt -> Prop.
-      Parameter eq_equiv: equivalence eq_elt -> equivalence (eq eq_elt).
 
-      Notation MapsTo := (mapsto eq_elt).
+      Parameter MapsTo : key -> elt -> t elt -> Prop.
 
-      Notation In := (belong eq_elt).
-(*       Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m.  *)
+      Definition In (k:key)(m: t elt) : Prop := exists e:elt, MapsTo k e m.
 
       Definition Empty m := forall (a : key)(e:elt) , ~ MapsTo a e m.
 
-      Definition Equal f m m' := forall (a : key) (e e': elt), 
-	(In a m <-> In a m') /\
-	(MapsTo a e m -> MapsTo a e' m' -> f e e' = true). 
-
-
-
-
-  (*  Definition Add (x : key) (s s' : t) :=
-      forall y : key, In y s' <-> E.eq y x \/ In y s.
-    Definition For_all (P : key -> Prop) (s : t) :=
-      forall x : key, In x s -> P x.
-    Definition Exists (P : key -> Prop) (s : t) :=
-      exists x : key, In x s /\ P x. *)
+      Definition eq_key (p p':key*elt) := E.eq (fst p) (fst p').
+      
+      Definition eq_key_elt (p p':key*elt) := 
+          E.eq (fst p) (fst p') /\ (snd p) = (snd p').
 
     (** Specification of [MapsTo] *)
       Parameter MapsTo_1 : E.eq x y -> MapsTo x e m -> MapsTo y e m.
       
-
-    (** Specification of [lt] *)
-      Section Lt. 
-	Variable lt_elt : elt -> elt -> Prop. 
-	Parameter eq_elt_equiv: equivalence eq_elt.
-	Parameter lt_trans :  transitive lt_elt. (* plus? order? *)
-	Parameter lt_not_eq : 
-	  (forall e e', lt_elt e e' -> e<>e') ->  
-	  lt lt_elt m m' -> ~ eq eq_elt m m'.
-      End Lt.
-
     (** Specification of [mem] *)
       Parameter mem_1 : In x m -> mem x m = true.
       Parameter mem_2 : mem x m = true -> In x m. 
@@ -187,71 +143,125 @@ Module Type S.
       Parameter remove_3 : MapsTo y e (remove x m) -> MapsTo y e m.
 
     (** Specification of [find] *)
-      Parameter find_1 : forall eq_elt: elt -> elt -> Prop,
-	MapsTo x e m -> find x m = Some e' -> eq_elt e e'. 
+      Parameter find_1 : MapsTo x e m -> find x m = Some e. 
       Parameter find_2 : find x m = Some e -> MapsTo x e m.
-
-
-      Definition key_eq := 
-	fun (p p':key*elt) => E.eq (fst p) (fst p').
-      
-      Definition key_elt_eq := 
-	fun (p p':key*elt) => E.eq (fst p) (fst p') /\ (snd p) = (snd p').
 
     (** Specification of [fold] *)  
       Parameter
 	fold_1 :
 	forall (A : Set) (i : A) (f : key -> elt -> A -> A),
 	  exists l : list (key*elt),
-            Unique key_eq l /\
-            (forall (k:key)(x:elt), MapsTo k x m <-> InList key_elt_eq (k,x) l) 
+            Unique eq_key l /\
+            (forall (k:key)(x:elt), MapsTo k x m <-> InList eq_key_elt (k,x) l) 
             /\
             fold f m i = fold_right (fun p => f (fst p) (snd p)) i l.
 
-    (** Specification of [equal] *) 
-      Variable fcompare: elt->elt->bool.
-      Parameter equal_1 : Equal fcompare m m' -> equal fcompare m m' = true.
-      Parameter equal_2 : equal fcompare m m' = true -> Equal fcompare m m.
-
-      Parameter map_1 : forall (x:key)(e:elt)(m:t elt)(f:elt->elt'), 
-        MapsTo x e m -> 
-        exists e', eq_elt e e' /\ mapsto (@Logic.eq elt') x (f e') (map f m).
-
-      Parameter map_2 :forall (x:key)(m:t elt)(f:elt->elt'), 
-	belong (@Logic.eq elt') x (map f m) -> In x m.
-
-
-    (** Specification of [mapi] *)
-      Parameter mapi_1 : forall (x:key)(e:elt)(m:t elt)
-        (f:key->elt->elt'), MapsTo x e m -> 
-        exists x', exists e', 
-	  E.eq x' x /\ mapsto (@Logic.eq elt') x (f x' e') (mapi f m).
-
-      Parameter mapi_2 : forall (x:key)(m:t elt) (f:key->elt->elt'),
-	belong (@Logic.eq elt') x (mapi f m) -> In x m.
-
     End Spec. 
-  End Types. 
+   End Types. 
 
-  (** Specification of [map] *)
+    (** Specification of [map] *)
+      Parameter map_1 : forall (elt elt':Set)(x:key)(e:elt)(m:t elt)(f:elt->elt'), 
+        MapsTo x e m -> MapsTo x (f e) (map f m).
+      Parameter map_2 : forall (elt elt':Set)(x:key)(m:t elt)(f:elt->elt'), 
+        In x (map f m) -> In x m.
+ 
+    (** Specification of [mapi] *)
+      Parameter mapi_1 : forall (elt elt':Set)(x:key)(e:elt)(m:t elt)
+        (f:key->elt->elt'), MapsTo x e m -> 
+        exists y, E.eq y x /\ MapsTo x (f y e) (mapi f m).
+      Parameter mapi_2 : forall (elt elt':Set)(x:key)(m:t elt)
+        (f:key->elt->elt'), In x (mapi f m) -> In x m.
 
-
-  
   Notation "âˆ…" := empty.
   Notation "a âˆˆ b" := (In a b) (at level 20).
   Notation "a âˆ‰ b" := (~ a âˆˆ b) (at level 20).
+
+  Hint Immediate MapsTo_1 mem_2 is_empty_2.
+  
+  Hint Resolve mem_1 is_empty_1 is_empty_2 add_1 add_2 add_3 remove_1
+    remove_2 remove_3 find_1 find_2 fold_1 map_1 map_2 mapi_1 mapi_2. 
+
+End S.
+
+Module Type DecidableType. 
+
+  Parameter t : Set.
+
+  Parameter eq : t -> t -> Prop.
+
+  Axiom eq_refl : forall x : t, eq x x.
+  Axiom eq_sym : forall x y : t, eq x y -> eq y x.
+  Axiom eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
+
+  Parameter eq_dec : forall x y : t, { eq x y } + { ~ eq x y }.
+
+  Hint Immediate eq_sym.
+  Hint Resolve eq_refl eq_trans.
+
+End DecidableType. 
+
+Module Type S1. 
+  Declare Module Data : DecidableType.   
+  Declare Module MapS : S. 
+  Import MapS.
+  
+  Definition t := MapS.t Data.t. 
+
+  Parameter eq : t -> t -> Prop. 
+  Axiom eq_refl : forall m : t, eq m m.
+  Axiom eq_sym : forall m1 m2 : t, eq m1 m2 -> eq m2 m1.
+  Axiom eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
+
+  Parameter equal : forall m1 m2 : t, { eq m1 m2 } + { ~ eq m1 m2 }. 
+  (** [equal m1 m2] tests whether the maps [m1] and [m2] are equal, 
+      that is, contain equal keys and associate them with equal data. 
+      The equality predicate used to compare the data associated 
+      with the keys is [Data.eq_dec]. *)
+
+  (* Specification of [eq] (and therefore of [equal]) *)
+ 
+  Definition Equal m m' := forall (a : key) (e e': Data.t), 
+   (In a m <-> In a m') /\ 
+   (MapsTo a e m -> MapsTo a e' m' -> Data.eq e e'). 
+
+  Parameter equal_1 : forall m m', Equal m m' -> eq m m'.
+  Parameter equal_2 : forall m m', eq m m' -> Equal m m.
+
   Notation "a â‰¡ b" := (Equal a b) (at level 20).
   Notation "a â‰¢ b" := (~ a â‰¡ b) (at level 20).
 
-(* 
-  Hint Immediate In_1.
-  
-  Hint Resolve mem_1 mem_2 equal_1 equal_2 subset_1 subset_2 empty_1
-    is_empty_1 is_empty_2 choose_1 choose_2 add_1 add_2 add_3 remove_1
-    remove_2 remove_3 singleton_1 singleton_2 union_1 union_2 union_3 inter_1
-    inter_2 inter_3 diff_1 diff_2 diff_3 filter_1 filter_2 filter_3 for_all_1
-    for_all_2 exists_1 exists_2 partition_1 partition_2 elements_1 elements_2
-    elements_3 min_elt_1 min_elt_2 min_elt_3 max_elt_1 max_elt_2 max_elt_3.
-*)
+End S1. 
 
-End S.
+Module Type S2.
+ 
+  Declare Module Data : OrderedType.   
+  Declare Module MapS : S. 
+  Import MapS.
+  
+  Definition t := MapS.t Data.t. 
+
+  Parameter eq : t -> t -> Prop.
+  Parameter lt : t -> t -> Prop. 
+ 
+  Axiom eq_refl : forall m : t, eq m m.
+  Axiom eq_sym : forall m1 m2 : t, eq m1 m2 -> eq m2 m1.
+  Axiom eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
+  Axiom lt_trans : forall m1 m2 m3 : t, lt m1 m2 -> lt m2 m3 -> lt m1 m3.
+  Axiom lt_not_eq : forall m1 m2 : t, lt m1 m2 -> ~ eq m1 m2.
+ 
+  Definition Equal m m' := forall (a : key) (e e': Data.t), 
+   (In a m <-> In a m') /\ 
+   (MapsTo a e m -> MapsTo a e' m' -> Data.eq e e'). 
+
+  Parameter eq_1 : forall m m', Equal m m' -> eq m m'.
+  Parameter eq_2 : forall m m', eq m m' -> Equal m m.
+
+  Notation "a â‰¡ b" := (Equal a b) (at level 20).
+  Notation "a â‰¢ b" := (~ a â‰¡ b) (at level 20).
+
+  Parameter compare : forall m1 m2, Compare lt eq m1 m2.
+  (** Total ordering between maps. The first argument (in Coq: Data.compare) 
+      is a total ordering used to compare data associated with equal keys 
+      in the two maps. *)
+
+End S2.
