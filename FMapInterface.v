@@ -101,6 +101,12 @@ Module Type S.
 	where [k1] ... [kN] are the keys of all bindings in [m] 
 	(in increasing order), and [d1] ... [dN] are the associated data. *)
 
+    Parameter equal : (elt -> elt -> bool) -> t elt -> t elt -> bool.
+    (** [equal cmp m1 m2] tests whether the maps [m1] and [m2] are equal, 
+      that is, contain equal keys and associate them with equal data. 
+      [cmp] is the equality predicate used to compare the data associated 
+      with the keys. *)
+
     Section Spec. 
       
       Variable m m' m'' : t elt.
@@ -155,6 +161,16 @@ Module Type S.
             (forall (k:key)(x:elt), MapsTo k x m <-> InList eq_key_elt (k,x) l) 
             /\
             fold f m i = fold_right (fun p => f (fst p) (snd p)) i l.
+ 
+   Definition Equal cmp m m' := 
+         (forall k, In k m <-> In k m') /\ 
+         (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
+
+   Variable cmp : elt -> elt -> bool. 
+
+   (** Specification of [equal] *)
+     Parameter equal_1 : Equal cmp m m' -> equal cmp m m' = true. 
+     Parameter equal_2 : equal cmp m m' = true -> Equal cmp m m'.
 
     End Spec. 
    End Types. 
@@ -183,56 +199,8 @@ Module Type S.
 
 End S.
 
-Module Type DecidableType. 
 
-  Parameter t : Set.
-
-  Parameter eq : t -> t -> Prop.
-
-  Axiom eq_refl : forall x : t, eq x x.
-  Axiom eq_sym : forall x y : t, eq x y -> eq y x.
-  Axiom eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-
-  Parameter eq_dec : forall x y : t, { eq x y } + { ~ eq x y }.
-
-  Hint Immediate eq_sym.
-  Hint Resolve eq_refl eq_trans.
-
-End DecidableType. 
-
-Module Type S1. 
-  Declare Module Data : DecidableType.   
-  Declare Module MapS : S. 
-  Import MapS.
-  
-  Definition t := MapS.t Data.t. 
-
-  Parameter eq : t -> t -> Prop. 
-  Axiom eq_refl : forall m : t, eq m m.
-  Axiom eq_sym : forall m1 m2 : t, eq m1 m2 -> eq m2 m1.
-  Axiom eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
-
-  Parameter equal : forall m1 m2 : t, { eq m1 m2 } + { ~ eq m1 m2 }. 
-  (** [equal m1 m2] tests whether the maps [m1] and [m2] are equal, 
-      that is, contain equal keys and associate them with equal data. 
-      The equality predicate used to compare the data associated 
-      with the keys is [Data.eq_dec]. *)
-
-  (* Specification of [eq] (and therefore of [equal]) *)
- 
-  Definition Equal m m' := forall (a : key) (e e': Data.t), 
-   (In a m <-> In a m') /\ 
-   (MapsTo a e m -> MapsTo a e' m' -> Data.eq e e'). 
-
-  Parameter equal_1 : forall m m', Equal m m' -> eq m m'.
-  Parameter equal_2 : forall m m', eq m m' -> Equal m m.
-
-  Notation "a ≡ b" := (Equal a b) (at level 20).
-  Notation "a ≢ b" := (~ a ≡ b) (at level 20).
-
-End S1. 
-
-Module Type S2.
+Module Type Sord.
  
   Declare Module Data : OrderedType.   
   Declare Module MapS : S. 
@@ -248,20 +216,15 @@ Module Type S2.
   Axiom eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
   Axiom lt_trans : forall m1 m2 m3 : t, lt m1 m2 -> lt m2 m3 -> lt m1 m3.
   Axiom lt_not_eq : forall m1 m2 : t, lt m1 m2 -> ~ eq m1 m2.
- 
-  Definition Equal m m' := forall (a : key) (e e': Data.t), 
-   (In a m <-> In a m') /\ 
-   (MapsTo a e m -> MapsTo a e' m' -> Data.eq e e'). 
 
-  Parameter eq_1 : forall m m', Equal m m' -> eq m m'.
-  Parameter eq_2 : forall m m', eq m m' -> Equal m m.
+  Definition cmp e e' := match Data.compare e e' with Eq _ => true | _ => false end.	
 
-  Notation "a ≡ b" := (Equal a b) (at level 20).
-  Notation "a ≢ b" := (~ a ≡ b) (at level 20).
+  Parameter eq_1 : forall m m', Equal cmp m m' -> eq m m'.
+  Parameter eq_2 : forall m m', eq m m' -> Equal cmp m m'.
 
   Parameter compare : forall m1 m2, Compare lt eq m1 m2.
   (** Total ordering between maps. The first argument (in Coq: Data.compare) 
       is a total ordering used to compare data associated with equal keys 
       in the two maps. *)
 
-End S2.
+End Sord.
