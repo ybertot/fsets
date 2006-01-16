@@ -22,26 +22,49 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 Require Import FSetInterface. 
+Require Import FMapInterface. 
 
+(** This file provides a interface for finite maps, with stronger requirements than 
+      [FMapInterface]: maps with the same bindings should be equal in the sense 
+      of Coq [=]. This additional property is stated in [equal_3]. Except from this, 
+      [FMapStrongInterface.S] is a clone from [FMapInterface.S]. 
 
-(** When compared with Ocaml Map, this signature has been split in two: 
-   - The first part [S] contains the usual operators (add, find, ...)
-     It only requires a ordered key type, the data type can be arbitrary. 
-     The only function that asks more is [equal], whose first argument should 
-     be an equality on data. 
-   - Then, [Sord] extends [S] with a complete comparison fonction. For 
-     that, the data type should have a decidable total ordering. 
-
-   NB: This interface [S] can be used both with keys belonging to an OrderedType 
-      or just a DecidableType (cf. FSetWeakInterface).
-      For [Sord], keys should be in an OrderedType. 
+      NB: This interface can only be used with keys that belongs to an OrderedType 
+      whose [eq] is Coq's [=]. These kind of OrderedType are named 
+      UsualOrderedType. 
 *)
+
+Module Type UsualOrderedType.
+
+  Parameter t : Set.
+
+  Definition eq := @eq t.
+  Parameter lt : t -> t -> Prop.
+
+  Definition eq_refl := @refl_equal t.
+  Definition eq_sym := @sym_eq t.
+  Definition eq_trans := @trans_eq t.
+ 
+  Axiom lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
+  Axiom lt_not_eq : forall x y : t, lt x y -> ~ x=y.
+
+  Parameter compare : forall x y : t, Compare lt eq x y.
+ 
+  Hint Immediate eq_sym.
+  Hint Resolve eq_refl eq_trans lt_not_eq lt_trans.
+
+End UsualOrderedType.
+
+(* A UsualOrderedType is in particular an OrderedType *)
+Module UOT_to_OT (U:UsualOrderedType) : OrderedType := U.
 
 
 Module Type S.
 
   Parameter key : Set.
-  Parameter keq : key -> key -> Prop.
+
+  (* unused afterwards, for compatibility with [FMapInterface.S] *)
+  Definition keq := @eq key.  
 
   Parameter t : Set -> Set. (** the abstract type of maps *)
  
@@ -125,13 +148,13 @@ Module Type S.
 
       Definition Empty m := forall (a : key)(e:elt) , ~ MapsTo a e m.
 
-      Definition eq_key (p p':key*elt) := keq (fst p) (fst p').
+      Definition eq_key (p p':key*elt) := (fst p) = (fst p').
       
       Definition eq_key_elt (p p':key*elt) := 
-          keq (fst p) (fst p') /\ (snd p) = (snd p').
+          (fst p) = (fst p') /\ (snd p) = (snd p').
 
     (** Specification of [MapsTo] *)
-      Parameter MapsTo_1 : keq x y -> MapsTo x e m -> MapsTo y e m.
+      Parameter MapsTo_1 : x = y -> MapsTo x e m -> MapsTo y e m.
       
     (** Specification of [mem] *)
       Parameter mem_1 : In x m -> mem x m = true.
@@ -145,13 +168,13 @@ Module Type S.
       Parameter is_empty_2 : is_empty m = true -> Empty m.
       
     (** Specification of [add] *)
-      Parameter add_1 : keq y x -> MapsTo y e (add x e m).
-      Parameter add_2 : ~ keq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
-      Parameter add_3 : ~ keq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
+      Parameter add_1 : y = x -> MapsTo y e (add x e m).
+      Parameter add_2 : x <> y -> MapsTo y e m -> MapsTo y e (add x e' m).
+      Parameter add_3 : x <> y -> MapsTo y e (add x e' m) -> MapsTo y e m.
 
     (** Specification of [remove] *)
-      Parameter remove_1 : keq y x -> ~ In y (remove x m).
-      Parameter remove_2 : ~ keq x y -> MapsTo y e m -> MapsTo y e (remove x m).
+      Parameter remove_1 : y = x -> ~ In y (remove x m).
+      Parameter remove_2 : x <> y -> MapsTo y e m -> MapsTo y e (remove x m).
       Parameter remove_3 : MapsTo y e (remove x m) -> MapsTo y e m.
 
     (** Specification of [find] *)
@@ -177,6 +200,9 @@ Module Type S.
    (** Specification of [equal] *)
      Parameter equal_1 : Equal cmp m m' -> equal cmp m m' = true. 
      Parameter equal_2 : equal cmp m m' = true -> Equal cmp m m'.
+     Parameter equal_3 : (forall e e', cmp e e' =true -> e=e') ->             
+         equal cmp  m m' = true -> m = m'.
+
 
     End Spec. 
    End Types. 
@@ -190,7 +216,9 @@ Module Type S.
     (** Specification of [mapi] *)
       Parameter mapi_1 : forall (elt elt':Set)(m: t elt)(x:key)(e:elt)
         (f:key->elt->elt'), MapsTo x e m -> 
-        exists y, keq y x /\ MapsTo x (f y e) (mapi f m).
+        exists y, y = x /\ MapsTo x (f y e) (mapi f m).
+      (** NB: this awkward formulation could be simplified, 
+            but would break the compatibility with [FMapInterface.S]. *)
       Parameter mapi_2 : forall (elt elt':Set)(m: t elt)(x:key)
         (f:key->elt->elt'), In x (mapi f m) -> In x m.
 
@@ -215,32 +243,6 @@ Module Type S.
 
 End S.
 
+(* A strong map is in particular a regular map *)
+Module ForgetStrong (Map:S) : FMapInterface.S := Map.
 
-Module Type Sord.
- 
-  Declare Module Data : OrderedType.   
-  Declare Module MapS : S. 
-  Import MapS.
-  
-  Definition t := MapS.t Data.t. 
-
-  Parameter eq : t -> t -> Prop.
-  Parameter lt : t -> t -> Prop. 
- 
-  Axiom eq_refl : forall m : t, eq m m.
-  Axiom eq_sym : forall m1 m2 : t, eq m1 m2 -> eq m2 m1.
-  Axiom eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
-  Axiom lt_trans : forall m1 m2 m3 : t, lt m1 m2 -> lt m2 m3 -> lt m1 m3.
-  Axiom lt_not_eq : forall m1 m2 : t, lt m1 m2 -> ~ eq m1 m2.
-
-  Definition cmp e e' := match Data.compare e e' with Eq _ => true | _ => false end.	
-
-  Parameter eq_1 : forall m m', Equal cmp m m' -> eq m m'.
-  Parameter eq_2 : forall m m', eq m m' -> Equal cmp m m'.
-
-  Parameter compare : forall m1 m2, Compare lt eq m1 m2.
-  (** Total ordering between maps. The first argument (in Coq: Data.compare) 
-      is a total ordering used to compare data associated with equal keys 
-      in the two maps. *)
-
-End Sord.
