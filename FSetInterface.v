@@ -197,8 +197,6 @@ Module Type S.
   the set is empty. Which element is chosen is unspecified,
   but equal elements will be chosen for equal sets. *)
   (** Coq comment: [Not_found] is represented by the option type *)
-  (** Coq comment: We do not necessary choose equal elements from 
-     equal sets. *)
 
   Section Spec. 
 
@@ -351,7 +349,7 @@ Module Type S.
   Parameter choose_1 : choose s = Some x -> In x s.
   Parameter choose_2 : choose s = None -> Empty s.
   (*i Parameter choose_equal: 
-      (equal s s')=true -> (compare (choose s) (choose s'))=E. i*)
+      (equal s s')=true -> E.eq (choose s) (choose s'). i*)
 
   End Filter.
   End Spec.

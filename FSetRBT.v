@@ -2133,10 +2133,8 @@ Set Firstorder Depth 5.
 
   Definition choose : forall s : t, {x : elt | In x s} + {Empty s}.
   Proof.
-    intros (s, Hs, Hrb); unfold Empty, In in |- *; simpl in |- *; case s;
-     intuition.
-    right; intros; inversion H.
-    left; exists t1; auto.
+    intro s; destruct (min_elt s) as [(x,(H,_))|H]; 
+       [ left; exists x | right ]; trivial.
   Qed.
 
   (** * Comparison *)
