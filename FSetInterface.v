@@ -527,6 +527,10 @@ End Sdep.
 
 Module OrderedTypeFacts (O: OrderedType). 
 
+  Add Setoid O.t O.eq  
+     (Build_Setoid_Theory _ O.eq_refl O.eq_sym O.eq_trans) 
+     as _eq_.
+
   Lemma gt_not_eq : forall x y : O.t, O.lt y x -> ~ O.eq x y.
   Proof.
    intros; intro; absurd (O.eq y x); auto.
@@ -555,26 +559,35 @@ Module OrderedTypeFacts (O: OrderedType).
   Qed.
 
   Hint Resolve eq_not_gt lt_antirefl lt_not_gt.
-
+ 
   Lemma lt_eq : forall x y z : O.t, O.lt x y -> O.eq y z -> O.lt x z.
   Proof. 
    intros; case (O.compare x z); intros; auto.
+   elimtype False.
    absurd (O.eq x y); eauto.
    absurd (O.eq z y); eauto. 
   Qed. 
- 
+
   Lemma eq_lt : forall x y z : O.t, O.eq x y -> O.lt y z -> O.lt x z.    
   Proof.
-    intros; case (O.compare x z); intros; auto.
+   intros; case (O.compare x z); intros; auto.
    absurd (O.eq y z); eauto.
    absurd (O.eq x y); eauto. 
   Qed. 
 
   Hint Immediate eq_lt lt_eq.
 
+  Add Morphism O.lt : compat_lt. 
+   split; intros.
+   apply lt_eq with x0; auto.
+   apply eq_lt with x1; auto. 
+   apply lt_eq with x3; auto.
+   apply eq_lt with x2; auto.
+  Qed.  
+
   Lemma elim_compare_eq :
    forall x y : O.t,
-   O.eq x y -> exists H : O.eq x y, O.compare x y = FSetInterface.Eq _ H.
+   O.eq x y -> exists H : O.eq x y, O.compare x y = Eq _ H.
   Proof. 
    intros; case (O.compare x y); intros H'.
    absurd (O.eq x y); auto. 
@@ -584,7 +597,7 @@ Module OrderedTypeFacts (O: OrderedType).
 
   Lemma elim_compare_lt :
    forall x y : O.t,
-   O.lt x y -> exists H : O.lt x y, O.compare x y = FSetInterface.Lt _ H.
+   O.lt x y -> exists H : O.lt x y, O.compare x y = Lt _ H.
   Proof. 
    intros; case (O.compare x y); intros H'.
    exists H'; auto.   
@@ -594,7 +607,7 @@ Module OrderedTypeFacts (O: OrderedType).
 
   Lemma elim_compare_gt :
    forall x y : O.t,
-   O.lt y x -> exists H : O.lt y x, O.compare x y = FSetInterface.Gt _ H.
+   O.lt y x -> exists H : O.lt y x, O.compare x y = Gt _ H.
   Proof. 
    intros; case (O.compare x y); intros H'.
    absurd (O.lt x x); eauto.
@@ -602,15 +615,25 @@ Module OrderedTypeFacts (O: OrderedType).
    exists H'; auto.   
   Qed.
 
-  Ltac Comp_eq x y :=
+  Ltac compare := 
+    match goal with 
+      | |- ?e => match e with 
+           | context ctx [ O.compare ?a ?b ] =>
+                let H := fresh in 
+                (destruct (O.compare a b) as [H|H|H]; 
+                 try solve [ intros; elimtype False; apply (absurd False H); eauto])
+         end
+    end.
+
+  Ltac compare_eq x y :=
     elim (elim_compare_eq (x:=x) (y:=y));
      [ intros _1 _2; rewrite _2; clear _1 _2 | auto ]. 
 
-  Ltac Comp_lt x y :=
+  Ltac compare_lt x y :=
     elim (elim_compare_lt (x:=x) (y:=y));
      [ intros _1 _2; rewrite _2; clear _1 _2 | auto ]. 
 
-  Ltac Comp_gt x y :=
+  Ltac compare_gt x y :=
     elim (elim_compare_gt (x:=x) (y:=y));
      [ intros _1 _2; rewrite _2; clear _1 _2 | auto ].
 
@@ -630,13 +653,23 @@ Module OrderedTypeFacts (O: OrderedType).
   Notation Inf := (lelistA O.lt).
   Notation In := (InList O.eq).
 
+  Add Morphism In : compat_In.
+   split; induction 1; intuition; eauto.
+  Qed.  
+
   Lemma In_eq :
    forall (s : list O.t) (x y : O.t), O.eq x y -> In x s -> In y s.
   Proof. 
-   intros; elim H0; intuition; eauto.
+   intros; setoid_rewrite <- H; trivial.
   Qed.
   Hint Immediate In_eq.
-  
+
+  Add Morphism Inf : compat_Inf. 
+   split.
+   induction 1; auto; setoid_rewrite H in H0; auto.
+   induction 1; auto; setoid_rewrite <- H in H0; auto.
+  Qed.   
+
   Lemma Inf_lt :
    forall (s : list O.t) (x y : O.t), O.lt x y -> Inf y s -> Inf x s.
   Proof.

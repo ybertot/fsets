@@ -34,9 +34,9 @@ Notation "[]" := nil (at level 0).
 Module Raw (X: OrderedType).
  
   Module E := X.
-  Module ME := OrderedTypeFacts X.
+  Module MX := OrderedTypeFacts X.
 
-  Definition elt := E.t.
+  Definition elt := X.t.
   Definition t := list elt.
 
   Definition empty : t := [].
@@ -49,7 +49,7 @@ Module Raw (X: OrderedType).
     match s with
     | [] => false
     | y :: l =>
-        match E.compare x y with
+        match X.compare x y with
         | FSetInterface.Lt _ => false
         | FSetInterface.Eq _ => true
         | FSetInterface.Gt _ => mem x l
@@ -60,7 +60,7 @@ Module Raw (X: OrderedType).
     match s with
     | [] => x :: []
     | y :: l =>
-        match E.compare x y with
+        match X.compare x y with
         | FSetInterface.Lt _ => x :: s
         | FSetInterface.Eq _ => s
         | FSetInterface.Gt _ => y :: add x l
@@ -73,7 +73,7 @@ Module Raw (X: OrderedType).
     match s with
     | [] => []
     | y :: l =>
-        match E.compare x y with
+        match X.compare x y with
         | FSetInterface.Lt _ => s
         | FSetInterface.Eq _ => l
         | FSetInterface.Gt _ => y :: remove x l
@@ -88,7 +88,7 @@ Module Raw (X: OrderedType).
            match s' with
            | [] => s
            | x' :: l' =>
-               match E.compare x x' with
+               match X.compare x x' with
                | FSetInterface.Lt _ => x :: union l s'
                | FSetInterface.Eq _ => x :: union l l'
                | FSetInterface.Gt _ => x' :: union_aux l'
@@ -104,7 +104,7 @@ Module Raw (X: OrderedType).
            match s' with
            | [] => []
            | x' :: l' =>
-               match E.compare x x' with
+               match X.compare x x' with
                | FSetInterface.Lt _ => inter l s'
                | FSetInterface.Eq _ => x :: inter l l'
                | FSetInterface.Gt _ => inter_aux l'
@@ -120,7 +120,7 @@ Module Raw (X: OrderedType).
            match s' with
            | [] => s
            | x' :: l' =>
-               match E.compare x x' with
+               match X.compare x x' with
                | FSetInterface.Lt _ => x :: diff l s'
                | FSetInterface.Eq _ => diff l l'
                | FSetInterface.Gt _ => diff_aux l'
@@ -133,7 +133,7 @@ Module Raw (X: OrderedType).
     match s, s' with
     | [], [] => true
     | x :: l, x' :: l' =>
-        match E.compare x x' with
+        match X.compare x x' with
         | FSetInterface.Eq _ => equal l l'
         | _ => false
         end
@@ -144,7 +144,7 @@ Module Raw (X: OrderedType).
     match s, s' with
     | [], _ => true
     | x :: l, x' :: l' =>
-        match E.compare x x' with
+        match X.compare x x' with
         | FSetInterface.Lt _ => false
         | FSetInterface.Eq _ => subset l l'
         | FSetInterface.Gt _ => subset s l'
@@ -206,16 +206,16 @@ Module Raw (X: OrderedType).
 
   (** ** Proofs of set operation specifications. *)
 
-  Definition In : elt -> t -> Prop := InList E.eq.
+  Definition In : elt -> t -> Prop := InList X.eq.
 
-  Notation Sort := (sort E.lt).
-  Notation Inf := (lelistA E.lt).
-  Notation "'In' x l" := (InList E.eq x l) (at level 10, x, l at next level).
+  Notation Sort := (sort X.lt).
+  Notation Inf := (lelistA X.lt).
+  Notation "'In' x l" := (InList X.eq x l) (at level 10, x, l at next level).
 
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
   Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
+    forall y : elt, In y s' <-> X.eq y x \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) (s : t) :=
     forall x : elt, In x s -> P x.
@@ -223,14 +223,14 @@ Module Raw (X: OrderedType).
     exists x : elt, In x s /\ P x.
 
   Definition In_eq :
-    forall (s : t) (x y : elt), E.eq x y -> In x s -> In y s := ME.In_eq.
+    forall (s : t) (x y : elt), X.eq x y -> In x s -> In y s := MX.In_eq.
   Definition Inf_lt :
-    forall (s : t) (x y : elt), E.lt x y -> Inf y s -> Inf x s := ME.Inf_lt.
+    forall (s : t) (x y : elt), X.lt x y -> Inf y s -> Inf x s := MX.Inf_lt.
   Definition Inf_eq :
-    forall (s : t) (x y : elt), E.eq x y -> Inf y s -> Inf x s := ME.Inf_eq.
+    forall (s : t) (x y : elt), X.eq x y -> Inf y s -> Inf x s := MX.Inf_eq.
   Definition In_sort :
-    forall (s : t) (x a : elt), Inf a s -> In x s -> Sort s -> E.lt a x :=
-    ME.In_sort.
+    forall (s : t) (x a : elt), Inf a s -> In x s -> Sort s -> X.lt a x :=
+    MX.In_sort.
   Hint Resolve Inf_lt Inf_eq. 
   Hint Immediate In_eq.
 
@@ -241,12 +241,8 @@ Module Raw (X: OrderedType).
   inversion H.
   inversion_clear Hs.
   inversion_clear H0.
-  simpl in |- *; replace E.compare with X.compare; auto.
-  elim (ME.elim_compare_eq (x:=x) (y:=a));
-   [ intros A B; rewrite B; auto | auto ].
-  simpl in |- *; replace E.compare with X.compare; auto.
-  elim (ME.elim_compare_gt (x:=x) (y:=a));
-   [ intros A B; rewrite B; auto | auto ].
+  simpl; MX.compare; trivial.
+  simpl; MX.compare_gt x a; auto.
   eapply In_sort; eauto.
   Qed.
 
@@ -255,16 +251,16 @@ Module Raw (X: OrderedType).
   simple induction s. 
   intros; inversion H.
   intros a l Hrec x.
-  simpl in |- *; elim (E.compare x a); firstorder.
-  inversion H.
+  simpl.
+  destruct (X.compare x a); firstorder; discriminate.
   Qed.
 
   Lemma add_Inf :
-   forall (s : t) (x a : elt), Inf a s -> E.lt a x -> Inf a (add x s).
+   forall (s : t) (x a : elt), Inf a s -> X.lt a x -> Inf a (add x s).
   Proof.
   simple induction s.  
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion H0;
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition; inversion H0;
    intuition.
   Qed.
   Hint Resolve add_Inf.
@@ -272,17 +268,17 @@ Module Raw (X: OrderedType).
   Lemma add_sort : forall (s : t) (Hs : Sort s) (x : elt), Sort (add x s).
   Proof.
   simple induction s.
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion_clear Hs;
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition; inversion_clear Hs;
    auto.
   Qed. 
 
   Lemma add_1 :
-   forall (s : t) (Hs : Sort s) (x y : elt), E.eq y x -> In y (add x s).
+   forall (s : t) (Hs : Sort s) (x y : elt), X.eq y x -> In y (add x s).
   Proof.
   simple induction s. 
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion_clear Hs;
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition; inversion_clear Hs;
    firstorder.
   eauto.
   Qed.
@@ -291,29 +287,29 @@ Module Raw (X: OrderedType).
    forall (s : t) (Hs : Sort s) (x y : elt), In y s -> In y (add x s).
   Proof.
   simple induction s. 
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition.
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition.
   inversion_clear Hs; inversion_clear H0; eauto.
   Qed.
 
   Lemma add_3 :
    forall (s : t) (Hs : Sort s) (x y : elt),
-   ~ E.eq x y -> In y (add x s) -> In y s.
+   ~ X.eq x y -> In y (add x s) -> In y s.
   Proof.
   simple induction s. 
-  simpl in |- *; intuition.
-  inversion_clear H0; firstorder; absurd (E.eq x y); auto.
-  simpl in |- *; intros a l Hrec Hs x y; case (E.compare x a); intros;
+  simpl; intuition.
+  inversion_clear H0; firstorder; absurd (X.eq x y); auto.
+  simpl; intros a l Hrec Hs x y; case (X.compare x a); intros;
    inversion_clear H0; inversion_clear Hs; firstorder; 
-   absurd (E.eq x y); auto.
+   absurd (X.eq x y); auto.
   Qed.
 
   Lemma remove_Inf :
    forall (s : t) (Hs : Sort s) (x a : elt), Inf a s -> Inf a (remove x s).
   Proof.
   simple induction s.  
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion_clear H0;
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition; inversion_clear H0;
    firstorder.
   inversion_clear Hs; firstorder; eauto.
   Qed.
@@ -323,68 +319,68 @@ Module Raw (X: OrderedType).
    forall (s : t) (Hs : Sort s) (x : elt), Sort (remove x s).
   Proof.
   simple induction s.
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion_clear Hs;
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition; inversion_clear Hs;
    auto.
   Qed. 
 
   Lemma remove_1 :
-   forall (s : t) (Hs : Sort s) (x y : elt), E.eq y x -> ~ In y (remove x s).
+   forall (s : t) (Hs : Sort s) (x y : elt), X.eq y x -> ~ In y (remove x s).
   Proof.
   simple induction s. 
-  simpl in |- *; red in |- *; intros; inversion H0.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion_clear Hs. 
+  simpl; red; intros; inversion H0.
+  simpl; intros; case (X.compare x a); intuition; inversion_clear Hs. 
   inversion_clear H1.
-  absurd (E.eq x a); eauto. 
-  absurd (E.lt a x); auto; eapply In_sort; eauto.
-  absurd (E.lt a x); auto; eapply In_sort; eauto.
+  absurd (X.eq x a); eauto. 
+  absurd (X.lt a x); auto; eapply In_sort; eauto.
+  absurd (X.lt a x); auto; eapply In_sort; eauto.
   inversion_clear H1; firstorder. 
-  absurd (E.eq x a); eauto.
+  absurd (X.eq x a); eauto.
   Qed.
 
   Lemma remove_2 :
    forall (s : t) (Hs : Sort s) (x y : elt),
-   ~ E.eq x y -> In y s -> In y (remove x s).
+   ~ X.eq x y -> In y s -> In y (remove x s).
   Proof.
   simple induction s. 
-  simpl in |- *; intuition.
-  simpl in |- *; intros; case (E.compare x a); intuition; inversion_clear Hs;
+  simpl; intuition.
+  simpl; intros; case (X.compare x a); intuition; inversion_clear Hs;
    inversion_clear H1; auto. 
-  absurd (E.eq x y); eauto. 
+  absurd (X.eq x y); eauto. 
   Qed.
 
   Lemma remove_3 :
    forall (s : t) (Hs : Sort s) (x y : elt), In y (remove x s) -> In y s.
   Proof.
   simple induction s. 
-  simpl in |- *; intuition.
-  simpl in |- *; intros a l Hrec Hs x y; case (E.compare x a); intuition.
+  simpl; intuition.
+  simpl; intros a l Hrec Hs x y; case (X.compare x a); intuition.
   inversion_clear Hs; inversion_clear H; firstorder.
   Qed.
   
   Lemma singleton_sort : forall x : elt, Sort (singleton x).
   Proof.
-  unfold singleton in |- *; simpl in |- *; firstorder.
+  unfold singleton; simpl; firstorder.
   Qed.
 
-  Lemma singleton_1 : forall x y : elt, In y (singleton x) -> E.eq x y.
+  Lemma singleton_1 : forall x y : elt, In y (singleton x) -> X.eq x y.
   Proof.
-  unfold singleton in |- *; simpl in |- *; intuition.
+  unfold singleton; simpl; intuition.
   inversion_clear H; auto; inversion H0.
   Qed. 
 
-  Lemma singleton_2 : forall x y : elt, E.eq x y -> In y (singleton x).
+  Lemma singleton_2 : forall x y : elt, X.eq x y -> In y (singleton x).
   Proof.
-  unfold singleton in |- *; simpl in |- *; intuition.
+  unfold singleton; simpl; intuition.
   Qed. 
 
   Ltac DoubleInd :=
     simple induction s;
-     [ simpl in |- *; auto; try solve [ intros; inversion H ]
+     [ simpl; auto; try solve [ intros; inversion H ]
      | intros x l Hrec; simple induction s';
-        [ simpl in |- *; auto; try solve [ intros; inversion H ]
+        [ simpl; auto; try solve [ intros; inversion H ]
         | intros x' l' Hrec' Hs Hs'; inversion Hs; inversion Hs'; subst;
-           simpl in |- * ] ].
+           simpl ] ].
 
   Lemma union_Inf :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s') (a : elt),
@@ -392,23 +388,23 @@ Module Raw (X: OrderedType).
   Proof.
   DoubleInd.
   intros i His His'; inversion_clear His; inversion_clear His'.
-  case (E.compare x x'); firstorder.
+  case (X.compare x x'); firstorder.
   Qed.
   Hint Resolve union_Inf.
  
   Lemma union_sort :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), Sort (union s s').
   Proof.
-  DoubleInd; case (E.compare x x'); intuition; constructor; auto.
+  DoubleInd; case (X.compare x x'); intuition; constructor; auto.
   eauto.
-  change (Inf x' (union (x :: l) l')) in |- *; firstorder.
+  change (Inf x' (union (x :: l) l')); firstorder.
   Qed.  
   
   Lemma union_1 :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s') (x : elt),
    In x (union s s') -> In x s \/ In x s'.
   Proof.
-  DoubleInd; case (E.compare x x'); intuition; inversion_clear H; intuition.
+  DoubleInd; case (X.compare x x'); intuition; inversion_clear H; intuition.
   elim (Hrec (x' :: l') H1 Hs' x0); intuition.
   elim (Hrec l' H1 H5 x0); intuition.
   elim (H0 x0); intuition.
@@ -419,7 +415,7 @@ Module Raw (X: OrderedType).
    In x s -> In x (union s s').
   Proof.
   DoubleInd.
-  intros i Hi; case (E.compare x x'); intuition; inversion_clear Hi; auto.
+  intros i Hi; case (X.compare x x'); intuition; inversion_clear Hi; auto.
   Qed.
 
   Lemma union_3 :
@@ -427,7 +423,7 @@ Module Raw (X: OrderedType).
    In x s' -> In x (union s s').
   Proof.
   DoubleInd. 
-  intros i Hi; case (E.compare x x'); inversion_clear Hi; intuition; eauto.
+  intros i Hi; case (X.compare x x'); inversion_clear Hi; intuition; eauto.
   Qed.
     
   Lemma inter_Inf :
@@ -436,21 +432,21 @@ Module Raw (X: OrderedType).
   Proof.
   DoubleInd.
   intros i His His'; inversion His; inversion His'; subst.
-  case (E.compare x x'); intuition; eauto.
+  case (X.compare x x'); intuition; eauto.
   Qed.
   Hint Resolve inter_Inf. 
 
   Lemma inter_sort :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), Sort (inter s s').
   Proof.
-  DoubleInd; case (E.compare x x'); eauto.
+  DoubleInd; case (X.compare x x'); eauto.
   Qed.  
   
   Lemma inter_1 :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s') (x : elt),
    In x (inter s s') -> In x s.
   Proof.
-  DoubleInd; case (E.compare x x'); intuition.
+  DoubleInd; case (X.compare x x'); intuition.
   eauto. 
   inversion_clear H; eauto.
   Qed.
@@ -459,7 +455,7 @@ Module Raw (X: OrderedType).
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s') (x : elt),
    In x (inter s s') -> In x s'.
   Proof.
-  DoubleInd; case (E.compare x x'); intuition; inversion_clear H; eauto. 
+  DoubleInd; case (X.compare x x'); intuition; inversion_clear H; eauto. 
   Qed.
 
   Lemma inter_3 :
@@ -467,22 +463,22 @@ Module Raw (X: OrderedType).
    In x s -> In x s' -> In x (inter s s').
   Proof.
   DoubleInd.
-  intros i His His'; elim (E.compare x x'); intuition.
+  intros i His His'; elim (X.compare x x'); intuition.
 
   inversion_clear His. 
-  absurd (E.lt i x); eauto.
+  absurd (X.lt i x); eauto.
   apply In_sort with (x' :: l'); auto.
-  constructor; eapply ME.eq_lt; eauto.
+  constructor; eapply MX.eq_lt; eauto.
   eapply In_eq; eauto.
   eapply In_eq; eauto.
 
   inversion_clear His; [ eauto | inversion_clear His' ]; eauto.
 
-  change (In i (inter (x :: l) l')) in |- *. 
+  change (In i (inter (x :: l) l')). 
   inversion_clear His'.
-  absurd (E.lt i x'); eauto.
+  absurd (X.lt i x'); eauto.
   apply In_sort with (x :: l); auto. 
-  constructor; eapply ME.eq_lt; eauto.
+  constructor; eapply MX.eq_lt; eauto.
   eapply In_eq; eauto.
   eapply In_eq; eauto.
   Qed.
@@ -493,21 +489,21 @@ Module Raw (X: OrderedType).
   Proof.
   DoubleInd.
   intros i His His'; inversion His; inversion His'.
-  case (E.compare x x'); intuition; eauto.
+  case (X.compare x x'); intuition; eauto.
   Qed.
   Hint Resolve diff_Inf. 
 
   Lemma diff_sort :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), Sort (diff s s').
   Proof.
-  DoubleInd; case (E.compare x x'); eauto.
+  DoubleInd; case (X.compare x x'); eauto.
   Qed.  
   
   Lemma diff_1 :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s') (x : elt),
    In x (diff s s') -> In x s.
   Proof.
-  DoubleInd; case (E.compare x x'); intuition.
+  DoubleInd; case (X.compare x x'); intuition.
   inversion_clear H; eauto.
   eauto.
   Qed.
@@ -518,23 +514,23 @@ Module Raw (X: OrderedType).
   Proof.
   DoubleInd.
   intros; intro Abs; inversion Abs. 
-  case (E.compare x x'); intuition.
+  case (X.compare x x'); intuition.
 
   inversion_clear H.
-  absurd (E.lt x x); eauto. 
+  absurd (X.lt x x); eauto. 
   apply In_sort with (x' :: l'); auto. 
   eapply In_eq; eauto.
   eauto.
   
   inversion_clear H3.
   generalize (diff_1 H1 H5 H); intros. 
-  absurd (E.lt x x0); eauto.
+  absurd (X.lt x x0); eauto.
   apply In_sort with l; eauto.
   eauto.
   
   inversion_clear H3. 
   generalize (diff_1 Hs H5 H); intros. 
-  absurd (E.lt x' x'); eauto.
+  absurd (X.lt x' x'); eauto.
   apply In_sort with (x :: l); auto.
   eapply In_eq; eauto.
   eauto.  
@@ -545,7 +541,7 @@ Module Raw (X: OrderedType).
    In x s -> ~ In x s' -> In x (diff s s').
   Proof.
   DoubleInd.
-  intros i His His'; elim (E.compare x x'); intuition; inversion_clear His.
+  intros i His His'; elim (X.compare x x'); intuition; inversion_clear His.
   eauto.
   eauto.
   elim His'; eauto.
@@ -556,49 +552,49 @@ Module Raw (X: OrderedType).
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'),
    Equal s s' -> equal s s' = true.
   Proof.
-  simple induction s; unfold Equal in |- *.
+  simple induction s; unfold Equal.
   intro s'; case s'; auto.
-  simpl in |- *; intuition.
+  simpl; intuition.
   elim (H e); intros; assert (A : In e []); auto; inversion A.
   intros x l Hrec s'.
   case s'.
   intros; elim (H x); intros; assert (A : In x []); auto; inversion A.
   intros x' l' Hs Hs'; inversion Hs; inversion Hs'; subst.
-  simpl in |- *; case (E.compare x); intros; auto.
+  simpl; case (X.compare x); intros; auto.
 
   elim (H x); intros.
   assert (A : In x (x' :: l')); auto; inversion_clear A.
-  absurd (E.eq x x'); eauto.
-  absurd (E.lt x' x); auto.
+  absurd (X.eq x x'); eauto.
+  absurd (X.lt x' x); auto.
   apply In_sort with l'; eauto.
   
   apply Hrec; intuition; elim (H a); intros.
   assert (A : In a (x' :: l')); auto; inversion_clear A; auto.
-  absurd (E.lt x' x); auto. 
+  absurd (X.lt x' x); auto. 
   apply In_sort with l; auto;
    [ apply Inf_eq with x; auto | apply In_eq with a; eauto ].
   assert (A : In a (x :: l)); auto; inversion_clear A; auto.
-  absurd (E.lt x x'); auto. 
+  absurd (X.lt x x'); auto. 
   apply In_sort with l'; auto;
    [ apply Inf_eq with x'; auto | apply In_eq with a; eauto ].
 
   elim (H x'); intros.
   assert (A : In x' (x :: l)); auto; inversion_clear A.
-  absurd (E.eq x' x); eauto.
-  absurd (E.lt x x'); auto.
+  absurd (X.eq x' x); eauto.
+  absurd (X.lt x x'); auto.
   apply In_sort with l; eauto.
   Qed.
 
   Lemma equal_2 : forall s s' : t, equal s s' = true -> Equal s s'.
   Proof.
-  simple induction s; unfold Equal in |- *.
+  simple induction s; unfold Equal.
   intro s'; case s'; intros.
   intuition.
   simpl in H; discriminate H.
   intros x l Hrec s'.
   case s'.
   intros; simpl in H; discriminate H.
-  intros x' l'; simpl in |- *; case (E.compare x); intros; auto.
+  intros x' l'; simpl; case (X.compare x); intros; auto.
   discriminate H.
   elim (Hrec l' H a); intuition; inversion_clear H2; eauto.
   discriminate H.  
@@ -609,42 +605,42 @@ Module Raw (X: OrderedType).
    Subset s s' -> subset s s' = true.
   Proof.
   intros s s'; generalize s' s; clear s s'.
-  simple induction s'; unfold Subset in |- *.
+  simple induction s'; unfold Subset.
   intro s; case s; auto.
   intros; elim (H e); intros; assert (A : In e []); auto; inversion A. 
   intros x' l' Hrec s; case s.
-  simpl in |- *; auto.
+  simpl; auto.
   intros x l Hs Hs'; inversion Hs; inversion Hs'; subst.
-  simpl in |- *; case (E.compare x); intros; auto.
+  simpl; case (X.compare x); intros; auto.
 
   assert (A : In x (x' :: l')); auto; inversion_clear A.
-  absurd (E.eq x x'); eauto.
-  absurd (E.lt x' x); auto.
+  absurd (X.eq x x'); eauto.
+  absurd (X.lt x' x); auto.
   apply In_sort with l'; eauto.
   
   apply Hrec; intuition.
   assert (A : In a (x' :: l')); auto; inversion_clear A; auto.
-  absurd (E.lt x' x); auto. 
+  absurd (X.lt x' x); auto. 
   apply In_sort with l; auto;
    [ apply Inf_eq with x; auto | apply In_eq with a; eauto ].
 
   apply Hrec; intuition.
   assert (A : In a (x' :: l')); auto; inversion_clear A; auto.
   inversion_clear H0.  
-  absurd (E.lt x' x); eauto.
-  absurd (E.lt x x'); auto. 
+  absurd (X.lt x' x); eauto.
+  absurd (X.lt x x'); auto. 
   apply In_sort with l; eauto.
   Qed.
 
   Lemma subset_2 : forall s s' : t, subset s s' = true -> Subset s s'.
   Proof.
   intros s s'; generalize s' s; clear s s'.
-  simple induction s'; unfold Subset in |- *.
+  simple induction s'; unfold Subset.
   intro s; case s; auto.
-  simpl in |- *; intros; discriminate H.
+  simpl; intros; discriminate H.
   intros x' l' Hrec s; case s.
   intros; inversion H0.
-  intros x l; simpl in |- *; case (E.compare x); intros; auto.
+  intros x l; simpl; case (X.compare x); intros; auto.
   discriminate H.  
   inversion_clear H0; eauto.
   eauto.
@@ -652,51 +648,51 @@ Module Raw (X: OrderedType).
   
   Lemma empty_sort : Sort empty.
   Proof.
-  unfold empty in |- *; constructor.
+  unfold empty; constructor.
   Qed.
 
   Lemma empty_1 : Empty empty.
   Proof.
-  unfold Empty, empty in |- *; intuition; inversion H.
+  unfold Empty, empty; intuition; inversion H.
   Qed. 
 
   Lemma is_empty_1 : forall s : t, Empty s -> is_empty s = true.
   Proof.
-  unfold Empty in |- *; intro s; case s; simpl in |- *; intuition.
+  unfold Empty; intro s; case s; simpl; intuition.
   elim (H e); auto.
   Qed.
   
   Lemma is_empty_2 : forall s : t, is_empty s = true -> Empty s. 
   Proof.
-  unfold Empty in |- *; intro s; case s; simpl in |- *; intuition;
+  unfold Empty; intro s; case s; simpl; intuition;
    inversion H0.
   Qed.
 
   Lemma elements_1 : forall (s : t) (x : elt), In x s -> In x (elements s).
   Proof.
-  unfold elements in |- *; auto.
+  unfold elements; auto.
   Qed.
 
   Lemma elements_2 : forall (s : t) (x : elt), In x (elements s) -> In x s.
   Proof. 
-  unfold elements in |- *; auto.
+  unfold elements; auto.
   Qed.
  
   Lemma elements_3 : forall (s : t) (Hs : Sort s), Sort (elements s).  
   Proof. 
-  unfold elements in |- *; auto.
+  unfold elements; auto.
   Qed.
 
   Lemma min_elt_1 : forall (s : t) (x : elt), min_elt s = Some x -> In x s. 
   Proof.
-  intro s; case s; simpl in |- *; intros; inversion H; auto.
+  intro s; case s; simpl; intros; inversion H; auto.
   Qed.  
 
   Lemma min_elt_2 :
    forall (s : t) (Hs : Sort s) (x y : elt),
-   min_elt s = Some x -> In y s -> ~ E.lt y x. 
+   min_elt s = Some x -> In y s -> ~ X.lt y x. 
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intros; inversion H.
   intros a l; case l; intros; inversion H0; inversion_clear H1; subst. 
   eauto.
@@ -704,20 +700,20 @@ Module Raw (X: OrderedType).
   eauto.
   inversion_clear Hs.
   inversion_clear H3.
-  intro; absurd (E.lt y e); eauto.
+  intro; absurd (X.lt y e); eauto.
   Qed. 
 
   Lemma min_elt_3 : forall s : t, min_elt s = None -> Empty s.
   Proof.
-  unfold Empty in |- *; intro s; case s; simpl in |- *; intuition;
+  unfold Empty; intro s; case s; simpl; intuition;
    inversion H; inversion H0.
   Qed.
 
   Lemma max_elt_1 : forall (s : t) (x : elt), max_elt s = Some x -> In x s. 
   Proof. 
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intros; inversion H.
-  intros x l; case l; simpl in |- *.
+  intros x l; case l; simpl.
   intuition.
   inversion H0; auto.
   eauto.
@@ -725,29 +721,29 @@ Module Raw (X: OrderedType).
  
   Lemma max_elt_2 :
    forall (s : t) (Hs : Sort s) (x y : elt),
-   max_elt s = Some x -> In y s -> ~ E.lt x y. 
+   max_elt s = Some x -> In y s -> ~ X.lt x y. 
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intros; inversion H.
-  intros x l; case l; simpl in |- *.
+  intros x l; case l; simpl.
   intuition.
   inversion H0; subst.
   inversion_clear H1.
-  absurd (E.eq y x0); auto. 
+  absurd (X.eq y x0); auto. 
   inversion H3.
   intros; inversion_clear Hs; inversion_clear H3; inversion_clear H1.
-  assert (~ E.lt x0 e).
+  assert (~ X.lt x0 e).
    eapply H; eauto.
   intro.
-  elim H1; apply E.lt_trans with x; auto; eapply ME.lt_eq; eauto.
+  elim H1; apply X.lt_trans with x; auto; eapply MX.lt_eq; eauto.
   eapply H; eauto.
   Qed. 
 
   Lemma max_elt_3 : forall s : t, max_elt s = None -> Empty s.
   Proof.
-  unfold Empty in |- *; simple induction s; simpl in |- *.
-  red in |- *; intros; inversion H0.
-  intros x l; case l; simpl in |- *; intros.
+  unfold Empty; simple induction s; simpl.
+  red; intros; inversion H0.
+  intros x l; case l; simpl; intros.
   inversion H0.
   elim (H H0 e); auto.
   Qed.
@@ -760,12 +756,12 @@ Module Raw (X: OrderedType).
   Lemma fold_1 :
    forall (s : t) (Hs : Sort s) (A : Set) (i : A) (f : elt -> A -> A),
    exists l : list elt,
-     Unique E.eq l /\
+     Unique X.eq l /\
      (forall x : elt, In x s <-> In x l) /\ fold f s i = fold_right f i l.
   Proof.
   intros; exists s; split; intuition.
-  apply ME.Sort_Unique; auto.
-  induction  s as [| a s Hrecs]; simpl in |- *; trivial.
+  apply MX.Sort_Unique; auto.
+  induction  s as [| a s Hrecs]; simpl; trivial.
   rewrite Hrecs; trivial.
   inversion_clear Hs; trivial.
   Qed.
@@ -773,12 +769,12 @@ Module Raw (X: OrderedType).
   Lemma cardinal_1 :
    forall (s : t) (Hs : Sort s),
    exists l : list elt,
-     Unique E.eq l /\
+     Unique X.eq l /\
      (forall x : elt, In x s <-> In x l) /\ cardinal s = length l.
   Proof.
   intros; exists s; split; intuition.
-  apply ME.Sort_Unique; auto.  
-  unfold cardinal in |- *; induction  s as [| a s Hrecs]; simpl in |- *;
+  apply MX.Sort_Unique; auto.  
+  unfold cardinal; induction  s as [| a s Hrecs]; simpl;
    trivial.
   rewrite Hrecs; trivial.
   inversion_clear Hs; trivial.
@@ -788,7 +784,7 @@ Module Raw (X: OrderedType).
    forall (s : t) (Hs : Sort s) (x : elt) (f : elt -> bool),
    Inf x s -> Inf x (filter f s).
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intuition.  
   intros x l Hrec Hs a f Ha; inversion_clear Hs; inversion Ha.
   case (f x); [ constructor; auto | eauto ]. 
@@ -797,7 +793,7 @@ Module Raw (X: OrderedType).
   Lemma filter_sort :
    forall (s : t) (Hs : Sort s) (f : elt -> bool), Sort (filter f s).
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   auto.
   intros x l Hrec Hs f; inversion_clear Hs.
   case (f x); auto.
@@ -807,56 +803,56 @@ Module Raw (X: OrderedType).
 
   Lemma filter_1 :
    forall (s : t) (x : elt) (f : elt -> bool),
-   compat_bool E.eq f -> In x (filter f s) -> In x s.
+   compat_bool X.eq f -> In x (filter f s) -> In x s.
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  case (f x); simpl in |- *; firstorder.
+  case (f x); simpl; firstorder.
   inversion H; firstorder.
   Qed.
 
    Lemma filter_2 :
     forall (s : t) (x : elt) (f : elt -> bool),
-    compat_bool E.eq f -> In x (filter f s) -> f x = true.   
+    compat_bool X.eq f -> In x (filter f s) -> f x = true.   
    Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  generalize (Hf x); case (f x); simpl in |- *; firstorder.
+  generalize (Hf x); case (f x); simpl; firstorder.
   inversion H0; firstorder.
-  symmetry  in |- *; firstorder.
+  symmetry ; firstorder.
   Qed.
  
   Lemma filter_3 :
    forall (s : t) (x : elt) (f : elt -> bool),
-   compat_bool E.eq f -> In x s -> f x = true -> In x (filter f s).     
+   compat_bool X.eq f -> In x s -> f x = true -> In x (filter f s).     
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  generalize (Hf x); case (f x); simpl in |- *; firstorder; inversion H0;
+  generalize (Hf x); case (f x); simpl; firstorder; inversion H0;
    firstorder.
   rewrite <- (H a) in H1; auto; discriminate H1.
   Qed.
 
   Lemma for_all_1 :
    forall (s : t) (f : elt -> bool),
-   compat_bool E.eq f ->
+   compat_bool X.eq f ->
    For_all (fun x => f x = true) s -> for_all f s = true.
   Proof. 
-  simple induction s; simpl in |- *; auto; unfold For_all in |- *.
+  simple induction s; simpl; auto; unfold For_all.
   intros x l Hrec f Hf. 
-  generalize (Hf x); case (f x); simpl in |- *; firstorder. 
+  generalize (Hf x); case (f x); simpl; firstorder. 
   rewrite (H x); auto.
   Qed.
 
   Lemma for_all_2 :
    forall (s : t) (f : elt -> bool),
-   compat_bool E.eq f ->
+   compat_bool X.eq f ->
    for_all f s = true -> For_all (fun x => f x = true) s.
   Proof. 
-  simple induction s; simpl in |- *; auto; unfold For_all in |- *.
+  simple induction s; simpl; auto; unfold For_all.
   intros; inversion H1.
   intros x l Hrec f Hf. 
   intros A a; intros. 
@@ -869,14 +865,14 @@ Module Raw (X: OrderedType).
 
   Lemma exists_1 :
    forall (s : t) (f : elt -> bool),
-   compat_bool E.eq f -> Exists (fun x => f x = true) s -> exists_ f s = true.
+   compat_bool X.eq f -> Exists (fun x => f x = true) s -> exists_ f s = true.
   Proof.
-  simple induction s; simpl in |- *; auto; unfold Exists in |- *.
+  simple induction s; simpl; auto; unfold Exists.
   intros.
   elim H0; intuition. 
   inversion H2.
   intros x l Hrec f Hf. 
-  generalize (Hf x); case (f x); simpl in |- *; firstorder. 
+  generalize (Hf x); case (f x); simpl; firstorder. 
   inversion_clear H0.
   absurd (false = true); auto with bool.
   rewrite (H x); auto.
@@ -887,12 +883,12 @@ Module Raw (X: OrderedType).
 
   Lemma exists_2 :
    forall (s : t) (f : elt -> bool),
-   compat_bool E.eq f -> exists_ f s = true -> Exists (fun x => f x = true) s.
+   compat_bool X.eq f -> exists_ f s = true -> Exists (fun x => f x = true) s.
   Proof. 
-  simple induction s; simpl in |- *; auto; unfold Exists in |- *.
+  simple induction s; simpl; auto; unfold Exists.
   intros; discriminate.
   intros x l Hrec f Hf.
-  generalize (refl_equal (f x)); pattern (f x) at -1 in |- *; case (f x). 
+  generalize (refl_equal (f x)); pattern (f x) at -1; case (f x). 
   intros; exists x; auto.
   intros; elim (Hrec f); auto; firstorder.
   Qed.
@@ -901,11 +897,11 @@ Module Raw (X: OrderedType).
    forall (s : t) (Hs : Sort s) (f : elt -> bool) (x : elt),
    Inf x s -> Inf x (fst (partition f s)).
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intuition.  
   intros x l Hrec Hs f a Ha; inversion_clear Hs; inversion Ha.
   generalize (Hrec H f a).
-  case (f x); case (partition f l); simpl in |- *.
+  case (f x); case (partition f l); simpl.
   intros; constructor; auto.
   eauto.
   Qed.
@@ -914,11 +910,11 @@ Module Raw (X: OrderedType).
    forall (s : t) (Hs : Sort s) (f : elt -> bool) (x : elt),
    Inf x s -> Inf x (snd (partition f s)).
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   intuition.  
   intros x l Hrec Hs f a Ha; inversion_clear Hs; inversion Ha.
   generalize (Hrec H f a).
-  case (f x); case (partition f l); simpl in |- *.
+  case (f x); case (partition f l); simpl.
   eauto.
   intros; constructor; auto.
   Qed.
@@ -926,72 +922,72 @@ Module Raw (X: OrderedType).
   Lemma partition_sort_1 :
    forall (s : t) (Hs : Sort s) (f : elt -> bool), Sort (fst (partition f s)).
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   auto.
   intros x l Hrec Hs f; inversion_clear Hs.
   generalize (Hrec H f); generalize (partition_Inf_1 H f).
-  case (f x); case (partition f l); simpl in |- *; auto.
+  case (f x); case (partition f l); simpl; auto.
   Qed.
   
   Lemma partition_sort_2 :
    forall (s : t) (Hs : Sort s) (f : elt -> bool), Sort (snd (partition f s)).
   Proof.
-  simple induction s; simpl in |- *.
+  simple induction s; simpl.
   auto.
   intros x l Hrec Hs f; inversion_clear Hs.
   generalize (Hrec H f); generalize (partition_Inf_2 H f).
-  case (f x); case (partition f l); simpl in |- *; auto.
+  case (f x); case (partition f l); simpl; auto.
   Qed.
 
   Lemma partition_1 :
    forall (s : t) (f : elt -> bool),
-   compat_bool E.eq f -> Equal (fst (partition f s)) (filter f s).
+   compat_bool X.eq f -> Equal (fst (partition f s)) (filter f s).
   Proof.
-  simple induction s; simpl in |- *; auto; unfold Equal in |- *.
+  simple induction s; simpl; auto; unfold Equal.
   firstorder.
   intros x l Hrec f Hf.
   generalize (Hrec f Hf); clear Hrec.
-  case (partition f l); intros s1 s2; simpl in |- *; intros.
-  case (f x); simpl in |- *; firstorder; inversion H0; intros; firstorder. 
+  case (partition f l); intros s1 s2; simpl; intros.
+  case (f x); simpl; firstorder; inversion H0; intros; firstorder. 
   Qed.
    
   Lemma partition_2 :
    forall (s : t) (f : elt -> bool),
-   compat_bool E.eq f ->
+   compat_bool X.eq f ->
    Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
   Proof.
-  simple induction s; simpl in |- *; auto; unfold Equal in |- *.
+  simple induction s; simpl; auto; unfold Equal.
   firstorder.
   intros x l Hrec f Hf. 
   generalize (Hrec f Hf); clear Hrec.
-  case (partition f l); intros s1 s2; simpl in |- *; intros.
-  case (f x); simpl in |- *; firstorder; inversion H0; intros; firstorder. 
+  case (partition f l); intros s1 s2; simpl; intros.
+  case (f x); simpl; firstorder; inversion H0; intros; firstorder. 
   Qed.
  
   Definition eq : t -> t -> Prop := Equal.
 
   Lemma eq_refl : forall s : t, eq s s. 
   Proof. 
-  unfold eq, Equal in |- *; intuition.
+  unfold eq, Equal; intuition.
   Qed.
 
   Lemma eq_sym : forall s s' : t, eq s s' -> eq s' s.
   Proof. 
-  unfold eq, Equal in |- *; firstorder.
+  unfold eq, Equal; firstorder.
   Qed.
 
   Lemma eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
   Proof. 
-  unfold eq, Equal in |- *; firstorder.
+  unfold eq, Equal; firstorder.
   Qed.
 
   Inductive lt : t -> t -> Prop :=
     | lt_nil : forall (x : elt) (s : t), lt [] (x :: s)
     | lt_cons_lt :
-        forall (x y : elt) (s s' : t), E.lt x y -> lt (x :: s) (y :: s')
+        forall (x y : elt) (s s' : t), X.lt x y -> lt (x :: s) (y :: s')
     | lt_cons_eq :
         forall (x y : elt) (s s' : t),
-        E.eq x y -> lt s s' -> lt (x :: s) (y :: s').
+        X.eq x y -> lt s s' -> lt (x :: s) (y :: s').
   Hint Constructors lt.
    
   Lemma lt_trans : forall s s' s'' : t, lt s s' -> lt s' s'' -> lt s s''.
@@ -1000,17 +996,17 @@ Module Raw (X: OrderedType).
   intros x l s'' H'; inversion_clear H'; auto.
   intros x x' l l' E s'' H'; inversion_clear H'; auto. 
   eauto.
-  constructor 2; apply ME.lt_eq with x'; auto.
+  constructor 2; apply MX.lt_eq with x'; auto.
   intros.
   inversion_clear H3.
-  constructor 2; apply ME.eq_lt with y; auto.
+  constructor 2; apply MX.eq_lt with y; auto.
   constructor 3; eauto.  
   Qed. 
 
   Lemma lt_not_eq :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), lt s s' -> ~ eq s s'.
   Proof. 
-  unfold eq, Equal in |- *. 
+  unfold eq, Equal. 
   intros s s' Hs Hs' H; generalize Hs Hs'; clear Hs Hs'; elim H; intros;
    intro.
   elim (H0 x); intros.
@@ -1018,18 +1014,18 @@ Module Raw (X: OrderedType).
   inversion_clear Hs; inversion_clear Hs'.
   elim (H1 x); intros. 
   assert (X : In x (y :: s'0)); auto; inversion_clear X.
-  absurd (E.eq x y); eauto.
-  absurd (E.lt y x); auto.
+  absurd (X.eq x y); eauto.
+  absurd (X.lt y x); auto.
   eapply In_sort; eauto.
   inversion_clear Hs; inversion_clear Hs'.
   elim H2; auto; intuition.
   elim (H3 a); intros.
   assert (X : In a (y :: s'0)); auto; inversion_clear X; auto.
-  absurd (E.lt x a); eauto.
+  absurd (X.lt x a); eauto.
   eapply In_sort with s0; eauto.
   elim (H3 a); intros.
   assert (X : In a (x :: s0)); auto; inversion_clear X; auto.
-  absurd (E.lt y a); eauto.
+  absurd (X.lt y a); eauto.
   eapply In_sort with s'0; eauto.
   Qed.
 
@@ -1043,14 +1039,14 @@ Module Raw (X: OrderedType).
   intros a l Hrec s'; case s'.
   constructor 3; auto.
   intros a' l' Hs Hs'.
-  case (E.compare a a'); [ constructor 1 | idtac | constructor 3 ]; auto.
+  case (X.compare a a'); [ constructor 1 | idtac | constructor 3 ]; auto.
   elim (Hrec l');
    [ constructor 1
    | constructor 2
    | constructor 3
    | inversion Hs
    | inversion Hs' ]; auto.
-  generalize e; unfold eq, Equal in |- *; intuition; inversion_clear H; eauto;
+  generalize e; unfold eq, Equal; intuition; inversion_clear H; eauto;
    elim (e1 a0); auto.
   Defined.
 
@@ -1066,7 +1062,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Module E := X.
  Module Raw := Raw X. 
 
- Record slist : Set :=  {this :> Raw.t; sorted : sort E.lt this}.
+ Record slist : Set :=  {this :> Raw.t; sorted : sort X.lt this}.
  Definition t := slist. 
  Definition elt := X.t.
  
@@ -1074,7 +1070,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
  Definition Subset s s' := forall a : elt, In a s -> In a s'.
  Definition Add (x : elt) (s s' : t) :=
-   forall y : elt, In y s' <-> E.eq y x \/ In y s.
+   forall y : elt, In y s' <-> X.eq y x \/ In y s.
  Definition Empty s := forall a : elt, ~ In a s.
  Definition For_all (P : elt -> Prop) (s : t) :=
    forall x : elt, In x s -> P x.
