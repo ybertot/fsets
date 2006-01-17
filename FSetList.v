@@ -50,9 +50,9 @@ Module Raw (X: OrderedType).
     | [] => false
     | y :: l =>
         match X.compare x y with
-        | FSetInterface.Lt _ => false
-        | FSetInterface.Eq _ => true
-        | FSetInterface.Gt _ => mem x l
+        | Lt _ => false
+        | Eq _ => true
+        | Gt _ => mem x l
         end
     end.
 
@@ -61,9 +61,9 @@ Module Raw (X: OrderedType).
     | [] => x :: []
     | y :: l =>
         match X.compare x y with
-        | FSetInterface.Lt _ => x :: s
-        | FSetInterface.Eq _ => s
-        | FSetInterface.Gt _ => y :: add x l
+        | Lt _ => x :: s
+        | Eq _ => s
+        | Gt _ => y :: add x l
         end
     end.
 
@@ -74,9 +74,9 @@ Module Raw (X: OrderedType).
     | [] => []
     | y :: l =>
         match X.compare x y with
-        | FSetInterface.Lt _ => s
-        | FSetInterface.Eq _ => l
-        | FSetInterface.Gt _ => y :: remove x l
+        | Lt _ => s
+        | Eq _ => l
+        | Gt _ => y :: remove x l
         end
     end.  
   
@@ -89,9 +89,9 @@ Module Raw (X: OrderedType).
            | [] => s
            | x' :: l' =>
                match X.compare x x' with
-               | FSetInterface.Lt _ => x :: union l s'
-               | FSetInterface.Eq _ => x :: union l l'
-               | FSetInterface.Gt _ => x' :: union_aux l'
+               | Lt _ => x :: union l s'
+               | Eq _ => x :: union l l'
+               | Gt _ => x' :: union_aux l'
                end
            end)
     end.      
@@ -105,9 +105,9 @@ Module Raw (X: OrderedType).
            | [] => []
            | x' :: l' =>
                match X.compare x x' with
-               | FSetInterface.Lt _ => inter l s'
-               | FSetInterface.Eq _ => x :: inter l l'
-               | FSetInterface.Gt _ => inter_aux l'
+               | Lt _ => inter l s'
+               | Eq _ => x :: inter l l'
+               | Gt _ => inter_aux l'
                end
            end)
     end.  
@@ -121,9 +121,9 @@ Module Raw (X: OrderedType).
            | [] => s
            | x' :: l' =>
                match X.compare x x' with
-               | FSetInterface.Lt _ => x :: diff l s'
-               | FSetInterface.Eq _ => diff l l'
-               | FSetInterface.Gt _ => diff_aux l'
+               | Lt _ => x :: diff l s'
+               | Eq _ => diff l l'
+               | Gt _ => diff_aux l'
                end
            end)
     end.  
@@ -134,7 +134,7 @@ Module Raw (X: OrderedType).
     | [], [] => true
     | x :: l, x' :: l' =>
         match X.compare x x' with
-        | FSetInterface.Eq _ => equal l l'
+        | Eq _ => equal l l'
         | _ => false
         end
     | _, _ => false
@@ -145,9 +145,9 @@ Module Raw (X: OrderedType).
     | [], _ => true
     | x :: l, x' :: l' =>
         match X.compare x x' with
-        | FSetInterface.Lt _ => false
-        | FSetInterface.Eq _ => subset l l'
-        | FSetInterface.Gt _ => subset s l'
+        | Lt _ => false
+        | Eq _ => subset l l'
+        | Gt _ => subset s l'
         end
     | _, _ => false
     end.
