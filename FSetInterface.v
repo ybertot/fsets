@@ -43,6 +43,17 @@ Inductive InList (x : A) : list A -> Prop :=
   | InList_cons_tl :
       forall (y : A) (l : list A), InList x l -> InList x (y :: l).
 
+Hint Constructors InList.
+
+Lemma InList_alt : forall x l, InList x l <-> exists y, eqA x y /\ List.In y l.
+Proof. 
+ induction l; intuition.
+ inversion H.
+ firstorder.
+ inversion H1; firstorder.
+ firstorder; subst; auto.
+Qed.
+
 (** A list without redondancy. *)
 Inductive Unique : list A -> Prop :=
   | Unique_nil : Unique nil
