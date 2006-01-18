@@ -538,10 +538,6 @@ End Sdep.
 
 Module OrderedTypeFacts (O: OrderedType). 
 
-  Add Setoid O.t O.eq  
-     (Build_Setoid_Theory _ O.eq_refl O.eq_sym O.eq_trans) 
-     as _eq_.
-
   Lemma gt_not_eq : forall x y : O.t, O.lt y x -> ~ O.eq x y.
   Proof.
    intros; intro; absurd (O.eq y x); auto.
@@ -587,14 +583,6 @@ Module OrderedTypeFacts (O: OrderedType).
   Qed. 
 
   Hint Immediate eq_lt lt_eq.
-
-  Add Morphism O.lt : compat_lt. 
-   split; intros.
-   apply lt_eq with x0; auto.
-   apply eq_lt with x1; auto. 
-   apply lt_eq with x3; auto.
-   apply eq_lt with x2; auto.
-  Qed.  
 
   Lemma elim_compare_eq :
    forall x y : O.t,
@@ -664,22 +652,14 @@ Module OrderedTypeFacts (O: OrderedType).
   Notation Inf := (lelistA O.lt).
   Notation In := (InList O.eq).
 
-  Add Morphism In : compat_In.
-   split; induction 1; intuition; eauto.
-  Qed.  
-
   Lemma In_eq :
    forall (s : list O.t) (x y : O.t), O.eq x y -> In x s -> In y s.
   Proof. 
-   intros; setoid_rewrite <- H; trivial.
+   intros s x y.
+   do 2 (setoid_rewrite InList_alt).
+   firstorder eauto.
   Qed.
   Hint Immediate In_eq.
-
-  Add Morphism Inf : compat_Inf. 
-   split.
-   induction 1; auto; setoid_rewrite H in H0; auto.
-   induction 1; auto; setoid_rewrite <- H in H0; auto.
-  Qed.   
 
   Lemma Inf_lt :
    forall (s : list O.t) (x y : O.t), O.lt x y -> Inf y s -> Inf x s.
