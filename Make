@@ -1,2 +1,17 @@
-Int.v FSetBridge.v FSetInterface.v FMapInterface.v FSetList.v FSetRBT.v FSetAVL.v FSetAVL2.v FSetEqProperties.v FSetProperties.v FSet.v extract.v PrecedenceGraph
+Int.v 
+FSetBridge.v 
+FSetInterface.v 
+FSetList.v 
+FSetEqProperties.v 
+FSetProperties.v
+FSetWeakInterface.v
+FSetWeakList.v
+FMapInterface.v 
+FMapList.v
+FSetRBT.v 
+FSetAVL.v 
+FSetAVL2.v 
+FSet.v 
+extract.v 
+PrecedenceGraph
 

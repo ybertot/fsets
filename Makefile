@@ -74,13 +74,16 @@ COQLIBS=-I .
 VFILES=Int.v\
   FSetBridge.v\
   FSetInterface.v\
-  FMapInterface.v\
   FSetList.v\
+  FSetEqProperties.v\
+  FSetProperties.v\
+  FSetWeakInterface.v\
+  FSetWeakList.v\
+  FMapInterface.v\
+  FMapList.v\
   FSetRBT.v\
   FSetAVL.v\
   FSetAVL2.v\
-  FSetEqProperties.v\
-  FSetProperties.v\
   FSet.v\
   extract.v
 VOFILES=$(VFILES:.v=.vo)
@@ -92,13 +95,16 @@ GHTMLFILES=$(VFILES:.v=.g.html)
 all: Int.vo\
   FSetBridge.vo\
   FSetInterface.vo\
-  FMapInterface.vo\
   FSetList.vo\
+  FSetEqProperties.vo\
+  FSetProperties.vo\
+  FSetWeakInterface.vo\
+  FSetWeakList.vo\
+  FMapInterface.vo\
+  FMapList.vo\
   FSetRBT.vo\
   FSetAVL.vo\
   FSetAVL2.vo\
-  FSetEqProperties.vo\
-  FSetProperties.vo\
   FSet.vo\
   extract.vo\
   PrecedenceGraph
