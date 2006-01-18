@@ -2527,7 +2527,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     {r : A |
     exists l : list elt,
       Unique E.eq l /\
-      (forall x : elt, In x s <-> L.ME.In x l) /\ r = fold_right f i l}.
+      (forall x : elt, In x s <-> L.MX.In x l) /\ r = fold_right f i l}.
   Proof.
     intros A f s i; exists (fold_tree f s i).
     rewrite fold_tree_equiv.
@@ -2664,10 +2664,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma sort_app :
    forall l1 l2 : list elt,
-   L.ME.Sort l1 ->
-   L.ME.Sort l2 ->
-   (forall x y : elt, L.ME.In x l1 -> L.ME.In y l2 -> X.lt x y) ->
-   L.ME.Sort (l1 ++ l2).
+   L.MX.Sort l1 ->
+   L.MX.Sort l2 ->
+   (forall x y : elt, L.MX.In x l1 -> L.MX.In y l2 -> X.lt x y) ->
+   L.MX.Sort (l1 ++ l2).
   Proof.
     simple induction l1; simpl in |- *; intuition.
     apply cons_sort; auto.
@@ -2680,7 +2680,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma in_app :
    forall (x : elt) (l1 l2 : list elt),
-   L.ME.In x (l1 ++ l2) -> L.ME.In x l1 \/ L.ME.In x l2.
+   L.MX.In x (l1 ++ l2) -> L.MX.In x l1 \/ L.MX.In x l2.
   Proof.
     simple induction l1; simpl in |- *; intuition.
     inversion_clear H0; auto.
@@ -2688,7 +2688,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma in_flatten :
-   forall (x : elt) (l : list tree), L.ME.In x (flatten l) -> In_tree_l x l.
+   forall (x : elt) (l : list tree), L.MX.In x (flatten l) -> In_tree_l x l.
   Proof.
     simple induction l; simpl in |- *; intuition.
     inversion_clear H.
@@ -2696,7 +2696,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma sorted_flatten :
-   forall l : list tree, sorted_l l -> L.ME.Sort (flatten l).
+   forall l : list tree, sorted_l l -> L.MX.Sort (flatten l).
   Proof.
     simple induction l; simpl in |- *; intuition.
     apply sort_app; inversion H0; auto.
@@ -3234,7 +3234,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
   Hint Constructors sorted_e.
 
   Lemma in_flatten_e :
-   forall (x : elt) (e : enumeration), L.ME.In x (flatten_e e) -> In_tree_e x e.
+   forall (x : elt) (e : enumeration), L.MX.In x (flatten_e e) -> In_tree_e x e.
   Proof.
     simple induction e; simpl in |- *; intuition.
     inversion_clear H.
@@ -3243,14 +3243,14 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
   Qed.
 
   Lemma sorted_flatten_e :
-   forall e : enumeration, sorted_e e -> L.ME.Sort (flatten_e e).
+   forall e : enumeration, sorted_e e -> L.MX.Sort (flatten_e e).
   Proof.
     simple induction e; simpl in |- *; intuition.
     apply cons_sort.
     apply sort_app; inversion H0; auto.
     intros; apply H8; auto.
     apply in_flatten_e; auto.
-    apply L.ME.Inf_In.
+    apply L.MX.Inf_In.
     inversion_clear H0.
     intros; elim (in_app_or _ _ _ H0); intuition.
     apply H4; apply in_flatten_e; auto.
