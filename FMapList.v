@@ -659,60 +659,6 @@ Module Raw (X:OrderedType).
 
       (** Specification of [fold] *)  
 
-      Lemma fold_1' :
-	forall (m: t elt)(Hm:Sort m)(A : Set) (acc : A) (f : key -> elt -> A -> A) ,
-	  exists l : list (key*elt),
-            Sort l /\
-            (forall (k:key)(x:elt), MapsTo k x m <-> InList eqke (k,x) l) 
-            /\
-            fold f m acc = fold_right (fun p => f (fst p) (snd p)) acc l.
-        intros m Hm A acc f; generalize Hm; clear Hm.
-        functional induction fold A f m acc;intro sorted;subst.
-        exists (@nil (key*elt)). 
-	split;[|split;[intros ;split|]];subst;auto.
-
-	elim H;eauto.
-	clear H. intros x hyp.
-	decompose [and] hyp. clear hyp.
-        exists ((k, e) ::x);intuition.
-
-	apply cons_sort;auto.
-	assert (Inf (k, e) m').
-
-	inversion sorted;auto.
-
-	apply all_lt_Inf.
-	intros e' hyp.
-	destruct e'.
-	elim (H1 k0 e0);intros .
-	assert (InList eqke (k0, e0) m').
-	apply H4;assumption.
-	eapply sort_in_tl with m';auto.
-
-	unfold MapsTo in H0.
-	inversion H0.
-	auto.
-	apply InList_cons_tl.
-	
-	elim (H1 k0 x0);intros .
-	auto.
-
-	inversion H0.
-	auto.
-	unfold MapsTo.
-	apply InList_cons_tl.
-	
-	elim (H1 k0 x0).
-	intros H6 H7.	
-	unfold MapsTo in H7.
-	auto.
-
-	rewrite H2.
-	simpl.
-	trivial.
-      Qed.
-	
-
       Lemma fold_1 :
 	forall (m:t elt)(Hm:Sort m)(A : Set) (acc : A) (f : key -> elt -> A -> A),
 	  exists l : list (key*elt),
@@ -720,11 +666,13 @@ Module Raw (X:OrderedType).
             (forall (k:key)(x:elt), MapsTo k x m <-> InList eqke (k,x) l) 
             /\
             fold f m acc = fold_right (fun p => f (fst p) (snd p)) acc l.
-	intros m Hm A acc f.
-	elim (@fold_1' m Hm A acc f).
-	intros x H0.	
-	exists x;intuition;auto.
-	apply sorted_unique;auto.
+      Proof.
+      intros.
+      exists m; firstorder.
+      apply sorted_unique; auto.
+      clear Hm.
+      induction m; simpl; auto.
+      destruct a; simpl; congruence.
       Qed.
 
      Fixpoint equal (cmp: elt -> elt -> bool)(m m' : t elt) { struct m } : bool := 
