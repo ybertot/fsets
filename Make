@@ -8,6 +8,7 @@ FSetWeakInterface.v
 FSetWeakList.v
 FMapInterface.v 
 FMapList.v
+FMapWeakList.v
 FSetRBT.v 
 FSetAVL.v 
 FSetAVL2.v 
