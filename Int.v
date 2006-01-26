@@ -48,6 +48,11 @@ Module Type Int.
  Parameter mult : int -> int -> int.
  Parameter max : int -> int -> int. 
 
+
+ Notation "0" := _0 : Int_scope.
+ Notation "1" := _1 : Int_scope. 
+ Notation "2" := _2 : Int_scope. 
+ Notation "3" := _3 : Int_scope.
  Infix "+" := plus : Int_scope.
  Infix "-" := minus : Int_scope.
  Infix "*" := mult : Int_scope.
@@ -57,12 +62,12 @@ Module Type Int.
    since they don't appear after extraction. Moreover, using tactics 
    like omega is easier this way. *)
 
- Notation "x == y" := ({{x}} = {{y}})%Z 
+ Notation "x == y" := ({{x}} = {{y}})
    (at level 70, y at next level, no associativity) : Int_scope.
- Notation "x <= y" := ({{x}} <= {{y}})%Z : Int_scope.
- Notation "x < y" := ({{x}} < {{y}})%Z : Int_scope.
- Notation "x >= y" := ({{x}} >= {{y}})%Z : Int_scope.
- Notation "x > y" := ({{x}} > {{y}})%Z: Int_scope.
+ Notation "x <= y" := (Zle {{x}} {{y}}) : Int_scope.
+ Notation "x < y" := (Zlt {{x}} {{y}}) : Int_scope.
+ Notation "x >= y" := (Zge {{x}} {{y}}) : Int_scope.
+ Notation "x > y" := (Zgt {{x}} {{y}}): Int_scope.
  Notation "x <= y <= z" := (x <= y /\ y <= z) : Int_scope.
  Notation "x <= y < z" := (x <= y /\ y < z) : Int_scope.
  Notation "x < y < z" := (x < y /\ y < z) : Int_scope.

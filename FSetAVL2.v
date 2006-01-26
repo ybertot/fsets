@@ -282,18 +282,17 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
 
   Definition height (s : tree) : int :=
     match s with
-    | Leaf => _0
+    | Leaf => 0
     | Node _ _ _ h => h
     end.
-
 
   (** Instead of writing [h = 1 + (max (height l) (height r))] we prefer 
       the following relation [height_of_node l r h] to ease the use of 
       [Omega] *)
 
   Definition height_of_node (l r : tree) (h : int) :=
-    height l >= height r /\ h == height l + _1 \/
-    height r >= height l /\ h == height r + _1.
+    height l >= height r /\ h == height l + 1 \/
+    height r >= height l /\ h == height r + 1.
 
   Inductive avl : tree -> Prop :=
     | RBLeaf : avl Leaf
@@ -301,7 +300,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
         forall (x : elt) (l r : tree) (h : int),
         avl l ->
         avl r ->
-        -_2 <= height l - height r <= _2 ->
+        -(2) <= height l - height r <= 2 ->
         height_of_node l r h -> avl (Node l x r h).
 
   Hint Constructors avl.
@@ -327,8 +326,8 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
    forall (x : elt) (l r : tree),
    avl l ->
    avl r ->
-   -_2 <= height l - height r <= _2 ->
-   avl (Node l x r (max (height l) (height r) + _1)).
+   -(2) <= height l - height r <= 2 ->
+   avl (Node l x r (max (height l) (height r) + 1)).
   Proof.
     intros; constructor; unfold height_of_node in |- *; intuition.
     MaxCase (height l) (height r); [left|right]; i2z; intuition.
@@ -337,7 +336,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
 
   (** The [AVL] tactic *)
 
-  Lemma height_non_negative : forall s : tree, avl s -> height s >= _0.
+  Lemma height_non_negative : forall s : tree, avl s -> height s >= 0.
   Proof.
     simple induction s; simpl in |- *; intros.
     iomega.
@@ -347,9 +346,9 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
   Lemma height_equation :
    forall (l r : tree) (x : elt) (h : int),
    avl (Node l x r h) ->
-   -_2 <= height l - height r <= _2 /\
-   (height l >= height r /\ h == height l + _1 \/
-    height r >= height l /\ h == height r + _1).
+   -(2) <= height l - height r <= 2 /\
+   (height l >= height r /\ h == height l + 1 \/
+    height r >= height l /\ h == height r + 1).
   Proof.
     inversion 1; intuition.
   Qed.
@@ -477,7 +476,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
 
   (** * Singleton set *)
 
-  Definition singleton_tree (x : elt) := Node Leaf x Leaf _1.
+  Definition singleton_tree (x : elt) := Node Leaf x Leaf 1.
 
   Lemma singleton_bst : forall x : elt, bst (singleton_tree x).
   Proof.
@@ -513,7 +512,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     avl r ->
     lt_tree x l ->
     gt_tree x r ->
-    -_2 <= height l - height r <= _2 ->
+    -(2) <= height l - height r <= 2 ->
     {s : tree |
     bst s /\
     avl s /\
@@ -521,7 +520,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     (forall y : elt, In_tree y s <-> X.eq y x \/ In_tree y l \/ In_tree y r)}.
   Proof.
     unfold height_of_node in |- *; intros.
-    exists (Node l x r (max (height l) (height r) + _1)).
+    exists (Node l x r (max (height l) (height r) + 1)).
     intuition.
     MaxCase (height l) (height r); intuition.
     inversion_clear H5; intuition.
@@ -538,16 +537,16 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     avl r ->
     lt_tree x l ->
     gt_tree x r ->
-    -_3 <= height l - height r <= _3 ->
+    -(3) <= height l - height r <= 3 ->
     {s : tree |
     bst s /\
     avl s /\
     
     (* height may be decreased by 1 *)
-    ((height_of_node l r (height s) \/ height_of_node l r (height s + _1)) /\
+    ((height_of_node l r (height s) \/ height_of_node l r (height s + 1)) /\
      
      (* ...but is unchanged when no rebalancing *)
-     (-_2 <= height l - height r <= _2 -> height_of_node l r (height s))) /\
+     (-(2) <= height l - height r <= 2 -> height_of_node l r (height s))) /\
     
     (* elements are those of (l,x,r) *)
     (forall y : elt, In_tree y s <-> X.eq y x \/ In_tree y l \/ In_tree y r)}.
@@ -556,12 +555,12 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     intros Hl Hr Hh.
     set (hl := height l) in *.
     set (hr := height r) in *.
-    case (gt_le_dec hl (hr + _2)); intro.
+    case (gt_le_dec hl (hr + 2)); intro.
     (* hl > hr + 2 *)
     destruct l as [| t0 t1 t2 z0].
     (* l = Leaf => absurd *)
     simpl in (value of hl); unfold hl in |- *.
-    absurd (hl > hr + _2); trivial.
+    absurd (hl > hr + 2); trivial.
     generalize (height_non_negative avl_r).
     unfold hl, hr in |- *; iomega.
     (* l = Node t0 t1 t2 z0 *)
@@ -604,7 +603,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     destruct t2 as [| t2 t3 t4 z2].
     (* t2 = Leaf => absurd *)
     simpl in z1.
-    absurd (height t0 < _0); trivial.
+    absurd (height t0 < 0); trivial.
     inversion_clear avl_l; AVL ipattern:H; iomega.
     (* t2 = Node t2 t3 t4 z2 *)
     case (create t4 x r); auto.
@@ -660,12 +659,12 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     inversion_clear H10; intuition.
     inversion_clear H14; intuition.
     (* hl <= hr + 2 *)
-    case (gt_le_dec hr (hl + _2)); intro.
+    case (gt_le_dec hr (hl + 2)); intro.
     (* hr > hl + 2 *)
     destruct r as [| t0 t1 t2 z1].
     (* r = Leaf => absurd *)
     simpl in (value of hr); unfold hr in |- *.
-    absurd (hr > hl + _2); trivial.
+    absurd (hr > hl + 2); trivial.
     AVL avl_l; unfold hl, hr in |- *; iomega.
     (* r = Node t0 t1 t2 z0 *)
     case (ge_lt_dec (height t2) (height t0)); intro.
@@ -702,7 +701,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     destruct t0 as [| t0 t3 t4 z3].
     (* t0 = Leaf => absurd *)
     simpl in z2.
-    absurd (height t2 < _0); trivial.
+    absurd (height t2 < 0); trivial.
     inversion_clear avl_r; AVL ipattern:H0; iomega.
     (* t0 = Node t0 t3 t4 z2 *)
     case (create l x t0); auto.
@@ -758,7 +757,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     inversion_clear H10; intuition.
     inversion_clear H14; intuition.
     (* hr <= hl + 2 *)
-    set (s := Node l x r (max (height l) (height r) + _1)) in *.
+    set (s := Node l x r (max (height l) (height r) + 1)) in *.
     assert (bst s). 
     unfold s in |- *; auto.
     assert (avl s). 
@@ -783,12 +782,12 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     {s' : tree |
     bst s' /\
     avl s' /\
-    _0 <= height s' - height s <= _1 /\
+    0 <= height s' - height s <= 1 /\
     (forall y : elt, In_tree y s' <-> E.eq y x \/ In_tree y s)}.
   Proof.
     simple induction s; simpl in |- *; intros.
     (* s = Leaf *)
-    exists (Node Leaf x Leaf _1); simpl in |- *; i2z; intuition.
+    exists (Node Leaf x Leaf 1); simpl in |- *; i2z; intuition.
     constructor; unfold height_of_node in |- *; simpl in |- *;
      i2z; intuition try omega.
     inversion_clear H1; intuition.
@@ -877,7 +876,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     {s : tree |
     bst s /\
     avl s /\
-    (height_of_node l r (height s) \/ height_of_node l r (height s + _1)) /\
+    (height_of_node l r (height s) \/ height_of_node l r (height s + 1)) /\
     (forall y : elt, In_tree y s <-> X.eq y x \/ In_tree y l \/ In_tree y r)}.
   Proof.
     simple induction l; simpl in |- *.
@@ -896,7 +895,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     firstorder. firstorder. firstorder. inversion_clear H.
     (* l = Node t0 t1 t2 z and r = Node r1 t3 r0 z0 *)
     intros.
-    case (gt_le_dec z (z0 + _2)); intro.
+    case (gt_le_dec z (z0 + 2)); intro.
     (* z > z0+2 *)
     clear Hrecr1 Hrecr0.
     case (H0 x (Node r1 t3 r0 z0)); clear H0; auto.
@@ -918,7 +917,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     clear H0 H12 H10; firstorder.
     inversion_clear H0; firstorder.
     (* z <= z0 + 2 *)
-    case (gt_le_dec z0 (z + _2)); intro.
+    case (gt_le_dec z0 (z + 2)); intro.
     (* z0 > z+2 *)
     clear H0 Hrecr0.
     case Hrecr1; clear Hrecr1; auto.
@@ -939,7 +938,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     clear H5 H6 H7 H8 H9 H13; AVL H4; clear H4; i2z; intuition omega.
     clear H0 H12 H10; firstorder.
     inversion_clear H0; firstorder.
-    (* -2 <= z-z0 <= 2 *)
+    (* -(2) <= z-z0 <= 2 *)
     clear H0 Hrecr0 Hrecr1.
     case (create (Node t0 t1 t2 z) x (Node r1 t3 r0 z0)); simpl in |- *;
      i2z; intuition.
@@ -957,7 +956,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     let (s', m) := r in
     bst s' /\
     avl s' /\
-    (height s' == height s \/ height s' == height s - _1) /\
+    (height s' == height s \/ height s' == height s - 1) /\
     (forall y : elt, In_tree y s' -> E.lt m y) /\
     (forall y : elt, In_tree y s <-> E.eq y m \/ In_tree y s')}.
   Proof.
@@ -1013,7 +1012,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     let (s', m) := r in
     bst s' /\
     avl s' /\
-    (height s' == height s \/ height s' == height s - _1) /\
+    (height s' == height s \/ height s' == height s - 1) /\
     (forall y : elt, In_tree y s' -> E.lt y m) /\
     (forall y : elt, In_tree y s <-> E.eq y m \/ In_tree y s')}.
   Proof.
@@ -1081,11 +1080,11 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     bst s2 ->
     avl s2 ->
     (forall y1 y2 : elt, In_tree y1 s1 -> In_tree y2 s2 -> X.lt y1 y2) ->
-    -_2 <= height s1 - height s2 <= _2 ->
+    -(2) <= height s1 - height s2 <= 2 ->
     {s : tree |
     bst s /\
     avl s /\
-    (height_of_node s1 s2 (height s) \/ height_of_node s1 s2 (height s + _1)) /\
+    (height_of_node s1 s2 (height s) \/ height_of_node s1 s2 (height s + 1)) /\
     (forall y : elt, In_tree y s <-> In_tree y s1 \/ In_tree y s2)}.
   Proof.
     simple destruct s1; simpl in |- *.
@@ -1126,11 +1125,11 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     bst s2 ->
     avl s2 ->
     (forall y1 y2 : elt, In_tree y1 s1 -> In_tree y2 s2 -> X.lt y1 y2) ->
-    -_2 <= height s1 - height s2 <= _2 ->
+    -(2) <= height s1 - height s2 <= 2 ->
     {s : tree |
     bst s /\
     avl s /\
-    (height_of_node s1 s2 (height s) \/ height_of_node s1 s2 (height s + _1)) /\
+    (height_of_node s1 s2 (height s) \/ height_of_node s1 s2 (height s + 1)) /\
     (forall y : elt, In_tree y s <-> In_tree y s1 \/ In_tree y s2)}.
   Proof.
     simple destruct s1; simpl in |- *.
@@ -1187,7 +1186,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     {s' : tree |
     bst s' /\
     avl s' /\
-    (height s' == height s \/ height s' == height s - _1) /\
+    (height s' == height s \/ height s' == height s - 1) /\
     (forall y : elt, In_tree y s' <-> ~ E.eq y x /\ In_tree y s)}.
   Proof.
     simple induction s; simpl in |- *; intuition.
@@ -1945,7 +1944,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma height_0 :
-   forall s : tree, avl s -> height s == _0 -> forall x : elt, ~ In_tree x s.
+   forall s : tree, avl s -> height s == 0 -> forall x : elt, ~ In_tree x s.
   Proof.
     simple destruct 1; intuition.
     inversion_clear H1.
@@ -2000,7 +1999,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     (* x' = Node t3 t4 t5 *)
     case (ge_lt_dec z z0); intro.
     (* z >= z0 *)
-    case (eq_dec z0 _1); intro.
+    case (eq_dec z0 1); intro.
     (* z0 = 1 *)
     clear H.
     case (add_tree t4 (Node t0 t1 t2 z)); simpl in |- *; auto.
@@ -2008,10 +2007,10 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     exists (t_intro s' s'_bst s'_avl); simpl in |- *; intros.
     generalize (s'_y x0); clear s'_y; intuition.
     inversion_clear H5; intuition.
-    assert (height t3 == _0).
+    assert (height t3 == 0).
     inversion s2_avl0; AVL s2_avl0; AVL ipattern:H9; AVL ipattern:H10; iomega.
     inversion_clear s2_avl0; elim (height_0 H6 H5 H3).
-    assert (height t5 == _0).
+    assert (height t5 == 0).
     inversion s2_avl0; AVL s2_avl0; AVL ipattern:H9; AVL ipattern:H10; iomega.
     inversion_clear s2_avl0; elim (height_0 H7 H5 H3).
     (* z0 <> 1 *)
@@ -2042,17 +2041,17 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     inversion_clear H21; intuition.
     case (X.compare x0 t1); intuition.
     (* z < z0 *)
-    case (eq_dec z _1); intro.
+    case (eq_dec z  1); intro.
     (* z = 1 *)
     case (add_tree t1 (Node t3 t4 t5 z0)); simpl in |- *; auto.
     intros s' (s'_bst, (s'_avl, (s'_h, s'_y))).
     exists (t_intro s' s'_bst s'_avl); simpl in |- *; intros.
     generalize (s'_y x0); clear s'_y; intuition.
     inversion_clear H6; intuition.
-    assert (height t0 == _0).
+    assert (height t0 == 0).
     inversion s1_avl0; AVL s1_avl0; AVL ipattern:H10; AVL ipattern:H11; iomega.
     inversion_clear s1_avl0; elim (height_0 H7 H6 H4).
-    assert (height t2 == _0).
+    assert (height t2 == 0).
     inversion s1_avl0; AVL s1_avl0; AVL ipattern:H10; AVL ipattern:H11; iomega.
     inversion_clear s1_avl0; elim (height_0 H8 H6 H4).
     (* z <> 1 *)
@@ -2337,7 +2336,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     (* x' = Node t3 t4 t5 z0 *)
     case (X.compare t1 t4); intro.
     (* t1 < t4 *)
-    case (H (Node t0 t1 Leaf _0) t3); auto; intros.
+    case (H (Node t0 t1 Leaf 0) t3); auto; intros.
     simpl in |- *; iomega.
     constructor; inversion_clear s1_bst; auto.
     inversion_clear s2_bst; auto.
@@ -2414,7 +2413,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     inversion_clear s2_bst.  
     apply ME.eq_lt with t4; auto.
     (* t4 < t1 *)
-    case (H (Node Leaf t1 t2 _0) t5); auto; intros.
+    case (H (Node Leaf t1 t2 0) t5); auto; intros.
     simpl in |- *; iomega.
     constructor; inversion_clear s1_bst; auto.
     inversion_clear s2_bst; auto.
