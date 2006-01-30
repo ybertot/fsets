@@ -70,7 +70,7 @@ Module Raw (X: DecidableType).
   Fixpoint fold (B : Set) (f : elt -> B -> B) (s : t) {struct s} : 
    B -> B := fun i => match s with
                       | [] => i
-                      | x :: l => f x (fold f l i)
+                      | x :: l => fold f l (f x i)
                       end.  
 
   Definition union (s : t) : t -> t := fold add s.
@@ -80,8 +80,7 @@ Module Raw (X: DecidableType).
   Definition inter (s s': t) : t := 
     fold (fun x s => if mem x s' then add x s else s) s nil.
 
-  Definition subset (s s' : t) : bool := 
-     fold (fun x => andb (mem x s')) s true.
+  Definition subset (s s' : t) : bool := is_empty (diff s s').
 
   Definition equal (s s' : t) : bool := andb (subset s s') (subset s' s). 
 
@@ -112,9 +111,9 @@ Module Raw (X: DecidableType).
         if f x then (x :: s1, s2) else (s1, x :: s2)
     end.
 
-  Definition cardinal (s : t) : nat := fold (fun _ => S) s 0.
+  Definition cardinal (s : t) : nat := length s.
 
-  Definition elements (x : t) : list elt := x.
+  Definition elements (s : t) : list elt := s.
 
   Definition choose (s : t) : option elt := 
      match s with 
@@ -309,21 +308,19 @@ Module Raw (X: DecidableType).
 
   Lemma fold_1 :
    forall (s : t) (Hs : Unique s) (A : Set) (i : A) (f : elt -> A -> A),
-   exists l : list elt,
-     Unique l /\
-     (forall x : elt, In x s <-> In x l) /\ fold f s i = fold_right f i l.
+   fold f s i = fold_left (fun a e => f e a) (elements s) i.
   Proof.
-  intros; exists s; split; intuition.
-  induction s as [| a s Hrecs]; simpl; trivial.
-  rewrite Hrecs; trivial.
-  inversion_clear Hs; trivial.
+  induction s; simpl; auto; intros.
+  inversion_clear Hs; auto.
   Qed.
 
   Lemma union_unique :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s'), Unique (union s s').
   Proof.
   unfold union; induction s; simpl; auto; intros.
-  inversion_clear Hs; apply add_unique; auto.
+  inversion_clear Hs.
+  apply IHs; auto.
+  apply add_unique; auto.
   Qed.
   
   Lemma union_1 :
@@ -334,96 +331,126 @@ Module Raw (X: DecidableType).
   inversion_clear Hs.
   destruct (X.eq_dec x a).
   left; auto.
-  destruct (IHs s' H1 Hs' x); intuition.
-  eapply add_3; eauto.
-  exact (union_unique H1 Hs').
+  destruct (IHs (add a s') H1 (add_unique Hs' a) x); intuition.
+  right; eapply add_3; eauto.
+  Qed.
+
+  Lemma union_0 : 
+   forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
+   In x s \/ In x s' -> In x (union s s').
+  Proof.
+  unfold union; induction s; simpl; auto; intros.
+  inversion_clear H; auto.
+  inversion_clear H0.
+  inversion_clear Hs.
+  apply IHs; auto.
+  apply add_unique; auto.
+  destruct H.
+  inversion_clear H; auto.
+  right; apply add_1; auto.
+  right; apply add_2; auto.
   Qed.
 
   Lemma union_2 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
    In x s -> In x (union s s').
   Proof.
-  unfold union; induction s; simpl; auto; intros.
-  inversion_clear H.
-  inversion_clear Hs.
-  inversion_clear H.
-  apply add_1; auto.
-  exact (union_unique H1 Hs').
-  apply add_2; auto.
-  exact (union_unique H1 Hs').
+  intros; apply union_0; auto.
   Qed.
 
   Lemma union_3 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
    In x s' -> In x (union s s').
   Proof.
-  unfold union; induction s; simpl; auto; intros.
-  inversion_clear Hs.
-  destruct (X.eq_dec x a).
-  apply add_1; auto.
-  exact (union_unique H1 Hs').
-  apply add_2; auto.
-  exact (union_unique H1 Hs').
+  intros; apply union_0; auto.
   Qed.
 
   Lemma inter_unique :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s'), Unique (inter s s').
   Proof.
-  unfold inter; induction s; simpl; auto; intros.
+  unfold inter; intros s.
+  set (acc := nil (A:=elt)).
+  assert (Unique acc) by (unfold acc; auto).
+  clearbody acc; generalize H; clear H; generalize acc; clear acc. 
+  induction s; simpl; auto; intros.
   inversion_clear Hs.
+  apply IHs; auto.
   destruct (mem a s'); intros; auto.
   apply add_unique; auto.
   Qed.  
   
-  Lemma inter_1 :
+  Lemma inter_0  :
+   forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
+   In x (inter s s') -> In x s /\ In x s'.
+  Proof.
+  unfold inter; intros.
+  set (acc := nil (A:=elt)) in *.
+  assert (Unique acc) by (unfold acc; auto).
+  cut ((In x s /\ In x s') \/ In x acc).
+    destruct 1; auto.
+    inversion H1.
+  clearbody acc. 
+  generalize H0 H Hs' Hs; clear H0 H Hs Hs'.
+  generalize acc x s'; clear acc x s'.
+  induction s; simpl; auto; intros.
+  inversion_clear Hs.
+  case_eq (mem a s'); intros H3; rewrite H3 in H; simpl in H.
+  destruct (IHs _ _ _ (add_unique H0 a) H); auto.
+  left; intuition.
+  destruct (X.eq_dec x a); auto.
+  left; intuition.
+  apply In_eq with a; eauto.
+  apply mem_2; auto.
+  right; eapply add_3; eauto.
+  destruct (IHs _ _ _ H0 H); auto.
+  left; intuition.
+  Qed.
+
+  Lemma inter_1  :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
    In x (inter s s') -> In x s.
   Proof.
-  unfold inter; induction s; simpl; auto; intros.
-  inversion_clear Hs.
-  case_eq (mem a s'); intros; rewrite H2 in H; simpl in H.
-  destruct (X.eq_dec x a); auto.
-  constructor 2.
-  eapply (IHs s'); eauto.
-  eapply add_3; eauto.
-  exact (inter_unique H1 Hs').
-  destruct (X.eq_dec x a); auto.
-  constructor 2.
-  eapply (IHs s'); eauto.
+  intros; cut (In x s /\ In x s'); [ intuition | apply inter_0; auto ].
   Qed.
 
   Lemma inter_2 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
    In x (inter s s') -> In x s'.
   Proof.
-  unfold inter; induction s; simpl; auto; intros.
-  inversion_clear H.
-  inversion_clear Hs.
-  case_eq (mem a s'); intros; rewrite H2 in H; simpl in H.
-  destruct (X.eq_dec x a); auto.
-  apply In_eq with a; auto.
-  apply mem_2; auto.
-  eapply (IHs s'); eauto.
-  eapply add_3; eauto.
-  exact (inter_unique H1 Hs').
-  eapply (IHs s'); eauto.
+  intros; cut (In x s /\ In x s'); [ intuition | apply inter_0; auto ].
   Qed.
 
   Lemma inter_3 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
    In x s -> In x s' -> In x (inter s s').
   Proof.
-  unfold inter; induction s; simpl; auto; intros.
+  intros s s' Hs Hs' x.
+  cut (((In x s /\ In x s')\/ In x (nil (A:=elt))) -> In x (inter s s')).
+  intuition.
+  unfold inter.
+  set (acc := nil (A:=elt)) in *.
+  assert (Unique acc) by (unfold acc; auto).
+  clearbody acc. 
+  generalize H Hs' Hs; clear H Hs Hs'.
+  generalize acc x s'; clear acc x s'.
+  induction s; simpl; auto; intros.
+  destruct H0; auto.
+  destruct H0; inversion H0.
   inversion_clear Hs.
-  case_eq (mem a s'); intros.
-  inversion_clear H.
-  apply add_1; auto.
-  exact (inter_unique H2 Hs').
-  apply add_2; auto.
-  exact (inter_unique H2 Hs').
-  eapply (IHs s'); eauto.
-  inversion_clear H; auto.
-  rewrite (mem_1 (In_eq H4 H0)) in H3.
+  case_eq (mem a s'); intros H3; apply IHs; auto.
+  apply add_unique; auto.
+  destruct H0.
+  destruct H0.
+  inversion_clear H0.
+  right; apply add_1; auto.
+  left; auto.
+  right; apply add_2; auto.
+  destruct H0; auto.
+  destruct H0.
+  inversion_clear H0; auto.
+  absurd (In x s'); auto.
+  red; intros.
+  rewrite (mem_1 (In_eq H5 H0)) in H3.
   discriminate.
   Qed.
 
@@ -433,33 +460,39 @@ Module Raw (X: DecidableType).
   unfold diff; intros s s' Hs; generalize s Hs; clear Hs s.
   induction s'; simpl; auto; intros.
   inversion_clear Hs'.
+  apply IHs'; auto.
   apply remove_unique; auto.
   Qed.  
   
-  Lemma diff_1 :
+  Lemma diff_0 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
-   In x (diff s s') -> In x s.
+   In x (diff s s') -> In x s /\ ~ In x s'.
   Proof.
   unfold diff; intros s s' Hs; generalize s Hs; clear Hs s.
   induction s'; simpl; auto; intros.
   inversion_clear Hs'.
-  apply (IHs' s); auto.
+  split; auto; intro H1; inversion H1.
+  inversion_clear Hs'.
+  destruct (IHs' (remove a s) (remove_unique Hs a) H1 x H).
+  split. 
   eapply remove_3; eauto.
-  exact (diff_unique Hs H1).
+  red; intros.
+  inversion_clear H4; auto.
+  destruct (remove_1 Hs H5 H2).
+  Qed.
+
+  Lemma diff_1 :
+   forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
+   In x (diff s s') -> In x s.
+  Proof.
+  intros; cut (In x s /\ ~ In x s'); [ intuition | apply diff_0; auto]. 
   Qed.
 
   Lemma diff_2 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s') (x : elt),
    In x (diff s s') -> ~ In x s'.
   Proof.
-  unfold diff; intros s s' Hs; generalize s Hs; clear Hs s.
-  induction s'; simpl; auto; intros; intro H1; inversion_clear H1.
-  inversion_clear Hs'.
-  destruct (remove_1 (diff_unique Hs H2) H0 H).
-  inversion_clear Hs'.
-  destruct (IHs' s Hs H2 x); auto.
-  eapply remove_3; eauto.
-  exact (diff_unique Hs H2).
+  intros; cut (In x s /\ ~ In x s'); [ intuition | apply diff_0; auto]. 
   Qed.
 
   Lemma diff_3 :
@@ -469,33 +502,35 @@ Module Raw (X: DecidableType).
   unfold diff; intros s s' Hs; generalize s Hs; clear Hs s.
   induction s'; simpl; auto; intros.
   inversion_clear Hs'.
+  apply IHs'; auto.
+  apply remove_unique; auto.
   apply remove_2; auto.
-  exact (diff_unique Hs H2).
   Qed.  
   
   Lemma subset_1 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s'),
    Subset s s' -> subset s s' = true.
   Proof.
-  unfold subset; induction s; simpl; auto; intros.
-  unfold Subset in *.
-  inversion_clear Hs.
-  assert (In a (a::s)); auto.
-  rewrite (mem_1 (H a H2)); simpl.
-  apply IHs; auto.
+  unfold subset, Subset; intros.
+  apply is_empty_1.
+  unfold Empty; intros.
+  intro.
+  destruct (diff_2 Hs Hs' H0).
+  apply H.
+  eapply diff_1; eauto.
   Qed.
 
-  Lemma subset_2 : forall s s' : t, subset s s' = true -> Subset s s'.
+  Lemma subset_2 : forall (s s' : t)(Hs : Unique s) (Hs' : Unique s'), 
+     subset s s' = true -> Subset s s'.
   Proof.
-  unfold subset; induction s; red; simpl; auto; intros.
-  inversion H0.
-  unfold Subset in *.
-  destruct (andb_prop _ _ H); clear H.
-  inversion_clear H0.
-  apply In_eq with a; auto.
-  apply mem_2; auto.
-  eapply IHs; eauto.
-  Qed.  
+  unfold subset, Subset; intros.
+  generalize (is_empty_2 H); clear H; unfold Empty; intros.
+  generalize (@mem_1 s' a) (@mem_2 s' a); destruct (mem a s').
+  intuition.
+  intros.
+  destruct (H a).
+  apply diff_3; intuition.
+  Qed.
 
   Lemma equal_1 :
    forall (s s' : t) (Hs : Unique s) (Hs' : Unique s'),
@@ -505,7 +540,8 @@ Module Raw (X: DecidableType).
   apply andb_true_intro; split; apply subset_1; firstorder.
   Qed.
 
-  Lemma equal_2 : forall s s' : t, equal s s' = true -> Equal s s'.
+  Lemma equal_2 : forall (s s' : t)(Hs : Unique s) (Hs' : Unique s'),  
+     equal s s' = true -> Equal s s'.
   Proof.
   unfold Equal, equal; intros.
   destruct (andb_prop _ _ H); clear H.
@@ -526,16 +562,9 @@ Module Raw (X: DecidableType).
   Qed.  
 
   Lemma cardinal_1 :
-   forall (s : t) (Hs : Unique s),
-   exists l : list elt,
-     Unique l /\
-     (forall x : elt, In x s <-> In x l) /\ cardinal s = length l.
+   forall (s : t) (Hs : Unique s), cardinal s = length (elements s).
   Proof.
-  intros; exists s; split; intuition.
-  unfold cardinal; induction  s as [| a s Hrecs]; simpl;
-   trivial.
-  rewrite Hrecs; trivial.
-  inversion_clear Hs; trivial.
+  auto.
   Qed.
 
   Lemma filter_1 :
@@ -795,11 +824,11 @@ Module Make (X: DecidableType) <: S with Module E := X.
  
  Definition equal (s s' : t) := Raw.equal s s'. 
  Definition equal_1 (s s' : t) := Raw.equal_1 (unique s) (unique s').  
- Definition equal_2 (s s' : t) := Raw.equal_2 (s:=s) (s':=s').
+ Definition equal_2 (s s' : t) := Raw.equal_2 (unique s) (unique s').
  
  Definition subset (s s' : t) := Raw.subset s s'.
  Definition subset_1 (s s' : t) := Raw.subset_1 (unique s) (unique s').  
- Definition subset_2 (s s' : t) := Raw.subset_2 (s:=s) (s':=s').
+ Definition subset_2 (s s' : t) := Raw.subset_2 (unique s) (unique s').
 
  Definition empty := Build_slist Raw.empty_unique.
  Definition empty_1 := Raw.empty_1.

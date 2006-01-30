@@ -7,8 +7,8 @@
 (***********************************************************************)
 
 (* Finite sets library.  
- * Authors: Pierre Letouzey and Jean-Christophe Filli\x{00E2}tre 
- * Institution: LRI, CNRS UMR 8623 - Universit\x{00E9} Paris Sud
+ * Authors: Pierre Letouzey and Jean-Christophe Filliâtre 
+ * Institution: LRI, CNRS UMR 8623 - Université Paris Sud
  *              91405 Orsay, France *)
 
 (* $Id$ *)
@@ -45,6 +45,9 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
     intros; generalize (mem_1 (s:=s) (x:=x)) (mem_2 (s:=s) (x:=x)).
     case (mem x s); intuition.
   Qed.
+ 
+  Definition Add (x : elt) (s s' : t) :=
+    forall y : elt, In y s' <-> E.eq y x \/ In y s.
  
   Definition add : forall (x : elt) (s : t), {s' : t | Add x s s'}.
   Proof.
@@ -107,21 +110,24 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
     case (subset s s'); intuition.
   Qed.   
 
+  Definition elements :
+    forall s : t,
+    {l : list elt | ME.Sort l /\ (forall x : elt, In x s <-> ME.In x l)}.
+   Proof.
+     intros; exists (elements s); intuition.   
+   Defined. 
+
   Definition fold :
     forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
-    {r : A |
-    exists l : list elt,
-      Unique E.eq l /\
-      (forall x : elt, In x s <-> ME.In x l) /\ r = fold_right f i l}.
-  Proof.
-    intros; exists (fold (A:=A) f s i); exact (fold_1 s i f).
-  Qed.  
+    {r : A |   let (l,_) := elements s in 
+                  r = fold_left (fun a e => f e a) l i}.
+  Proof. 
+  intros; exists (fold (A:=A) f s i); exact (fold_1 s i f).
+  Qed.
 
   Definition cardinal :
-    forall s : t,
-    {r : nat |
-    exists l : list elt,
-      Unique E.eq l /\ (forall x : elt, In x s <-> ME.In x l) /\ r = length l}.
+      forall s : t,
+      {r : nat | let (l,_) := elements s in r = length l }.
   Proof.
     intros; exists (cardinal s); exact (cardinal_1 s).
   Qed.    
@@ -252,13 +258,6 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
     exists e; auto.    
   Qed.
 
-  Definition elements :
-    forall s : t,
-    {l : list elt | ME.Sort l /\ (forall x : elt, In x s <-> ME.In x l)}.
-   Proof.
-     intros; exists (elements s); intuition.   
-   Qed. 
-
   Definition min_elt :
     forall s : t,
     {x : elt | In x s /\ For_all (fun y => ~ E.lt y x) s} + {Empty s}.
@@ -287,8 +286,6 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
   Definition In := In. 
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) (s : t) :=
     forall x : elt, In x s -> P x.
@@ -579,13 +576,10 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
 
   Definition cardinal (s : t) : nat := let (f, _) := cardinal s in f.
 
-  Lemma cardinal_1 :
-   forall s : t,
-   exists l : list elt,
-     Unique E.eq l /\
-     (forall x : elt, In x s <-> ME.In x l) /\ cardinal s = length l.
+  Lemma cardinal_1 : forall s, cardinal s = length (elements s).
   Proof.
-    intros; unfold cardinal in |- *; case (M.cardinal s); firstorder.
+    intros; unfold cardinal in |- *; case (M.cardinal s); unfold elements in *; 
+    destruct (M.elements s); auto.
   Qed.
 
   Definition fold (B : Set) (f : elt -> B -> B) (i : t) 
@@ -593,11 +587,10 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
 
   Lemma fold_1 :
    forall (s : t) (A : Set) (i : A) (f : elt -> A -> A),
-   exists l : list elt,
-     Unique E.eq l /\
-     (forall x : elt, In x s <-> ME.In x l) /\ fold f s i = fold_right f i l.
+   fold f s i = fold_left (fun a e => f e a) (elements s) i.
   Proof.
-    intros; unfold fold in |- *; case (M.fold f s i); firstorder.
+    intros; unfold fold in |- *; case (M.fold f s i); unfold elements in *; 
+    destruct (M.elements s); auto.
   Qed.  
 
   Definition f_dec :

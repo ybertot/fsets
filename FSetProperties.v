@@ -7,8 +7,8 @@
 (***********************************************************************)
 
 (* Finite sets library.  
- * Authors: Pierre Letouzey and Jean-Christophe Filli\x{00E2}tre 
- * Institution: LRI, CNRS UMR 8623 - Universit\x{00E9} Paris Sud
+ * Authors: Pierre Letouzey and Jean-Christophe Filliâtre 
+ * Institution: LRI, CNRS UMR 8623 - Université Paris Sud
  *              91405 Orsay, France *)
 
 (* $Id$ *)
@@ -272,16 +272,171 @@ Module Properties (M: S).
 
   End Unique_Remove.
 
+  Lemma fold_right_append : forall (A B:Set) (l l':list A)(f:A->B->B)(i:B), 
+     fold_right f i (l++l') = fold_right f (fold_right f i l') l.
+  Proof.
+  induction l.
+  simpl; auto.
+  simpl; intros.
+  f_equal; auto.
+  Qed.
+
+  Lemma fold_left_rev_right : 
+     forall (A B:Set) (l:list A)(f:A->B->B)(i:B), 
+       fold_right f i (rev l) = fold_left (fun x y => f y x) l i.
+  Proof.
+  induction l.
+  simpl; auto.
+  intros.
+  simpl.
+  rewrite fold_right_append; simpl.
+  auto.
+  Qed.
+
+  Lemma In_rev : forall (A:Set)(l:list A)(x:A), List.In x l <-> List.In x (rev l).
+  Proof.
+  induction l.
+  simpl; intuition.
+  intros.
+  simpl.
+  intuition.
+  subst.
+  apply in_or_app; right; simpl; auto.
+  apply in_or_app; left; firstorder.
+  destruct (in_app_or _ _ _ H); firstorder.
+  Qed.
+  
+  Lemma app_length : forall (A:Set)(l l':list A), length (l++l') = length l + length l'.
+  Proof. 
+  induction l; simpl; auto.
+  Qed.
+
+  Lemma rev_length : forall (A:Set)(l:list A), length (rev l) = length l.
+  Proof. 
+  induction l; simpl; auto.
+  rewrite app_length; simpl; auto.
+  rewrite IHl; omega.
+  Qed.
+
+  Lemma Unique_app : forall
+    (l l':list elt), 
+    Unique E.eq l -> Unique E.eq l' -> 
+    (forall x, InList E.eq x l -> InList E.eq x l' -> False) -> 
+    Unique E.eq (l++l').
+  Proof.
+  induction l; simpl; auto; intros.
+  inversion_clear H.
+  constructor.
+  intro.
+  destruct (InList_alt E.eq a (l++l')) as (alt1,alt2).
+  destruct (alt1 H) as (y,(H4,H5)); clear alt1 alt2.
+  destruct (in_app_or _ _ _ H5).
+  elim H2.
+  destruct (InList_alt E.eq a l) as (alt1,alt2).
+  apply alt2; clear alt1 alt2.
+  exists y; auto.
+  apply (H1 a).
+  auto.
+  destruct (InList_alt E.eq a l') as (alt1,alt2).
+  apply alt2; clear alt1 alt2.
+  exists y; auto.
+  apply IHl; auto.
+  intros.
+  apply (H1 x); auto.
+  Qed.
+
+
+  Lemma Unique_rev : forall (l:list elt), Unique E.eq l -> Unique E.eq (rev l).
+  Proof.
+  induction l.
+  simpl; auto.
+  simpl; intros.
+  inversion_clear H.
+  apply Unique_app; auto.
+  constructor; auto.
+  intro H2; inversion H2.
+  intros.
+  apply H0.
+  inversion_clear H2.
+  destruct (InList_alt E.eq x (rev l)) as (alt1,alt2).
+  destruct (alt1 H) as (y, (H4,H5)); clear alt1 alt2.
+  destruct (InList_alt E.eq a l) as (alt1,alt2).
+  apply alt2; exists y; split; eauto.
+  rewrite In_rev; auto.
+  inversion H3.
+  Qed.
+
+  (** When [FSets] was first designed, the order in which Ocaml's [Set.fold]
+        takes the set elements was unspecified. This specification reflects this fact: 
+  *)
+
+  Lemma fold_0 : 
+      forall (s:t) (A : Set) (i : A) (f : elt -> A -> A),
+      exists l : list elt,
+        Unique E.eq l /\
+        (forall x : elt, In x s <-> InList E.eq x l) /\
+        fold f s i = fold_right f i l.
+  Proof.
+  intros; exists (rev (elements s)).
+  split.
+  apply Unique_rev.
+  apply ME.Sort_Unique.
+  apply elements_3.
+  split.
+  intros.
+  destruct (InList_alt E.eq x (rev (elements s))).
+  destruct (InList_alt E.eq x (elements s)).
+  split; intros.
+  destruct (H1 (elements_1 H3)) as (y, (H4,H5)).
+  apply H0; exists y; split; auto.
+  rewrite <- In_rev; auto.
+  destruct (H H3) as (y,(H4,H5)).
+  apply elements_2.
+  apply H2; exists y; split; auto.
+  rewrite In_rev; auto.
+  rewrite fold_left_rev_right.
+  apply fold_1.
+  Qed.
+
+  Lemma cardinal_0 :
+    forall s, exists l : list elt,
+        Unique E.eq l /\
+        (forall x : elt, In x s <-> InList E.eq x l) /\ cardinal s = length l.
+  Proof. 
+  intros; exists (rev (elements s)).
+  split.
+  apply Unique_rev.
+  apply ME.Sort_Unique.
+  apply elements_3.
+  split.
+  intros.
+  destruct (InList_alt E.eq x (rev (elements s))).
+  destruct (InList_alt E.eq x (elements s)).
+  split; intros.
+  destruct (H1 (elements_1 H3)) as (y, (H4,H5)).
+  apply H0; exists y; split; auto.
+  rewrite <- In_rev; auto.
+  destruct (H H3) as (y,(H4,H5)).
+  apply elements_2.
+  apply H2; exists y; split; auto.
+  rewrite In_rev; auto.
+  rewrite cardinal_1.
+  symmetry; apply rev_length.
+  Qed.
+
   (** An alternate (and previous) specification for [fold] was based on 
       the recursive structure of a set. It is now lemmas [fold_1] and 
       [fold_2]. *)
+
+  Definition Add (x : elt) (s s' : t) :=
+    forall y : elt, In y s' <-> E.eq y x \/ In y s.
 
   Lemma fold_1 :
    forall (s : t) (A : Set) (eqA : A -> A -> Prop) 
      (st : Setoid_Theory A eqA) (i : A) (f : elt -> A -> A),
    Empty s -> eqA (fold f s i) i.
   Proof.
-  intros; elim (fold_1 s i f); intros l (H1, (H2, H3)).
+  intros; elim (fold_0 s i f); intros l (H1, (H2, H3)).
   rewrite H3; clear H3.
   unfold Empty in H; generalize H H2; clear H H2; case l; simpl in |- *;
    intros.
@@ -297,8 +452,8 @@ Module Properties (M: S).
    transpose eqA f ->
    ~ In x s -> Add x s s' -> eqA (fold f s' i) (f x (fold f s i)).
   Proof.
-  intros; elim (M.fold_1 s i f); intros l (Hl, (Hl1, Hl2)).
-  elim (M.fold_1 s' i f); intros l' (Hl', (Hl'1, Hl'2)).
+  intros; elim (fold_0 s i f); intros l (Hl, (Hl1, Hl2)).
+  elim (fold_0 s' i f); intros l' (Hl', (Hl'1, Hl'2)).
   rewrite Hl2; clear Hl2.
   rewrite Hl'2; clear Hl'2.
   assert (forall y : elt, ME.In y l' <-> E.eq y x \/ ME.In y l).
@@ -314,8 +469,8 @@ Module Properties (M: S).
 
   Lemma cardinal_fold : forall s : t, cardinal s = fold (fun _ => S) s 0.
   Proof.
-  intros; elim (cardinal_1 s); intros l (Hl, (Hl1, Hl2)).
-  elim (M.fold_1 s 0 (fun _ => S)); intros l' (Hl', (Hl'1, Hl'2)).
+  intros; elim (cardinal_0 s); intros l (Hl, (Hl1, Hl2)).
+  elim (fold_0 s 0 (fun _ => S)); intros l' (Hl', (Hl'1, Hl'2)).
   rewrite Hl2; rewrite Hl'2; clear Hl2 Hl'2.
   assert (forall l : list elt, length l = fold_right (fun _ => S) 0 l).
    simple induction l0; simpl in |- *; auto.

@@ -1814,7 +1814,7 @@ Unset Implicit Arguments.
     apply elements_tree_sort; auto.
     apply elements_tree_1; auto.
     apply elements_tree_2; auto.
-  Qed.
+  Defined.
 
   (** * Isomorphism with [FSetList] *)
 
@@ -1927,10 +1927,10 @@ Set Firstorder Depth 5.
   (** * Fold *)
 
   Fixpoint fold_tree (A : Set) (f : elt -> A -> A) 
-   (s : tree) {struct s} : A -> A :=
+   (s : tree) {struct s} : A -> A := fun a => 
     match s with
-    | Leaf => fun a => a
-    | Node _ l x r => fun a => fold_tree A f l (f x (fold_tree A f r a))
+    | Leaf => a
+    | Node _ l x r => fold_tree A f r (f x (fold_tree A f l a))
     end.
   Implicit Arguments fold_tree [A].
 
@@ -1941,14 +1941,15 @@ Set Firstorder Depth 5.
   Lemma fold_tree_equiv_aux :
    forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
    Lists.Raw.fold f (elements_tree_aux acc s) a =
-   fold_tree f s (Lists.Raw.fold f acc a).
+   Lists.Raw.fold f acc (fold_tree f s a).
   Proof.
   simple induction s.
-  simpl in |- *; intuition.
-  simpl in |- *; intros.
+  simpl; intuition.
+  simpl; intros.
   rewrite H.
-  rewrite <- H0.
-  simpl in |- *; auto.
+  simpl.
+  rewrite H0.
+  auto.
   Qed.
 
   Lemma fold_tree_equiv :
@@ -1956,42 +1957,39 @@ Set Firstorder Depth 5.
    fold_tree f s a = fold_tree' f s a.
   Proof.
   unfold fold_tree', elements_tree in |- *. 
-  simple induction s; simpl in |- *; auto; intros.
-  rewrite fold_tree_equiv_aux.
-  rewrite H0.
-  simpl in |- *; auto.
+  intros; rewrite fold_tree_equiv_aux.
+  simpl; auto.
   Qed.
 
   Definition fold :
     forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
-    {r : A |
-    exists l : list elt,
-      Unique E.eq l /\
-      (forall x : elt, In x s <-> InList E.eq x l) /\ r = fold_right f i l}.
+    {r : A | let (l,_) := elements s in 
+                  r = fold_left (fun a e => f e a) l i}.
   Proof.
     intros A f s i; exists (fold_tree f s i).
     rewrite fold_tree_equiv.
     unfold fold_tree' in |- *.
-    elim (Lists.Raw.fold_1 (elements_tree_sort _ (is_bst s)) i f); intro l.
-    exists l; elim H; clear H; intros H1 (H2, H3); split; auto.
-    split; auto.
-    intros x; generalize (elements_tree_1 s x) (elements_tree_2 s x).
-    generalize (H2 x); unfold In in |- *; firstorder.
+    rewrite Lists.Raw.fold_1; auto.
+    unfold Lists.Raw.elements.
+    destruct s.
+    simpl; auto.
   Qed.
 
   (** * Cardinal *)
 
   Definition cardinal :
     forall s : t,
-    {r : nat |
-    exists l : list elt,
-      Unique E.eq l /\
-      (forall x : elt, In x s <-> InList E.eq x l) /\ r = length l}.
+    {r : nat | let (l,_) := elements s in r = length l }.
   Proof.
     intros; elim (fold nat (fun _ => S) s 0%nat); intro n; exists n.
-    assert (forall l : list elt, length l = fold_right (fun _ => S) 0%nat l). 
-     simple induction l; simpl in |- *; auto.
-    elim p; intro l; exists l; rewrite H; auto.
+    destruct s; simpl in *.
+    clear is_bst0 is_rbtree0.
+    set (l := elements_tree the_tree0) in *; clearbody l; clear the_tree0; subst.
+    assert (forall k, fold_left (fun a _ => S a) l k = k+length l)%nat.
+     induction l; simpl; auto.
+     intros; rewrite IHl.
+     simpl; auto with arith.
+     apply (H O).
   Qed.
 
   (** * Filter *)

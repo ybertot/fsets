@@ -160,9 +160,7 @@ Module Type S.
 
   Parameter fold : forall A : Set, (elt -> A -> A) -> t -> A -> A.
   (** [fold f s a] computes [(f xN ... (f x2 (f x1 a))...)],
-  where [x1 ... xN] are the elements of [s].
-  The order in which elements of [s] are presented to [f] is
-  unspecified. *)
+  where [x1 ... xN] are the elements of [s], in increasing order. *)
 
   Parameter for_all : (elt -> bool) -> t -> bool.
   (** [for_all p s] checks if all elements of the set
@@ -217,8 +215,6 @@ Module Type S.
   Parameter In : elt -> t -> Prop.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) (s : t) :=
     forall x : elt, In x s -> P x.
@@ -286,20 +282,11 @@ Module Type S.
   Parameter diff_3 : In x s -> ~ In x s' -> In x (diff s s').
  
   (** Specification of [fold] *)  
-  Parameter
-    fold_1 :
-      forall (A : Set) (i : A) (f : elt -> A -> A),
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\
-        fold f s i = fold_right f i l.
+  Parameter fold_1 : forall (A : Set) (i : A) (f : elt -> A -> A),
+      fold f s i = fold_left (fun a e => f e a) (elements s) i.
 
   (** Specification of [cardinal] *)  
-  Parameter
-    cardinal_1 :
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ cardinal s = length l.
+  Parameter cardinal_1 : cardinal s = length (elements s).
 
   Section Filter.
   
@@ -308,36 +295,29 @@ Module Type S.
   (** Specification of [filter] *)
   Parameter filter_1 : compat_bool E.eq f -> In x (filter f s) -> In x s. 
   Parameter filter_2 : compat_bool E.eq f -> In x (filter f s) -> f x = true. 
-  Parameter
-    filter_3 :
+  Parameter filter_3 :
       compat_bool E.eq f -> In x s -> f x = true -> In x (filter f s).
 
   (** Specification of [for_all] *)
-  Parameter
-    for_all_1 :
+  Parameter for_all_1 :
       compat_bool E.eq f ->
       For_all (fun x => f x = true) s -> for_all f s = true.
-  Parameter
-    for_all_2 :
+  Parameter for_all_2 :
       compat_bool E.eq f ->
       for_all f s = true -> For_all (fun x => f x = true) s.
 
   (** Specification of [exists] *)
-  Parameter
-    exists_1 :
+  Parameter exists_1 :
       compat_bool E.eq f ->
       Exists (fun x => f x = true) s -> exists_ f s = true.
-  Parameter
-    exists_2 :
+  Parameter exists_2 :
       compat_bool E.eq f ->
       exists_ f s = true -> Exists (fun x => f x = true) s.
 
   (** Specification of [partition] *)
-  Parameter
-    partition_1 :
+  Parameter partition_1 :
       compat_bool E.eq f -> Equal (fst (partition f s)) (filter f s).
-  Parameter
-    partition_2 :
+  Parameter partition_2 :
       compat_bool E.eq f ->
       Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
 
@@ -359,8 +339,8 @@ Module Type S.
   (** Specification of [choose] *)
   Parameter choose_1 : choose s = Some x -> In x s.
   Parameter choose_2 : choose s = None -> Empty s.
-  (*i Parameter choose_equal: 
-      (equal s s')=true -> E.eq (choose s) (choose s'). i*)
+(*  Parameter choose_equal: 
+      (equal s s')=true -> E.eq (choose s) (choose s'). *)
 
   End Filter.
   End Spec.
@@ -457,22 +437,6 @@ Module Type Sdep.
   Parameter subset : forall s s' : t, {Subset s s'} + {~ Subset s s'}.
 
   Parameter
-    fold :
-      forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
-      {r : A |
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ r = fold_right f i l}.
-
-  Parameter
-    cardinal :
-      forall s : t,
-      {r : nat |
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ r = length l}.
-
-  Parameter
     filter :
       forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
         (s : t),
@@ -506,6 +470,17 @@ Module Type Sdep.
       forall s : t,
       {l : list elt |
       sort E.lt l /\ (forall x : elt, In x s <-> InList E.eq x l)}.
+
+  Parameter
+    fold :
+      forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
+      {r : A | let (l,_) := elements s in 
+                  r = fold_left (fun a e => f e a) l i}.
+
+  Parameter
+    cardinal :
+      forall s : t,
+      {r : nat | let (l,_) := elements s in r = length l }.
 
   Parameter
     min_elt :

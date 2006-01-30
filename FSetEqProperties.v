@@ -31,6 +31,8 @@ Module EqProperties (M:S).
   Module ME := OrderedTypeFacts E.  
   Module MP := Properties M.
 
+  Definition Add := MP.Add.
+
   Section Old_Spec_Now_Properties. 
 
   (** Other old specifications written with boolean equalities. *) 
@@ -194,7 +196,7 @@ Module EqProperties (M:S).
      apply (Seq_trans _ _ st) with (f x0 (fold f s0 i)); auto.
      apply MP.fold_2 with (eqA:=eqA); auto.
      apply Seq_sym; auto; apply MP.fold_2 with (eqA := eqA); auto.
-     generalize (equal_2 H2) H1; unfold Add, Equal; intros; 
+     generalize (equal_2 H2) H1; unfold MP.Add, Equal; intros;
        elim (H4 y0); elim (H3 y0); intuition.
   Qed.
    

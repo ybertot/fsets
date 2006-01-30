@@ -1787,7 +1787,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
   Proof.
     intros; unfold elements_tree in |- *; apply elements_tree_aux_sort; auto.
     intros; inversion H0.
-  Qed.
+  Defined.
   Hint Resolve elements_tree_sort.
 
   Definition elements :
@@ -1828,15 +1828,10 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
 
   Definition cardinal :
     forall s : t,
-    {r : nat |
-    exists l : list elt,
-      Unique E.eq l /\
-      (forall x : elt, In x s <-> InList E.eq x l) /\ r = length l}.
+    {r : nat | let (l,_) := elements s in r = length l }.
   Proof.
     intros (s, s_bst, s_avl); unfold In in |- *; simpl in |- *; clear s_avl.
     exists (cardinal_tree s).
-    exists (elements_tree s); intuition.
-    apply ME.Sort_Unique; auto.
     exact (cardinal_elements_2 s).
   Qed.
 
@@ -2499,10 +2494,10 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
   Module L := Raw E.
 
   Fixpoint fold_tree (A : Set) (f : elt -> A -> A) 
-   (s : tree) {struct s} : A -> A :=
+   (s : tree) {struct s} : A -> A := fun a => 
     match s with
-    | Leaf => fun a => a
-    | Node l x r _ => fun a => fold_tree A f l (f x (fold_tree A f r a))
+    | Leaf => a
+    | Node l x r _ => fold_tree A f r (f x (fold_tree A f l a))
     end.
   Implicit Arguments fold_tree [A].
 
@@ -2512,14 +2507,15 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
 
   Lemma fold_tree_equiv_aux :
    forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
-   L.fold f (elements_tree_aux acc s) a = fold_tree f s (L.fold f acc a).
+   L.fold f (elements_tree_aux acc s) a = 
+   L.fold f acc (fold_tree f s a).
   Proof.
   simple induction s.
   simpl in |- *; intuition.
   simpl in |- *; intros.
   rewrite H.
-  rewrite <- H0.
-  simpl in |- *; auto.
+  simpl.
+  apply H0.
   Qed.
 
   Lemma fold_tree_equiv :
@@ -2535,19 +2531,15 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
 
   Definition fold :
     forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
-    {r : A |
-    exists l : list elt,
-      Unique E.eq l /\
-      (forall x : elt, In x s <-> L.MX.In x l) /\ r = fold_right f i l}.
+    {r : A | let (l,_) := elements s in 
+                  r = fold_left (fun a e => f e a) l i}. 
   Proof.
     intros A f s i; exists (fold_tree f s i).
     rewrite fold_tree_equiv.
     unfold fold_tree' in |- *.
-    elim (L.fold_1 (elements_tree_sort _ (is_bst s)) i f); intro l.
-    exists l; elim H; clear H; intros H1 (H2, H3); split; auto.
-    split; auto.
-    intros x; generalize (elements_tree_1 s x) (elements_tree_2 s x).
-    generalize (H2 x); unfold In in |- *; firstorder.
+    assert (H:=L.fold_1 (elements_tree_sort _ (is_bst s)) i f).
+    destruct s; simpl in *.
+    auto.
   Qed.
 
   (** * Comparison *)

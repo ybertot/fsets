@@ -203,20 +203,11 @@ Module Type S.
   Parameter diff_3 : In x s -> ~ In x s' -> In x (diff s s').
  
   (** Specification of [fold] *)  
-  Parameter
-    fold_1 :
-      forall (A : Set) (i : A) (f : elt -> A -> A),
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\
-        fold f s i = fold_right f i l.
+  Parameter fold_1 : forall (A : Set) (i : A) (f : elt -> A -> A),
+      fold f s i = fold_left (fun a e => f e a) (elements s) i.
 
   (** Specification of [cardinal] *)  
-  Parameter
-    cardinal_1 :
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ cardinal s = length l.
+  Parameter cardinal_1 : cardinal s = length (elements s).
 
   Section Filter.
   
@@ -225,36 +216,29 @@ Module Type S.
   (** Specification of [filter] *)
   Parameter filter_1 : compat_bool E.eq f -> In x (filter f s) -> In x s. 
   Parameter filter_2 : compat_bool E.eq f -> In x (filter f s) -> f x = true. 
-  Parameter
-    filter_3 :
+  Parameter filter_3 :
       compat_bool E.eq f -> In x s -> f x = true -> In x (filter f s).
 
   (** Specification of [for_all] *)
-  Parameter
-    for_all_1 :
+  Parameter for_all_1 :
       compat_bool E.eq f ->
       For_all (fun x => f x = true) s -> for_all f s = true.
-  Parameter
-    for_all_2 :
+  Parameter for_all_2 :
       compat_bool E.eq f ->
       for_all f s = true -> For_all (fun x => f x = true) s.
 
   (** Specification of [exists] *)
-  Parameter
-    exists_1 :
+  Parameter exists_1 :
       compat_bool E.eq f ->
       Exists (fun x => f x = true) s -> exists_ f s = true.
-  Parameter
-    exists_2 :
+  Parameter exists_2 :
       compat_bool E.eq f ->
       exists_ f s = true -> Exists (fun x => f x = true) s.
 
   (** Specification of [partition] *)
-  Parameter
-    partition_1 :
+  Parameter partition_1 :
       compat_bool E.eq f -> Equal (fst (partition f s)) (filter f s).
-  Parameter
-    partition_2 :
+  Parameter partition_2 :
       compat_bool E.eq f ->
       Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
 
@@ -289,126 +273,3 @@ Module Type S.
     for_all_2 exists_1 exists_2 partition_1 partition_2 elements_1 elements_2.
 
 End S.
-
-(** * Dependent signature 
-
-    Signature [Sdep] presents sets using dependent types *)
-
-Module Type Sdep.
-
-  Declare Module E : OrderedType.
-  Definition elt := E.t.
-
-  Parameter t : Set.
-
-  Parameter In : elt -> t -> Prop.
-  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
-  Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
-  Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) (s : t) :=
-    forall x : elt, In x s -> P x.
-  Definition Exists (P : elt -> Prop) (s : t) :=
-    exists x : elt, In x s /\ P x.
-
-  Parameter eq_In : forall (s : t) (x y : elt), E.eq x y -> In x s -> In y s.
-
-  Parameter empty : {s : t | Empty s}.
-
-  Parameter is_empty : forall s : t, {Empty s} + {~ Empty s}.
-
-  Parameter mem : forall (x : elt) (s : t), {In x s} + {~ In x s}.
-
-  Parameter add : forall (x : elt) (s : t), {s' : t | Add x s s'}.
-
-  Parameter
-    singleton : forall x : elt, {s : t | forall y : elt, In y s <-> E.eq x y}.
-  
-  Parameter
-    remove :
-      forall (x : elt) (s : t),
-      {s' : t | forall y : elt, In y s' <-> ~ E.eq y x /\ In y s}.
-
-  Parameter
-    union :
-      forall s s' : t,
-      {s'' : t | forall x : elt, In x s'' <-> In x s \/ In x s'}.
-
-  Parameter
-    inter :
-      forall s s' : t,
-      {s'' : t | forall x : elt, In x s'' <-> In x s /\ In x s'}.
-
-  Parameter
-    diff :
-      forall s s' : t,
-      {s'' : t | forall x : elt, In x s'' <-> In x s /\ ~ In x s'}.
-
-  Parameter equal : forall s s' : t, {Equal s s'} + {~ Equal s s'}.
- 
-  Parameter subset : forall s s' : t, {Subset s s'} + {~ Subset s s'}.
-
-  Parameter
-    fold :
-      forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
-      {r : A |
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ r = fold_right f i l}.
-
-  Parameter
-    cardinal :
-      forall s : t,
-      {r : nat |
-      exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ r = length l}.
-
-  Parameter
-    filter :
-      forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
-        (s : t),
-      {s' : t | compat_P E.eq P -> forall x : elt, In x s' <-> In x s /\ P x}.
-
-  Parameter
-    for_all :
-      forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
-        (s : t),
-      {compat_P E.eq P -> For_all P s} + {compat_P E.eq P -> ~ For_all P s}.
-  
-  Parameter
-    exists_ :
-      forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
-        (s : t),
-      {compat_P E.eq P -> Exists P s} + {compat_P E.eq P -> ~ Exists P s}.
-
-  Parameter
-    partition :
-      forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
-        (s : t),
-      {partition : t * t |
-      let (s1, s2) := partition in
-      compat_P E.eq P ->
-      For_all P s1 /\
-      For_all (fun x => ~ P x) s2 /\
-      (forall x : elt, In x s <-> In x s1 \/ In x s2)}.
-
-  Parameter
-    elements :
-      forall s : t,
-      {l : list elt | forall x : elt, In x s <-> InList E.eq x l}.
-
-  Parameter choose : forall s : t, {x : elt | In x s} + {Empty s}.
-
-  Notation "∅" := empty.
-  Notation "a ⋃ b" := (union a b) (at level 20).
-  Notation "a ⋂ b" := (inter a b) (at level 20).
-  Notation "a ∈ b" := (In a b) (at level 20).
-  Notation "a ∉ b" := (~ a ∈ b) (at level 20).
-  Notation "a ≡ b" := (Equal a b) (at level 20).
-  Notation "a ≢ b" := (~ a ≡ b) (at level 20).
-  Notation "a ⊆ b" := (Subset a b) (at level 20).
-  Notation "a ⊈ b" := (~ a ⊆ b) (at level 20).  
-	
-End Sdep.

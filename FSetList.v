@@ -155,7 +155,7 @@ Module Raw (X: OrderedType).
   Fixpoint fold (B : Set) (f : elt -> B -> B) (s : t) {struct s} : 
    B -> B := fun i => match s with
                       | [] => i
-                      | x :: l => f x (fold f l i)
+                      | x :: l => fold f l (f x i)
                       end.  
 
   Fixpoint filter (f : elt -> bool) (s : t) {struct s} : t :=
@@ -185,7 +185,7 @@ Module Raw (X: OrderedType).
         if f x then (x :: s1, s2) else (s1, x :: s2)
     end.
 
-  Definition cardinal (s : t) : nat := fold (fun _ => S) s 0.
+  Definition cardinal (s : t) : nat := length s.
 
   Definition elements (x : t) : list elt := x.
 
@@ -755,29 +755,20 @@ Module Raw (X: OrderedType).
 
   Lemma fold_1 :
    forall (s : t) (Hs : Sort s) (A : Set) (i : A) (f : elt -> A -> A),
-   exists l : list elt,
-     Unique X.eq l /\
-     (forall x : elt, In x s <-> In x l) /\ fold f s i = fold_right f i l.
+   fold f s i = fold_left (fun a e => f e a) (elements s) i.
   Proof.
-  intros; exists s; split; intuition.
-  apply MX.Sort_Unique; auto.
-  induction  s as [| a s Hrecs]; simpl; trivial.
-  rewrite Hrecs; trivial.
-  inversion_clear Hs; trivial.
+  induction s.
+  simpl; trivial.
+  intros.
+  inversion_clear Hs.
+  simpl; auto.
   Qed.
 
   Lemma cardinal_1 :
    forall (s : t) (Hs : Sort s),
-   exists l : list elt,
-     Unique X.eq l /\
-     (forall x : elt, In x s <-> In x l) /\ cardinal s = length l.
+   cardinal s = length (elements s).
   Proof.
-  intros; exists s; split; intuition.
-  apply MX.Sort_Unique; auto.  
-  unfold cardinal; induction  s as [| a s Hrecs]; simpl;
-   trivial.
-  rewrite Hrecs; trivial.
-  inversion_clear Hs; trivial.
+  auto.
   Qed.
 
   Lemma filter_Inf :
