@@ -29,6 +29,7 @@ Ltac absurd_hyp h :=
   absurd T.
 
 Module Raw (X:OrderedType).
+  Module E := X.
   Module MX := OrderedTypeFacts X.
 
   Definition key := X.t.
@@ -650,30 +651,39 @@ Module Raw (X:OrderedType).
       eapply eqke_trans with (x, e);auto.
     Qed.
 
+    Definition elements (m: t elt) := m.
+
+    Lemma elements_1 : forall m x e, 
+        MapsTo x e m -> InList eqke (x,e) (elements m).
+    Proof.
+    auto.
+    Qed.
+
+    Lemma elements_2 : forall m x e, 
+        InList eqke (x,e) (elements m) -> MapsTo x e m.
+    Proof. 
+    auto.
+    Qed.
+
+    Lemma elements_3 : forall m (Hm:Sort m),
+       sort ltk (elements m). 
+    Proof. 
+    auto.
+    Qed.
+
     Fixpoint fold (A:Set) (f:key -> elt -> A -> A) (m:t elt) {struct m} : A -> A :=
       fun acc => 
       match m with
 	| [] => acc
-	| (k,e)::m' => f k e (fold f m' acc)
+	| (k,e)::m' => fold f m' (f k e acc)
       end.
 
-      (** Specification of [fold] *)  
-
-      Lemma fold_1 :
-	forall (m:t elt)(Hm:Sort m)(A : Set) (acc : A) (f : key -> elt -> A -> A),
-	  exists l : list (key*elt),
-            Unique eqk l /\
-            (forall (k:key)(x:elt), MapsTo k x m <-> InList eqke (k,x) l) 
-            /\
-            fold f m acc = fold_right (fun p => f (fst p) (snd p)) acc l.
-      Proof.
-      intros.
-      exists m; firstorder.
-      apply sorted_unique; auto.
-      clear Hm.
-      induction m; simpl; auto.
-      destruct a; simpl; congruence.
-      Qed.
+    Lemma fold_1 : 
+	forall m (A : Set) (i : A) (f : key -> elt -> A -> A),
+        fold f m i = fold_left (fun a p => f (fst p) (snd p) a) (elements m) i.
+     Proof. 
+     intros; functional induction fold A f m i; auto.
+     Qed.
 
      Fixpoint equal (cmp: elt -> elt -> bool)(m m' : t elt) { struct m } : bool := 
        match m, m' with 
@@ -1010,10 +1020,13 @@ Module Raw (X:OrderedType).
               end
         end. 
 
+    Definition fold_right_pair (A B C:Set)(f: A -> B -> C -> C)(l:list (A*B))(i:C) := 
+           List.fold_right (fun p => f (fst p) (snd p)) i l.
+
     Definition map2_alt m m' := 
       let m0 : t (option elt * option elt') := combine m m' in 
       let m1 : t (option elt'') := map (fun p => f (fst p) (snd p)) m0 in 
-      fold (option_cons (A:=elt'')) m1 nil.
+      fold_right_pair (option_cons (A:=elt'')) m1 nil.
 
     Lemma map2_alt_equiv : 
       forall m m', map2_alt m m' = map2 m m'.
@@ -1208,7 +1221,8 @@ Module Raw (X:OrderedType).
     generalize H; clear H.
     match goal with |- ?g => 
        assert (g /\ (find x m0 = None -> 
-                           find x (fold (option_cons (A:=elt'')) (map f' m0) []) = None)); 
+                           find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) []) 
+                           = None)); 
        [ | intuition ] end.
     induction m0; simpl in *; intuition.
     destruct o; destruct o'; simpl in *; try discriminate; auto.
@@ -1308,12 +1322,11 @@ Module Raw (X:OrderedType).
 
 End Raw.
 
-
-Module Make (X: OrderedType) <: S with Definition key := X.t with Definition keq := X.eq.
+Module Make (X: OrderedType) <: S with Module E := X.
   Module Raw := Raw X. 
+  Module E := X.
 
-  Definition key := X.t. 
-  Definition keq := X.eq.
+  Definition key := X.t.
 
   Record slist (elt:Set) : Set :=  {this :> Raw.t elt; sorted : sort (@Raw.ltk elt) this}.
   Definition t (elt:Set) := slist elt. 
@@ -1333,6 +1346,7 @@ Module Make (X: OrderedType) <: S with Definition key := X.t with Definition keq
  Definition mapi f m : t elt' := Build_slist (Raw.mapi_sorted m.(sorted) f).
  Definition map2 f m (m':t elt') : t elt'' := 
      Build_slist (Raw.map2_sorted f m.(sorted) m'.(sorted)).
+ Definition elements m := @Raw.elements elt m.(this).
  Definition fold A f m i := @Raw.fold elt A f m.(this) i.
  Definition equal cmp m m' := @Raw.equal elt cmp m.(this) m'.(this).
 
@@ -1345,6 +1359,8 @@ Module Make (X: OrderedType) <: S with Definition key := X.t with Definition keq
      
  Definition eq_key_elt (p p':key*elt) := 
           X.eq (fst p) (fst p') /\ (snd p) = (snd p').
+
+ Definition lt_key (p p':key*elt) := X.lt (fst p) (fst p').
 
  Definition MapsTo_1 m := @Raw.MapsTo_1 elt m.(this).
 
@@ -1367,7 +1383,11 @@ Module Make (X: OrderedType) <: S with Definition key := X.t with Definition keq
  Definition find_1 m := @Raw.find_1 elt m.(this) m.(sorted).
  Definition find_2 m := @Raw.find_2 elt m.(this).
 
- Definition fold_1 m := @Raw.fold_1 elt m.(this) m.(sorted).
+ Definition elements_1 m := @Raw.elements_1 elt m.(this). 
+ Definition elements_2 m := @Raw.elements_2 elt m.(this). 
+ Definition elements_3 m := @Raw.elements_3 elt m.(this) m.(sorted). 
+
+ Definition fold_1 m := @Raw.fold_1 elt m.(this).
 
  Definition map_1 m := @Raw.map_1 elt elt' m.(this).
  Definition map_2 m := @Raw.map_2 elt elt' m.(this).
@@ -1386,12 +1406,9 @@ Module Make (X: OrderedType) <: S with Definition key := X.t with Definition keq
  End Elt.
 End Make.
 
-
-
 Module Make_ord (X: OrderedType)(Data : OrderedType) <: 
     Sord with Module Data := Data 
-            with Definition MapS.key := X.t 
-            with Definition MapS.keq := X.eq.
+            with Module MapS.E := X.
 
   Module Data := Data.
   Module MapS := Make(X). 

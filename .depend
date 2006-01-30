@@ -1,12 +1,7 @@
-avl2.cmo: avl2.ml avl2.cmi
-avl2.cmx: avl2.ml avl2.cmi
 avl.cmo: avl.ml avl.cmi
 avl.cmx: avl.ml avl.cmi
-int.cmo: int.ml avl2.cmi
-int.cmx: int.ml avl2.cmx
 rbt.cmo: rbt.ml rbt.cmi
 rbt.cmx: rbt.ml rbt.cmi
-avl2.cmi: avl2.mli
 avl.cmi: avl.mli
 rbt.cmi: rbt.mli
 Int.vo: Int.v
@@ -29,8 +24,10 @@ FMapInterface.vo: FMapInterface.v FSetInterface.vo
 FMapInterface.vi: FMapInterface.v FSetInterface.vo
 FMapList.vo: FMapList.v FSetInterface.vo FMapInterface.vo
 FMapList.vi: FMapList.v FSetInterface.vo FMapInterface.vo
-FMapWeakList.vo: FMapWeakList.v FSetInterface.vo FSetWeakInterface.vo FMapInterface.vo
-FMapWeakList.vi: FMapWeakList.v FSetInterface.vo FSetWeakInterface.vo FMapInterface.vo
+FMapWeakInterface.vo: FMapWeakInterface.v FSetInterface.vo FSetWeakInterface.vo
+FMapWeakInterface.vi: FMapWeakInterface.v FSetInterface.vo FSetWeakInterface.vo
+FMapWeakList.vo: FMapWeakList.v FSetInterface.vo FSetWeakInterface.vo FMapWeakInterface.vo
+FMapWeakList.vi: FMapWeakList.v FSetInterface.vo FSetWeakInterface.vo FMapWeakInterface.vo
 FSetRBT.vo: FSetRBT.v FSetInterface.vo FSetList.vo FSetBridge.vo
 FSetRBT.vi: FSetRBT.v FSetInterface.vo FSetList.vo FSetBridge.vo
 FSetAVL.vo: FSetAVL.v FSetInterface.vo FSetList.vo
@@ -51,7 +48,8 @@ FSetWeakInterface.html: FSetWeakInterface.v FSetInterface.html
 FSetWeakList.html: FSetWeakList.v FSetInterface.html FSetWeakInterface.html
 FMapInterface.html: FMapInterface.v FSetInterface.html
 FMapList.html: FMapList.v FSetInterface.html FMapInterface.html
-FMapWeakList.html: FMapWeakList.v FSetInterface.html FSetWeakInterface.html FMapInterface.html
+FMapWeakInterface.html: FMapWeakInterface.v FSetInterface.html FSetWeakInterface.html
+FMapWeakList.html: FMapWeakList.v FSetInterface.html FSetWeakInterface.html FMapWeakInterface.html
 FSetRBT.html: FSetRBT.v FSetInterface.html FSetList.html FSetBridge.html
 FSetAVL.html: FSetAVL.v FSetInterface.html FSetList.html
 FSetAVL2.html: FSetAVL2.v FSetInterface.html FSetList.html Int.html

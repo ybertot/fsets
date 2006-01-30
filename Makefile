@@ -81,6 +81,7 @@ VFILES=Int.v\
   FSetWeakList.v\
   FMapInterface.v\
   FMapList.v\
+  FMapWeakInterface.v\
   FMapWeakList.v\
   FSetRBT.v\
   FSetAVL.v\
@@ -103,6 +104,7 @@ all: Int.vo\
   FSetWeakList.vo\
   FMapInterface.vo\
   FMapList.vo\
+  FMapWeakInterface.vo\
   FMapWeakList.vo\
   FSetRBT.vo\
   FSetAVL.vo\

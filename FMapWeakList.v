@@ -18,7 +18,7 @@
 
 Require Import FSetInterface. 
 Require Import FSetWeakInterface.
-Require Import FMapInterface.
+Require Import FMapWeakInterface.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -434,29 +434,39 @@ Module Raw (X:DecidableType).
       eapply eqke_trans with (x, e);auto.
     Qed.
 
+    Definition elements (m: t elt) := m.
+
+    Lemma elements_1 : forall m x e, 
+        MapsTo x e m -> InList eqke (x,e) (elements m).
+    Proof.
+    auto.
+    Qed.
+
+    Lemma elements_2 : forall m x e, 
+        InList eqke (x,e) (elements m) -> MapsTo x e m.
+    Proof. 
+    auto.
+    Qed.
+
+    Lemma elements_3 : forall m (Hm:Unique m),
+       Unique (elements m). 
+    Proof. 
+    auto.
+    Qed.
+
     Fixpoint fold (A:Set) (f:key -> elt -> A -> A) (m:t elt) {struct m} : A -> A :=
       fun acc => 
       match m with
 	| [] => acc
-	| (k,e)::m' => f k e (fold f m' acc)
+	| (k,e)::m' => fold f m' (f k e acc)
       end.
 
-      (** Specification of [fold] *)  
-
-      Lemma fold_1 :
-	forall (m:t elt)(Hm:Unique m)(A : Set) (acc : A) (f : key -> elt -> A -> A),
-	  exists l : list (key*elt),
-            Unique l /\
-            (forall (k:key)(x:elt), MapsTo k x m <-> InList eqke (k,x) l) 
-            /\
-            fold f m acc = fold_right (fun p => f (fst p) (snd p)) acc l.
-      Proof.
-      intros.
-      exists m; firstorder.
-      clear Hm.
-      induction m; simpl; auto.
-      destruct a; simpl; congruence.
-      Qed.
+    Lemma fold_1 : 
+	forall m (A : Set) (i : A) (f : key -> elt -> A -> A),
+        fold f m i = fold_left (fun a p => f (fst p) (snd p) a) (elements m) i.
+     Proof. 
+     intros; functional induction fold A f m i; auto.
+     Qed.
 
      Definition check (cmp : elt -> elt -> bool)(k:key)(e:elt)(m': t elt) := 
          match find k m' with 
@@ -487,18 +497,15 @@ Module Raw (X:DecidableType).
      destruct a; simpl; intros.
      destruct H.
      inversion_clear Hm.
-     apply andb_true_intro; split.
-     unfold check.
      assert (H3 : In k m').
      apply H; exists e; auto.
      destruct H3 as (e', H3).
-     rewrite (find_1 Hm' H3).
-     eapply H0; eauto.
-     
-     apply IHm; auto.
+     unfold check at 2; rewrite (find_1 Hm' H3).
+     rewrite (H0 k); simpl; auto.
+     eapply IHm; auto.
      split; intuition.
      apply H.
-     destruct H4 as (e',H4); exists e'; auto.
+     destruct H5 as (e'',H5); exists e''; auto.
      eapply H0; eauto; auto.
      Qed.
        
@@ -514,23 +521,30 @@ Module Raw (X:DecidableType).
      
      destruct a; simpl; intros.
      inversion_clear Hm.
-     destruct (andb_prop _ _ H); clear H.
+     rewrite andb_b_true in H.
+     assert (check cmp k e m' = true).
+       clear H1 H0 Hm' IHm.
+       set (b:=check cmp k e m') in *.
+       generalize H; clear H; generalize b; clear b.
+       induction m; simpl; auto; intros.
+       destruct a; simpl in *.
+       destruct (andb_prop _ _ (IHm _ H)); auto.
+     rewrite H2 in H.
+     destruct (IHm H1 m' Hm' cmp H); auto.
      unfold check in H2.
-     case_eq (find k m'); [intros e' H4 | intros H4]; rewrite H4 in H2; try discriminate.
+     case_eq (find k m'); [intros e' H5 | intros H5]; rewrite H5 in H2; try discriminate.
      split; intros.
-     destruct H as (e0,H); inversion_clear H.
-     compute in H5; destruct H5; subst.
+     destruct H6 as (e0,H6); inversion_clear H6.
+     compute in H7; destruct H7; subst.
      exists e'.
      apply MapsTo_1 with k; auto.
      apply find_2; auto.
-     destruct (IHm H1 m' Hm' cmp); auto.
-     apply H.
+     apply H3.
      exists e0; auto.
-     inversion_clear H.
-     compute in H6; destruct H6; subst.
-     rewrite (find_1 Hm' (MapsTo_1 H H5)) in H4; congruence.
-     destruct (IHm H1 m' Hm' cmp); auto.
-     eapply H7; eauto.
+     inversion_clear H6.
+     compute in H8; destruct H8; subst.
+     rewrite (find_1 Hm' (MapsTo_1 H6 H7)) in H5; congruence.
+     eapply H4; eauto.
      Qed.
 
 
@@ -746,11 +760,14 @@ Module Raw (X:DecidableType).
 
       Definition combine_r (m : t elt)(m' : t elt') : t (option elt * option elt') :=
         mapi (fun k e' => (find k m, Some e')) m'.	
-       
+    
+      Definition fold_right_pair (A B C:Set)(f: A -> B -> C -> C)(l:list (A*B))(i:C) := 
+         List.fold_right (fun p => f (fst p) (snd p)) i l.
+
       Definition combine (m : t elt)(m' : t elt') : t (option elt * option elt') := 
          let l := combine_l m m' in 
          let r := combine_r m m' in 
-         fold (add (elt:=option elt * option elt')) l r.
+         fold_right_pair (add (elt:=option elt * option elt')) l r.
 
     Lemma combine_unique : 
       forall (m: t elt)(Hm : Unique (@eqk elt) m)(m': t elt')(Hm' : Unique (@eqk elt') m'), 
@@ -890,7 +907,7 @@ Module Raw (X:DecidableType).
       Definition map2 m m' := 
         let m0 : t (option elt * option elt') := combine m m' in 
         let m1 : t (option elt'') := map (fun p => f (fst p) (snd p)) m0 in 
-        fold (option_cons (A:=elt'')) m1 nil.
+        fold_right_pair (option_cons (A:=elt'')) m1 nil.
     
     Lemma map2_unique : 
       forall (m: t elt)(Hm : Unique (@eqk elt) m)(m': t elt')(Hm' : Unique (@eqk elt') m'), 
@@ -941,7 +958,7 @@ Module Raw (X:DecidableType).
     generalize H; clear H.
     match goal with |- ?g => 
        assert (g /\ (find x m0 = None -> 
-                           find x (fold (option_cons (A:=elt'')) (map f' m0) []) = None)); 
+                           find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) []) = None)); 
        [ | intuition ] end.
     induction m0; simpl in *; intuition.
     destruct o; destruct o'; simpl in *; try discriminate; auto.
@@ -1022,11 +1039,11 @@ Module Raw (X:DecidableType).
 End Raw.
 
 
-Module Make (X: DecidableType) <: S with Definition key := X.t with Definition keq := X.eq.
+Module Make (X: DecidableType) <: S with Module E:=X.
   Module Raw := Raw X. 
 
+  Module E := X.
   Definition key := X.t. 
-  Definition keq := X.eq.
 
   Record slist (elt:Set) : Set :=  {this :> Raw.t elt; unique : Unique (@Raw.eqk elt) this}.
   Definition t (elt:Set) := slist elt. 
@@ -1046,6 +1063,7 @@ Module Make (X: DecidableType) <: S with Definition key := X.t with Definition k
  Definition mapi f m : t elt' := Build_slist (Raw.mapi_unique m.(unique) f).
  Definition map2 f m (m':t elt') : t elt'' := 
      Build_slist (Raw.map2_unique f m.(unique) m'.(unique)).
+ Definition elements m := @Raw.elements elt m.(this).
  Definition fold A f m i := @Raw.fold elt A f m.(this) i.
  Definition equal cmp m m' := @Raw.equal elt cmp m.(this) m'.(this).
 
@@ -1080,7 +1098,11 @@ Module Make (X: DecidableType) <: S with Definition key := X.t with Definition k
  Definition find_1 m := @Raw.find_1 elt m.(this) m.(unique).
  Definition find_2 m := @Raw.find_2 elt m.(this).
 
- Definition fold_1 m := @Raw.fold_1 elt m.(this) m.(unique).
+ Definition elements_1 m := @Raw.elements_1 elt m.(this).
+ Definition elements_2 m := @Raw.elements_2 elt m.(this).
+ Definition elements_3 m := @Raw.elements_3 elt m.(this) m.(unique).
+
+ Definition fold_1 m := @Raw.fold_1 elt m.(this).
 
  Definition map_1 m := @Raw.map_1 elt elt' m.(this).
  Definition map_2 m := @Raw.map_2 elt elt' m.(this).

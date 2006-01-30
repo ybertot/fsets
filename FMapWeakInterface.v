@@ -12,26 +12,17 @@
 
 (* $Id$ *)
 
-(** This file proposes an interface for finite maps *)
+(** This file proposes an interface for finite maps over keys with decidable 
+     equality, but no decidable order. *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Require Import FSetInterface. 
-
-
-(** When compared with Ocaml Map, this signature has been split in two: 
-   - The first part [S] contains the usual operators (add, find, ...)
-     It only requires a ordered key type, the data type can be arbitrary. 
-     The only function that asks more is [equal], whose first argument should 
-     be an equality on data. 
-   - Then, [Sord] extends [S] with a complete comparison fonction. For 
-     that, the data type should have a decidable total ordering. 
-*)
-
+Require Import FSetWeakInterface. 
 
 Module Type S.
 
-  Declare Module E : OrderedType.
+  Declare Module E : DecidableType.
 
   Definition key := E.t.
 
@@ -128,8 +119,6 @@ Module Type S.
       Definition eq_key_elt (p p':key*elt) := 
           E.eq (fst p) (fst p') /\ (snd p) = (snd p').
 
-      Definition lt_key (p p':key*elt) := E.lt (fst p) (fst p').
-
     (** Specification of [MapsTo] *)
       Parameter MapsTo_1 : E.eq x y -> MapsTo x e m -> MapsTo y e m.
       
@@ -163,7 +152,7 @@ Module Type S.
         MapsTo x e m -> InList eq_key_elt (x,e) (elements m).
       Parameter elements_2 : 
         InList eq_key_elt (x,e) (elements m) -> MapsTo x e m.
-      Parameter elements_3 : sort lt_key (elements m).  
+      Parameter elements_3 : Unique eq_key (elements m).  
 
     (** Specification of [fold] *)  
       Parameter fold_1 :
@@ -216,33 +205,3 @@ Module Type S.
     remove_2 remove_3 find_1 find_2 fold_1 map_1 map_2 mapi_1 mapi_2. 
 
 End S.
-
-
-Module Type Sord.
- 
-  Declare Module Data : OrderedType.   
-  Declare Module MapS : S. 
-  Import MapS.
-  
-  Definition t := MapS.t Data.t. 
-
-  Parameter eq : t -> t -> Prop.
-  Parameter lt : t -> t -> Prop. 
- 
-  Axiom eq_refl : forall m : t, eq m m.
-  Axiom eq_sym : forall m1 m2 : t, eq m1 m2 -> eq m2 m1.
-  Axiom eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
-  Axiom lt_trans : forall m1 m2 m3 : t, lt m1 m2 -> lt m2 m3 -> lt m1 m3.
-  Axiom lt_not_eq : forall m1 m2 : t, lt m1 m2 -> ~ eq m1 m2.
-
-  Definition cmp e e' := match Data.compare e e' with Eq _ => true | _ => false end.	
-
-  Parameter eq_1 : forall m m', Equal cmp m m' -> eq m m'.
-  Parameter eq_2 : forall m m', eq m m' -> Equal cmp m m'.
-
-  Parameter compare : forall m1 m2, Compare lt eq m1 m2.
-  (** Total ordering between maps. The first argument (in Coq: Data.compare) 
-      is a total ordering used to compare data associated with equal keys 
-      in the two maps. *)
-
-End Sord.
