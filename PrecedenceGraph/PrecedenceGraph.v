@@ -187,7 +187,7 @@ rewrite (@fold_2 (remove n G) G n _ _  (gen_st nat) 0 (fun x => plus (f1 x))); a
 assert (f1 n  = nb_succ G n).
 unfold f1, nb_succ, set_succ, node_remove, is_succ; simpl.
 apply Equal_cardinal.
-eapply add_filter_2; eauto.
+eapply add_filter_2; unfold Add; eauto.
 rewrite H1; omega.
 unfold transpose; intros; omega.
 unfold g, f1, f2; intros; apply node_remove_3; auto.
