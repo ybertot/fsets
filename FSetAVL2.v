@@ -1787,7 +1787,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
   Proof.
     intros; unfold elements_tree in |- *; apply elements_tree_aux_sort; auto.
     intros; inversion H0.
-  Defined.
+  Qed.
   Hint Resolve elements_tree_sort.
 
   Definition elements :
@@ -1800,7 +1800,7 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
     apply elements_tree_sort; auto.
     apply elements_tree_1; auto.
     apply elements_tree_2; auto.
-  Qed.
+  Defined.
 
   (** * Cardinal *)
 
