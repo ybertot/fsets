@@ -1107,66 +1107,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     clear H7 H12 H14; firstorder.
   Qed.
 
-  (** Variant where we remove from the biggest subtree *)
-
-  Definition merge_bis :
-    forall s1 s2 : tree,
-    bst s1 ->
-    avl s1 ->
-    bst s2 ->
-    avl s2 ->
-    (forall y1 y2 : elt, In_tree y1 s1 -> In_tree y2 s2 -> X.lt y1 y2) ->
-    -2 <= height s1 - height s2 <= 2 ->
-    {s : tree |
-    bst s /\
-    avl s /\
-    (height_of_node s1 s2 (height s) \/ height_of_node s1 s2 (height s + 1)) /\
-    (forall y : elt, In_tree y s <-> In_tree y s1 \/ In_tree y s2)}.
-  Proof.
-    simple destruct s1; simpl in |- *.
-    (* s1 = Leaf *)
-    intros; exists s2; unfold height_of_node in |- *; simpl in |- *;
-     intuition.
-    AVL H2; omega.
-    inversion_clear H7.
-    (* s1 = Node t0 t1 t2 *)
-    simple destruct s2; simpl in |- *.
-    (* s2 = Leaf *)
-    intros; exists (Node t0 t1 t2 z); unfold height_of_node in |- *;
-     simpl in |- *; intuition.
-    AVL H0; omega.
-    inversion_clear H7.
-    (* s2 = Node t3 t4 t5 *)
-    intros; case (Z_ge_lt_dec z z0); intro.
-    (* z >= z0 *)
-    case (remove_max (Node t0 t1 t2 z)); auto.
-    discriminate.
-    intros (s'1, m); intuition.
-    case (create s'1 m (Node t3 t4 t5 z0)); auto.
-    firstorder.
-    clear H3 H11; AVL H0; AVL H2; AVL H8; simpl in H7; omega.
-    intro s'; unfold height_of_node in |- *; intuition. 
-    exists s'.
-    do 3 (split; trivial).
-    clear H3 H9 H11 H15; AVL H0; AVL H2; AVL H8; AVL H13.
-    simpl in H7, H14, H12; simpl in |- *.
-    intuition omega.
-    clear H7 H12; firstorder.
-    (* z < z0 *)
-    case (remove_min (Node t3 t4 t5 z0)); auto.
-    discriminate.
-    intros (s'2, m); intuition.
-    case (create (Node t0 t1 t2 z) m s'2); auto.
-    firstorder.
-    clear H3 H11; AVL H0; AVL H2; AVL H8; simpl in H7; omega.
-    intro s'; unfold height_of_node in |- *; intuition. 
-    exists s'.
-    do 3 (split; trivial).
-    clear H3 H9 H11 H15; AVL H0; AVL H2; AVL H8; AVL H13.
-    simpl in H7, H14, H12; simpl in |- *.
-    intuition omega.
-    clear H7 H12; firstorder.
-  Qed.
 
   (** * Deletion *)
 
