@@ -239,41 +239,6 @@ Module Make (I:Int)(X: OrderedType) : Sdep with Module E := X.
   Qed.
   Hint Resolve bst_height.
 
-  (** Key fact about binary search trees: rotations preserve the 
-      [bst] property *)
-
-  Lemma rotate_left :
-   forall (x y : elt) (a b c : tree) (h1 h2 h3 h4 : int),
-   bst (Node a x (Node b y c h2) h1) -> bst (Node (Node a x b h4) y c h3).
-  Proof.
-    intros; inversion H; intuition.
-    constructor; intuition.
-    constructor; eauto.
-    eauto.
-    apply lt_tree_node; intuition.
-    apply lt_tree_trans with x; auto.
-    inversion H5; auto.
-    inversion H5; auto.
-  Qed.
-
-  Lemma rotate_right :
-   forall (x y : elt) (a b c : tree) (h1 h2 h3 h4 : int),
-   bst (Node (Node a x b h4) y c h3) -> bst (Node a x (Node b y c h2) h1).
-  Proof.
-    intros; inversion H; intuition.
-    constructor; intuition.
-    eauto.
-    constructor; auto.
-    inversion H4; auto.
-    inversion H4; auto.
-    apply gt_tree_node; intuition.
-    inversion H4; auto.
-    apply gt_tree_trans with y; auto.
-    eauto.
-  Qed.
-
-  Hint Resolve rotate_left rotate_right.
-
   (** * AVL trees *)
 
   (** [avl s] : [s] is a properly balanced AVL tree,
