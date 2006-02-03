@@ -24,7 +24,7 @@ Require Import FSetInterface.
      It only requires a ordered key type, the data type can be arbitrary. 
      The only function that asks more is [equal], whose first argument should 
      be an equality on data. 
-   - Then, [Sord] extends [S] with a complete comparison fonction. For 
+   - Then, [Sord] extends [S] with a complete comparison function. For 
      that, the data type should have a decidable total ordering. 
 *)
 
