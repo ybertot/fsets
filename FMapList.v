@@ -1178,17 +1178,12 @@ Module Raw (X:OrderedType).
     destruct (X.compare k k'); simpl;
       destruct (X.compare x k); 
         MX.compare || destruct (X.compare x k'); simpl; auto.
-    absurd_hyp l; eauto.
     rewrite IHm; auto; simpl; MX.compare; auto.
     rewrite IHm; auto; simpl; MX.compare; auto.
     rewrite IHm; auto; simpl; MX.compare; auto.
-    absurd_hyp e0; eauto.
-    absurd_hyp e0; eauto.
     change ((find x (combine ((k, e) :: m) m')) = at_least_one None (find x m')).
     rewrite IHm'; auto. 
     simpl find; MX.compare; auto.
-    absurd_hyp e0; eauto.
-    absurd_hyp l; eauto.
     change ((find x (combine ((k, e) :: m) m')) = Some (Some e, find x m')).
     rewrite IHm'; auto. 
     simpl find; MX.compare; auto.
@@ -1540,9 +1535,8 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
      destruct (X.compare x x'); 
        destruct (X.compare x' x''); 
          MapS.Raw.MX.compare; auto.
-    absurd (X.lt x' x''); eauto.
     intuition; try solve [left; eauto].
-    right. 
+    right.
     split; eauto.
      inversion_clear Hm1; inversion_clear Hm2; inversion_clear Hm3.
      apply (IHm1 H2 (Build_slist H6) (Build_slist H8)); intuition.
