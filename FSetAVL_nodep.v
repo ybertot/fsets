@@ -1496,6 +1496,345 @@ Proof.
 Qed.
 Hint Resolve elements_sort.
 
+(** * Filter *)
+
+Variable f : elt -> bool.
+
+Fixpoint filter_acc (acc:t)(s:t) { struct s } : t := match s with 
+  | Leaf => acc
+  | Node l x r h => 
+     filter_acc (filter_acc (if f x then add x acc else acc) l) r 
+ end.
+
+Definition filter := filter_acc Leaf. 
+
+Lemma filter_acc_avl : forall s acc, avl s -> avl acc -> 
+ avl (filter_acc acc s).
+Proof.
+ induction s; simpl; auto.
+ intros.
+ inv avl.
+ apply IHs2; auto.
+ apply IHs1; auto.
+ destruct (f t); auto.
+Qed. 
+Hint Resolve filter_acc_avl.
+
+Lemma filter_acc_bst : forall s acc, bst s -> avl s -> bst acc -> avl acc -> 
+ bst (filter_acc acc s).
+Proof.
+ induction s; simpl; auto.
+ intros.
+ inv avl; inv bst.
+ destruct (f t); auto.
+ apply IHs2; auto.
+ apply IHs1; auto.
+ apply add_bst; auto.
+Qed. 
+
+Lemma filter_acc_in : forall s acc, avl s -> avl acc -> 
+ compat_bool X.eq f -> forall x : elt, 
+ In x (filter_acc acc s) <-> In x acc \/ In x s /\ f x = true.
+Proof.  
+ induction s; simpl; intros.
+ intuition_in.
+ inv bst; inv avl.
+ rewrite IHs2; auto.
+ destruct (f t); auto.
+ rewrite IHs1; auto.
+ destruct (f t); auto.
+ case_eq (f t); intros.
+ rewrite (add_in); auto.
+ intuition_in.
+ rewrite (H1 _ _ H8).
+ intuition.
+ intuition_in.
+ rewrite (H1 _ _ H8) in H9.
+ rewrite H in H9; discriminate.
+Qed. 
+
+Lemma filter_avl : forall s, avl s -> avl (filter s). 
+Proof.
+ unfold filter; intros; apply filter_acc_avl; auto.
+Qed.
+
+Lemma filter_bst : forall s, bst s -> avl s -> bst (filter s). 
+Proof.
+ unfold filter; intros; apply filter_acc_bst; auto.
+Qed.
+
+Lemma filter_in : forall s, avl s -> 
+ compat_bool X.eq f -> forall x : elt, 
+ In x (filter s) <-> In x s /\ f x = true.
+Proof.
+ unfold filter; intros; rewrite filter_acc_in; intuition_in.
+Qed. 
+
+(** * Partition *)
+
+Fixpoint partition_acc (acc : t*t)(s : t) { struct s } : t*t := 
+  match s with 
+   | Leaf => acc
+   | Node l x r _ => 
+      let (acct,accf) := acc in 
+      partition_acc 
+        (partition_acc 
+           (if f x then (add x acct, accf) else (acct, add x accf)) l) r
+  end. 
+
+Definition partition := partition_acc (Leaf,Leaf).
+
+Lemma partition_acc_avl_1 : forall s acc, avl s -> 
+ avl (fst acc) -> avl (fst (partition_acc acc s)).
+Proof.
+ induction s; simpl; auto.
+ destruct acc as [acct accf]; simpl in *.
+ intros.
+ inv avl.
+ apply IHs2; auto.
+ apply IHs1; auto.
+ destruct (f t); simpl; auto.
+Qed. 
+
+Lemma partition_acc_avl_2 : forall s acc, avl s -> 
+ avl (snd acc) -> avl (snd (partition_acc acc s)).
+Proof.
+ induction s; simpl; auto.
+ destruct acc as [acct accf]; simpl in *.
+ intros.
+ inv avl.
+ apply IHs2; auto.
+ apply IHs1; auto.
+ destruct (f t); simpl; auto.
+Qed. 
+Hint Resolve partition_acc_avl_1 partition_acc_avl_2.
+
+Lemma partition_acc_bst_1 : forall s acc, bst s -> avl s -> 
+ bst (fst acc) -> avl (fst acc) -> 
+ bst (fst (partition_acc acc s)).
+Proof.
+ induction s; simpl; auto.
+ destruct acc as [acct accf]; simpl in *.
+ intros.
+ inv avl; inv bst.
+ destruct (f t); auto.
+ apply IHs2; simpl; auto.
+ apply IHs1; simpl; auto.
+ apply add_bst; auto.
+ apply partition_acc_avl_1; simpl; auto.
+Qed. 
+
+Lemma partition_acc_bst_2 : forall s acc, bst s -> avl s -> 
+ bst (snd acc) -> avl (snd acc) -> 
+ bst (snd (partition_acc acc s)).
+Proof.
+ induction s; simpl; auto.
+ destruct acc as [acct accf]; simpl in *.
+ intros.
+ inv avl; inv bst.
+ destruct (f t); auto.
+ apply IHs2; simpl; auto.
+ apply IHs1; simpl; auto.
+ apply add_bst; auto.
+ apply partition_acc_avl_2; simpl; auto.
+Qed. 
+
+Lemma partition_acc_in_1 : forall s acc, avl s -> avl (fst acc) -> 
+ compat_bool X.eq f -> forall x : elt, 
+ In x (fst (partition_acc acc s)) <-> 
+ In x (fst acc) \/ In x s /\ f x = true.
+Proof.  
+ induction s; simpl; intros.
+ intuition_in.
+ destruct acc as [acct accf]; simpl in *.
+ inv bst; inv avl.
+ rewrite IHs2; auto.
+ destruct (f t); auto.
+ apply partition_acc_avl_1; simpl; auto.
+ rewrite IHs1; auto.
+ destruct (f t); simpl; auto.
+ case_eq (f t); simpl; intros.
+ rewrite (add_in); auto.
+ intuition_in.
+ rewrite (H1 _ _ H8).
+ intuition.
+ intuition_in.
+ rewrite (H1 _ _ H8) in H9.
+ rewrite H in H9; discriminate.
+Qed. 
+
+Lemma partition_acc_in_2 : forall s acc, avl s -> avl (snd acc) -> 
+ compat_bool X.eq f -> forall x : elt, 
+ In x (snd (partition_acc acc s)) <-> 
+ In x (snd acc) \/ In x s /\ f x = false.
+Proof.  
+ induction s; simpl; intros.
+ intuition_in.
+ destruct acc as [acct accf]; simpl in *.
+ inv bst; inv avl.
+ rewrite IHs2; auto.
+ destruct (f t); auto.
+ apply partition_acc_avl_2; simpl; auto.
+ rewrite IHs1; auto.
+ destruct (f t); simpl; auto.
+ case_eq (f t); simpl; intros.
+ intuition.
+ intuition_in.
+ rewrite (H1 _ _ H8) in H9.
+ rewrite H in H9; discriminate.
+ rewrite (add_in); auto.
+ intuition_in.
+ rewrite (H1 _ _ H8).
+ intuition.
+Qed. 
+
+Lemma partition_avl_1 : forall s, avl s -> avl (fst (partition s)). 
+Proof.
+ unfold partition; intros; apply partition_acc_avl_1; auto.
+Qed.
+
+Lemma partition_avl_2 : forall s, avl s -> avl (snd (partition s)). 
+Proof.
+ unfold partition; intros; apply partition_acc_avl_2; auto.
+Qed.
+
+Lemma partition_bst_1 : forall s, bst s -> avl s -> 
+ bst (fst (partition s)). 
+Proof.
+ unfold partition; intros; apply partition_acc_bst_1; auto.
+Qed.
+
+Lemma partition_bst_2 : forall s, bst s -> avl s -> 
+ bst (snd (partition s)). 
+Proof.
+ unfold partition; intros; apply partition_acc_bst_2; auto.
+Qed.
+
+Lemma partition_in_1 : forall s, avl s -> 
+ compat_bool X.eq f -> forall x : elt, 
+ In x (fst (partition s)) <-> In x s /\ f x = true.
+Proof.
+ unfold partition; intros; rewrite partition_acc_in_1; 
+ simpl in *; intuition_in.
+Qed. 
+
+Lemma partition_in_2 : forall s, avl s -> 
+ compat_bool X.eq f -> forall x : elt, 
+ In x (snd (partition s)) <-> In x s /\ f x = false.
+Proof.
+ unfold partition; intros; rewrite partition_acc_in_2; 
+ simpl in *; intuition_in.
+Qed. 
+
+(** [for_all] and [exists] *)
+
+Fixpoint for_all (s:t) : bool := match s with 
+  | Leaf => true
+  | Node l x r _ => f x && for_all l && for_all r
+end.
+
+Lemma for_all_1 : forall s, compat_bool E.eq f ->
+ For_all (fun x => f x = true) s -> for_all s = true.
+Proof.
+ induction s; simpl; auto.
+ intros.
+ rewrite IHs1; try red; auto.
+ rewrite IHs2; try red; auto.
+ generalize (H0 t).
+ destruct (f t); simpl; auto.
+Qed.
+
+Lemma for_all_2 : forall s, compat_bool E.eq f ->
+ for_all s = true -> For_all (fun x => f x = true) s.
+Proof.
+ induction s; simpl; auto; intros; red; intros; inv In.
+ destruct (andb_prop _ _ H0); auto.
+ destruct (andb_prop _ _ H1); eauto.
+ apply IHs1; auto.
+ destruct (andb_prop _ _ H0); auto.
+ destruct (andb_prop _ _ H1); auto.
+ apply IHs2; auto.
+ destruct (andb_prop _ _ H0); auto.
+Qed.
+
+Fixpoint exists_ (s:t) : bool := match s with 
+  | Leaf => false
+  | Node l x r _ => f x || exists_ l || exists_ r
+end.  
+
+Lemma exists_1 : forall s, compat_bool E.eq f ->
+ Exists (fun x => f x = true) s -> exists_ s = true.
+Proof.
+ induction s; simpl; destruct 2 as (x,(U,V)); inv In.
+ rewrite (H _ _ (X.eq_sym H0)); rewrite V; auto.
+ apply orb_true_intro; left.
+ apply orb_true_intro; right; apply IHs1; firstorder.
+ apply orb_true_intro; right; apply IHs2; firstorder.
+Qed.
+
+Lemma exists_2 : forall s, compat_bool E.eq f ->
+ exists_ s = true -> Exists (fun x => f x = true) s.
+Proof. 
+ induction s; simpl; intros.
+ discriminate.
+ destruct (orb_true_elim _ _ H0) as [H1|H1]. 
+ destruct (orb_true_elim _ _ H1) as [H2|H2].
+ exists t; auto.
+ destruct (IHs1 H H2); firstorder.
+ destruct (IHs2 H H1); firstorder.
+Qed. 
+
+(** * Fold *)
+
+Module L := FSetList.Raw X.
+
+Fixpoint fold (A : Set) (f : elt -> A -> A)(s : tree) {struct s} : A -> A := 
+ fun a => match s with
+  | Leaf => a
+  | Node l x r _ => fold A f r (f x (fold A f l a))
+ end.
+Implicit Arguments fold [A].
+
+Definition fold' (A : Set) (f : elt -> A -> A)(s : tree) := 
+  L.fold f (elements s).
+Implicit Arguments fold' [A].
+
+Lemma fold_equiv_aux :
+ forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
+ L.fold f (elements_aux acc s) a = L.fold f acc (fold f s a).
+Proof.
+ simple induction s.
+ simpl in |- *; intuition.
+ simpl in |- *; intros.
+ rewrite H.
+ simpl.
+ apply H0.
+Qed.
+
+Lemma fold_equiv :
+ forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A),
+ fold f s a = fold' f s a.
+Proof.
+ unfold fold', elements in |- *. 
+ simple induction s; simpl in |- *; auto; intros.
+ rewrite fold_equiv_aux.
+ rewrite H0.
+ simpl in |- *; auto.
+Qed.
+
+Lemma fold_1 : 
+ forall (s:t)(Hs:bst s)(A : Set)(f : elt -> A -> A)(i : A),
+ fold f s i = fold_left (fun a e => f e a) (elements s) i.
+Proof.
+ intros.
+ rewrite fold_equiv.
+ unfold fold'.
+ rewrite L.fold_1.
+ unfold L.elements; auto.
+ apply elements_sort; auto.
+Qed.
+
+
 (** * Cardinal *)
 
 Fixpoint cardinal (s : tree) : nat :=
@@ -1601,16 +1940,7 @@ Proof.
    (fun xx' : tree * tree => (cardinal (fst xx') + cardinal (snd xx'))%nat)).
 Qed.
 
-Lemma height_0 :
- forall s : tree, avl s -> height s = 0 -> forall x : elt, ~ In x s.
-Proof.
- simple destruct 1; intuition.
- inv In.
- avl_nns; simpl in *; omega_max.
-Qed.
-Implicit Arguments height_0.
-
-Lemma height_1 : forall s, avl s -> height s = 0 -> s = Leaf.
+Lemma height_0 : forall s, avl s -> height s = 0 -> s = Leaf.
 Proof.
  destruct 1; intuition; simpl in *.
  avl_nns; simpl in *; false_omega_max.
@@ -1628,13 +1958,13 @@ Qed.
     | (Node(l1, v1, r1, h1), Node(l2, v2, r2, h2)) ->
         if h1 >= h2 then
           if h2 = 1 then add v2 s1 else begin
-            let (l2, _, r2) = split v1 s2 in
-            join (union l1 l2) v1 (union r1 r2)
+            let (l2', _, r2') = split v1 s2 in
+            join (union l1 l2') v1 (union r1 r2')
           end
         else
           if h1 = 1 then add v1 s2 else begin
-            let (l1, _, r1) = split v2 s1 in
-            join (union l1 l2) v2 (union r1 r2)
+            let (l1', _, r1') = split v2 s1 in
+            join (union l1' l2) v2 (union r1' r2)
           end
 >>
 *)
@@ -1662,8 +1992,8 @@ Proof.
  exists (add x2 (Node l1 x1 r1 h1)); auto.
  inv avl; inv bst.
  avl_nn l2; avl_nn r2.
- rewrite (height_1 _ H); [ | omega_max].
- rewrite (height_1 _ H4); [ | omega_max].
+ rewrite (height_0 _ H); [ | omega_max].
+ rewrite (height_0 _ H4); [ | omega_max].
  split; [apply add_bst; auto|].
  split; [apply add_avl; auto|].
  intros.
@@ -1716,8 +2046,8 @@ Proof.
  exists (add x1 (Node l2 x2 r2 h2)); auto.
  inv avl; inv bst.
  avl_nn l1; avl_nn r1.
- rewrite (height_1 _ H3); [ | omega_max].
- rewrite (height_1 _ H8); [ | omega_max].
+ rewrite (height_0 _ H3); [ | omega_max].
+ rewrite (height_0 _ H8); [ | omega_max].
  split; [apply add_bst; auto|].
  split; [apply add_avl; auto|].
  intros.
@@ -1767,456 +2097,153 @@ Proof.
 Qed.
 
 
-(** * Filter *)
-
-Variable f : elt -> bool.
-
-Fixpoint filter_acc (acc:t)(s:t) { struct s } : t := match s with 
-  | Leaf => acc
-  | Node l x r h => 
-     filter_acc (filter_acc (if f x then add x acc else acc) l) r 
- end.
-
-Definition filter := filter_acc Leaf. 
-
-Lemma filter_acc_avl : forall s acc, avl s -> avl acc -> 
- avl (filter_acc acc s).
-Proof.
- induction s; simpl; auto.
- intros.
- inv avl.
- apply IHs2; auto.
- apply IHs1; auto.
- destruct (f t); auto.
-Qed. 
-Hint Resolve filter_acc_avl.
-
-Lemma filter_acc_bst : forall s acc, bst s -> avl s -> bst acc -> avl acc -> 
- bst (filter_acc acc s).
-Proof.
- induction s; simpl; auto.
- intros.
- inv avl; inv bst.
- destruct (f t); auto.
- apply IHs2; auto.
- apply IHs1; auto.
- apply add_bst; auto.
-Qed. 
-
-Lemma filter_acc_in : forall s acc, avl s -> avl acc -> 
- compat_bool X.eq f -> forall x : elt, 
- In x (filter_acc acc s) <-> In x acc \/ In x s /\ f x = true.
-Proof.  
- induction s; simpl; intros.
- intuition_in.
- inv bst; inv avl.
- rewrite IHs2; auto.
- destruct (f t); auto.
- rewrite IHs1; auto.
- destruct (f t); auto.
- case_eq (f t); intros.
- rewrite (add_in); auto.
- intuition_in.
- rewrite (H1 _ _ H8).
- intuition.
- intuition_in.
- rewrite (H1 _ _ H8) in H9.
- rewrite H in H9; discriminate.
-Qed. 
-
-Lemma filter_avl : forall s, avl s -> avl (filter s). 
-Proof.
- unfold filter; intros; apply filter_acc_avl; auto.
-Qed.
-
-Lemma filter_bst : forall s, bst s -> avl s -> bst (filter s). 
-Proof.
- unfold filter; intros; apply filter_acc_bst; auto.
-Qed.
-
-Lemma filter_in : forall s, avl s -> 
- compat_bool X.eq f -> forall x : elt, 
- In x (filter s) <-> In x s /\ f x = true.
-Proof.
- unfold filter; intros; rewrite filter_acc_in; intuition_in.
-Qed. 
-
-(** * Partition
-<<
-  let partition p s =
-    let rec part (t, f as accu) = function
-      | Empty -> accu
-      | Node(l, v, r, _) ->
-          part (part (if p v then (add v t, f) else (t, add v f)) l) r in
-    part (Empty, Empty) s
->>
-*)
-(*
-Definition partition_acc :
- forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
-  (s acct accf : tree),
- bst s -> avl s -> bst acct -> avl acct -> bst accf -> avl accf ->
- {partition : tree * tree | let (s1, s2) := partition in
-    bst s1 /\ avl s1 /\ bst s2 /\ avl s2 /\
-    (compat_P X.eq P ->
-      forall x : elt,
-      (In_tree x s1 <-> In_tree x acct \/ In_tree x s /\ P x) /\
-      (In_tree x s2 <-> In_tree x accf \/ In_tree x s /\ ~ P x))}.
-Proof.
- simple induction s; simpl in |- *; intuition.
- (* s = Leaf *)
- exists (acct, accf); simpl in |- *; intuition; inversion_clear H6.
- (* s = Node t0 t1 t2 *)
- case (Pdec t1); intro.
- (* P t1 *)
- case (add_tree t1 acct); auto.
- intro acct'; intuition; clear H10 H12.
- case (H acct' accf); clear H; auto.
- inversion_clear H1; auto.
- inversion_clear H2; auto.
- intros (acct'', accf'); intuition.
- case (H0 acct'' accf'); clear H0; auto.
- inversion_clear H1; auto.
- inversion_clear H2; auto.
- intros (s1, s2); intuition; exists (s1, s2); do 4 (split; trivial).
- intros HP x; generalize (H11 x) (H14 HP x) (H18 HP x); clear H11 H14 H18;
-  intros.
- decompose [and] H11; clear H11.
- decompose [and] H14; clear H14.
- decompose [and] H17; clear H17.
- repeat split; intros.
- elim (H24 H17); intros.
- elim (H21 H20); intros.
- elim (H18 H27); intros.
- right; split; auto.
- apply (HP t1); auto.
- auto.
- right; decompose [and] H27; auto.
- right; decompose [and] H20; auto.
- elim H17; intros.
- apply H25; left; apply H22; left; apply H19; right; trivial.
- decompose [and] H20; clear H20.
- inversion_clear H27.
- apply H25; left; apply H22; left; apply H19; left; trivial.
- apply H25; left; apply H22; right; auto.
- apply H25; right; auto.
- elim (H14 H17); intros.
- elim (H11 H20); intros.
- auto.
- right; decompose [and] H27; auto.
- right; decompose [and] H20; auto.
- elim H17; intros.
- gintuition.
- gintuition.
- inversion_clear H17; gintuition; elim H33; apply (HP t1); auto.
- (* ~(P t1) *)
- case (add_tree t1 accf); auto.
- intro accf'; intuition; clear H10 H12.
- case (H acct accf'); clear H; auto.
- inversion_clear H1; auto.
- inversion_clear H2; auto.
- intros (acct', accf''); intuition.
- case (H0 acct' accf''); clear H0; auto.
- inversion_clear H1; auto.
- inversion_clear H2; auto.
- intros (s1, s2); intuition; exists (s1, s2); do 4 (split; trivial).
- intros HP x; generalize (H11 x) (H14 HP x) (H18 HP x); clear H11 H14 H18;
-  intros.
- decompose [and] H11; clear H11.
- decompose [and] H14; clear H14.
- decompose [and] H17; clear H17.
- repeat split; intros.
- elim (H24 H17); intros.
- elim (H21 H20); intros.
- auto.
- right; decompose [and] H27; auto.
- right; decompose [and] H20; auto.
- elim H17; intros.
- apply H25; left; apply H22; left; auto.
- decompose [and] H20; clear H20.
- inversion_clear H27.
- elim f; apply (HP x); auto.
- gintuition.
- gintuition.
- elim (H14 H17); intros.
- elim (H11 H20); intros.
- elim (H18 H27); auto; intros.
- right; split; auto; intro; apply f; apply (HP x); auto.
- right; decompose [and] H27; auto.
- right; decompose [and] H20; auto.
- gintuition.
- inversion_clear H17; gintuition; elim H33; apply (HP t1); auto.
-Qed.
-
-Definition partition :
- forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x}) (s : t),
- {partition : t * t | let (s1, s2) := partition in
-   compat_P X.eq P -> 
-   For_all P s1 /\
-   For_all (fun x => ~ P x) s2 /\
-   (forall x : elt, In x s <-> In x s1 \/ In x s2)}.
-Proof.
- intros P Pdec (s, s_bst, s_avl).
- case (partition_acc P Pdec s Leaf Leaf); auto.
- intros (s1, s2); intuition.
- exists (t_intro s1 H H1, t_intro s2 H0 H2); unfold In in |- *;
-  simpl in |- *; intros.
- unfold For_all, In in |- *; simpl in |- *.
- split; [ idtac | split ]; intro x; generalize (H4 H3 x); clear H4;
-  intuition.
- inversion_clear H4.
- inversion_clear H4.
- inversion_clear H7.
- inversion_clear H7.
- case (Pdec x); auto.
- inversion_clear H5.
- inversion_clear H4.
-Qed.
-
 (** * Subset
 <<
   let rec subset s1 s2 =
     match (s1, s2) with
-      Empty, _ ->
-        true
-    | _, Empty ->
-        false
+      Empty, _ -> true
+    | _, Empty -> false
     | Node (l1, v1, r1, _), (Node (l2, v2, r2, _) as t2) ->
         let c = Ord.compare v1 v2 in
-        if c = 0 then
+        if c = 0 then 
           subset l1 l2 && subset r1 r2
-        else if c < 0 then
+        else if c < 0 then 
           subset (Node (l1, v1, Empty, 0)) l2 && subset r1 t2
         else
           subset (Node (Empty, v1, r1, 0)) r2 && subset l1 t2
 >>
 *)
 
-Definition subset : forall s1 s2 : t, {Subset s1 s2} + {~ Subset s1 s2}.
+Definition subset : forall s1 s2 : t, bst s1 -> bst s2 ->
+ {Subset s1 s2} + {~ Subset s1 s2}.
 Proof.
- unfold Subset, In in |- *.
- intros (s1, s1_bst, s1_avl) (s2, s2_bst, s2_avl); simpl in |- *.
- generalize s1_bst s2_bst; clear s1_bst s1_avl s2_bst s2_avl.
- pattern s1, s2 in |- *; apply cardinal_rec2.
- simple destruct x; simpl in |- *; intuition.
+ intros s1 s2; pattern s1, s2; apply cardinal_rec2; clear s1 s2.
+ destruct s1 as [| l1 x1 r1 h1]; intros.
  (* x = Leaf *)
- clear H; left; intros; inversion_clear H.
- (* x = Node t0 t1 t2 z *)
- destruct x' as [| t3 t4 t5 z0]; simpl in |- *; intuition.
+ left; red; intros; inv In.
+ (* x = Node l1 x1 r1 h1 *)
+ destruct s2 as [| l2 x2 r2 h2].
  (* x' = Leaf *)
- right; intros.
- assert (In_tree t1 Leaf); auto.
- inversion_clear H1.
- (* x' = Node t3 t4 t5 z0 *)
- case (X.compare t1 t4); intro.
- (* t1 < t4 *)
- case (H (Node t0 t1 Leaf 0) t3); auto; intros.
+ right; intros; intro.
+ assert (In x1 Leaf); auto.
+ inversion_clear H3.
+ (* x' = Node l2 x2 r2 h2 *)
+ case (X.compare x1 x2); intro.
+ (* x1 < x2 *)
+ case (H (Node l1 x1 Leaf 0) l2); auto; intros.
  simpl in |- *; omega.
- constructor; inversion_clear s1_bst; auto.
- inversion_clear s2_bst; auto.
- (* Subset (Node t0 t1 Leaf) t3 *)
- intros; case (H t2 (Node t3 t4 t5 z0)); auto; intros.
+ inv bst; auto.
+ inv bst; auto.
+ (* Subset (Node l1 x1 Leaf) l2 *)
+ case (H r1 (Node l2 x2 r2 h2)); auto; intros.
  simpl in |- *; omega.
- inversion_clear s1_bst; auto.
- (* Subset t2 (Node t3 t4 t5 z0) *)
- clear H; left; intuition.
- generalize (i a) (i0 a); clear i i0; inversion_clear H; intuition.
- (* ~ (Subset t2 (Node t3 t4 t5 z0)) *)
- clear H; right; intuition.
- apply f; intuition.
- assert (In_tree a (Node t3 t4 t5 z0)).
+ inv bst; auto.
+ (* Subset r1 (Node l2 x2 r2 h2) *)
+ clear H; left; red; intuition.
+ generalize (s a) (s0 a); clear s s0; intuition_in.
+ (* ~ (Subset r1 (Node l2 x2 r2 h2)) *)
+ clear H; right; red; intuition.
+ firstorder.
+ Admitted.
+ (* A SUiVRE
+ apply n; intuition.
+ assert (In_tree a (Node l2 x2 r2 h2)).
  apply H; inversion_clear H0; auto.
  inversion_clear H1.
  inversion_clear H1; auto.
  inversion_clear H0; auto.
- elim (X.lt_not_eq (x:=t1) (y:=t4)); auto.
+ elim (X.lt_not_eq (x:=x1) (y:=x2)); auto.
  apply X.eq_trans with a; auto.
- assert (X.lt a t1).
+ assert (X.lt a x1).
  inversion_clear s1_bst; apply H4; auto.
- elim (X.lt_not_eq (x:=a) (y:=t4)); auto.
- apply X.lt_trans with t1; auto.
+ elim (X.lt_not_eq (x:=a) (y:=x2)); auto.
+ apply X.lt_trans with x1; auto.
  inversion_clear H1.
- assert (X.lt t4 a).
+ assert (X.lt x2 a).
  inversion_clear s2_bst; apply H5; auto.
  inversion_clear H0; auto.
- elim (X.lt_not_eq (x:=t1) (y:=a)); auto.
- apply X.lt_trans with t4; auto.
- assert (X.lt a t1).
+ elim (X.lt_not_eq (x:=x1) (y:=a)); auto.
+ apply X.lt_trans with x2; auto.
+ assert (X.lt a x1).
  inversion_clear s1_bst; apply H5; auto.
- elim (MX.lt_not_gt (x:=a) (y:=t1)); auto.
- apply X.lt_trans with t4; auto.
+ elim (MX.lt_not_gt (x:=a) (y:=x1)); auto.
+ apply X.lt_trans with x2; auto.
  inversion_clear H3.
- (* t1 = t4 *)
- case (H t0 t3); auto; intros.
+ (* x1 = x2 *)
+ case (H l1 l2); auto; intros.
  simpl in |- *; omega.
  inversion_clear s1_bst; auto.
  inversion_clear s2_bst; auto.
- (* Subset t0 t3 *)
- case (H t2 t5); auto; intros.
+ (* Subset l1 l2 *)
+ case (H r1 r2); auto; intros.
  simpl in |- *; omega.
  inversion_clear s1_bst; auto.
  inversion_clear s2_bst; auto.
- (* Subset t2 t5 *)
+ (* Subset r1 r2 *)
  clear H; left; intuition.
  inversion_clear H; intuition.
- apply IsRoot; apply X.eq_trans with t1; auto.
- (* ~(Subset t2 t5) *)
+ apply IsRoot; apply X.eq_trans with x1; auto.
+ (* ~(Subset r1 r2) *)
  clear H; right; intuition.
  apply f; intros.
- assert (In_tree a (Node t3 t4 t5 z0)).
+ assert (In_tree a (Node l2 x2 r2 h2)).
  apply H; auto.
  inversion_clear H1; auto.
- elim (X.lt_not_eq (x:=t1) (y:=a)); auto.
+ elim (X.lt_not_eq (x:=x1) (y:=a)); auto.
  inversion_clear s1_bst; apply H5; auto.
- apply X.eq_trans with t4; auto.
- elim (MX.lt_not_gt (x:=a) (y:=t1)); auto.
+ apply X.eq_trans with x2; auto.
+ elim (MX.lt_not_gt (x:=a) (y:=x1)); auto.
  inversion_clear s2_bst.  
- apply MX.lt_eq with t4; auto.
+ apply MX.lt_eq with x2; auto.
  inversion_clear s1_bst; auto.
- (* ~(Subset t0 t3) *)
+ (* ~(Subset l1 l2) *)
  clear H; right; intuition.
  apply f; intros.
- assert (In_tree a (Node t3 t4 t5 z0)).
+ assert (In_tree a (Node l2 x2 r2 h2)).
  apply H; auto.
  inversion_clear H1; auto.
- elim (X.lt_not_eq (x:=a) (y:=t1)); auto.
+ elim (X.lt_not_eq (x:=a) (y:=x1)); auto.
  inversion_clear s1_bst; auto.
- apply X.eq_trans with t4; auto.
- elim (MX.lt_not_gt (x:=a) (y:=t1)); auto.
+ apply X.eq_trans with x2; auto.
+ elim (MX.lt_not_gt (x:=a) (y:=x1)); auto.
  inversion_clear s1_bst; auto.
  inversion_clear s2_bst.  
- apply MX.eq_lt with t4; auto.
- (* t4 < t1 *)
- case (H (Node Leaf t1 t2 0) t5); auto; intros.
+ apply MX.eq_lt with x2; auto.
+ (* x2 < x1 *)
+ case (H (Node Leaf x1 r1 0) r2); auto; intros.
  simpl in |- *; omega.
  constructor; inversion_clear s1_bst; auto.
  inversion_clear s2_bst; auto.
- (* Subset (Node Leaf t1 t2) t5 *)
- intros; case (H t0 (Node t3 t4 t5 z0)); auto; intros.
+ (* Subset (Node Leaf x1 r1) r2 *)
+ intros; case (H l1 (Node l2 x2 r2 h2)); auto; intros.
  simpl in |- *; omega.
  inversion_clear s1_bst; auto.
- (* Subset t0 (Node t3 t4 t5 z0) *)
+ (* Subset l1 (Node l2 x2 r2 h2) *)
  clear H; left; intuition.
  generalize (i a) (i0 a); clear i i0; inversion_clear H; intuition.
- (* ~ (Subset t2 (Node t3 t4 t5 z0)) *)
+ (* ~ (Subset r1 (Node l2 x2 r2 h2)) *)
  clear H; right; intuition.
  apply f; intuition.
- assert (In_tree a (Node t3 t4 t5 z0)).
+ assert (In_tree a (Node l2 x2 r2 h2)).
  apply H; inversion_clear H0; auto.
  inversion_clear H1.
  inversion_clear H1; auto.
  inversion_clear H0; auto.
- elim (X.lt_not_eq (x:=t4) (y:=t1)); auto.
+ elim (X.lt_not_eq (x:=x2) (y:=x1)); auto.
  apply X.eq_trans with a; auto.
  inversion_clear H1.
- elim (MX.lt_not_gt (x:=a) (y:=t1)); auto.
- apply MX.eq_lt with t4; auto.
+ elim (MX.lt_not_gt (x:=a) (y:=x1)); auto.
+ apply MX.eq_lt with x2; auto.
  inversion_clear s1_bst; auto.
  inversion_clear H0; auto.
- elim (MX.lt_not_gt (x:=a) (y:=t4)); auto.
+ elim (MX.lt_not_gt (x:=a) (y:=x2)); auto.
  inversion_clear s2_bst; auto.
- apply MX.lt_eq with t1; auto.
+ apply MX.lt_eq with x1; auto.
  inversion_clear H1.
- elim (MX.lt_not_gt (x:=a) (y:=t1)); auto.
- apply X.lt_trans with t4; inversion_clear s2_bst; auto.
+ elim (MX.lt_not_gt (x:=a) (y:=x1)); auto.
+ apply X.lt_trans with x2; inversion_clear s2_bst; auto.
  inversion_clear s1_bst; auto.
-Qed.
-
-(** [for_all] and [exists] *)
-
-Definition for_all :
- forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x}) (s : t),
- {compat_P X.eq P -> For_all P s} + {compat_P X.eq P -> ~ For_all P s}.
-Proof.
- intros P Pdec (s, s_bst, s_avl); unfold For_all, In in |- *;
-  simpl in |- *. 
- clear s_bst s_avl; induction  s as [| s1 Hrecs1 t0 s0 Hrecs0 z];
-  simpl in |- *.
- (* Leaf *)
- left; intros; inversion_clear H0.
- (* Node s1 t0 s0 z *)
- case (Pdec t0); intro.
- (* P t0 *)
- case Hrecs1; clear Hrecs1; intro.
- case Hrecs0; clear Hrecs0; [ left | right ]; intuition.
- inversion_clear H2; firstorder.
- clear Hrecs0; right; firstorder.
- (* ~(P t0) *)
- clear Hrecs0 Hrecs1; right; intros; firstorder.
-Qed.
-
-Definition exists_ :
- forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x}) (s : t),
- {compat_P X.eq P -> Exists P s} + {compat_P X.eq P -> ~ Exists P s}.
-Proof.
- intros P Pdec (s, s_bst, s_avl); unfold Exists, In in |- *; simpl in |- *. 
- clear s_bst s_avl; induction  s as [| s1 Hrecs1 t0 s0 Hrecs0 z];
-  simpl in |- *.
- (* Leaf *)
- right; intros; intro; elim H0; intuition; inversion_clear H2.
- (* Node s1 t0 s0 z *)
- case (Pdec t0); intro.
- (* P t0 *)
- clear Hrecs0 Hrecs1; left; intro; exists t0; auto.
- (* ~(P t0) *)
- case Hrecs1; clear Hrecs1; intro.
- left; intro; elim (e H); intuition; exists x; intuition.
- case Hrecs0; clear Hrecs0; intro.
- left; intro; elim (e H); intuition; exists x; intuition.
- right; intros; intro.
- elim H0; intuition.
- inversion_clear H4; firstorder.
-Qed.
-*)
-(** * Fold *)
-
-Module L := FSetList.Raw X.
-
-Fixpoint fold (A : Set) (f : elt -> A -> A)(s : tree) {struct s} : A -> A := 
- fun a => match s with
-  | Leaf => a
-  | Node l x r _ => fold A f r (f x (fold A f l a))
- end.
-Implicit Arguments fold [A].
-
-Definition fold' (A : Set) (f : elt -> A -> A)(s : tree) := 
-  L.fold f (elements s).
-Implicit Arguments fold' [A].
-
-Lemma fold_equiv_aux :
- forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
- L.fold f (elements_aux acc s) a = L.fold f acc (fold f s a).
-Proof.
- simple induction s.
- simpl in |- *; intuition.
- simpl in |- *; intros.
- rewrite H.
- simpl.
- apply H0.
-Qed.
-
-Lemma fold_equiv :
- forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A),
- fold f s a = fold' f s a.
-Proof.
- unfold fold', elements in |- *. 
- simple induction s; simpl in |- *; auto; intros.
- rewrite fold_equiv_aux.
- rewrite H0.
- simpl in |- *; auto.
-Qed.
-
-Lemma fold_1 : 
- forall (s:t)(Hs:bst s)(A : Set)(f : elt -> A -> A)(i : A),
- fold f s i = fold_left (fun a e => f e a) (elements s) i.
-Proof.
- intros.
- rewrite fold_equiv.
- unfold fold'.
- rewrite L.fold_1.
- unfold L.elements; auto.
- apply elements_sort; auto.
-Qed.
+Qed.*)
 
 (** * Comparison *)
 
