@@ -32,8 +32,10 @@ FSetRBT.vo: FSetRBT.v FSetInterface.vo FSetList.vo FSetBridge.vo
 FSetRBT.vi: FSetRBT.v FSetInterface.vo FSetList.vo FSetBridge.vo
 FSetAVL.vo: FSetAVL.v FSetInterface.vo FSetList.vo
 FSetAVL.vi: FSetAVL.v FSetInterface.vo FSetList.vo
-FSetAVL2.vo: FSetAVL2.v FSetInterface.vo FSetList.vo Int.vo
-FSetAVL2.vi: FSetAVL2.v FSetInterface.vo FSetList.vo Int.vo
+FSetAVL_nodep.vo: FSetAVL_nodep.v FSetInterface.vo FSetList.vo
+FSetAVL_nodep.vi: FSetAVL_nodep.v FSetInterface.vo FSetList.vo
+FSetAVL_int.vo: FSetAVL_int.v FSetInterface.vo FSetList.vo Int.vo
+FSetAVL_int.vi: FSetAVL_int.v FSetInterface.vo FSetList.vo Int.vo
 FSet.vo: FSet.v FSetInterface.vo FSetBridge.vo FSetProperties.vo FSetEqProperties.vo FSetList.vo FSetRBT.vo FSetAVL.vo
 FSet.vi: FSet.v FSetInterface.vo FSetBridge.vo FSetProperties.vo FSetEqProperties.vo FSetList.vo FSetRBT.vo FSetAVL.vo
 extract.vo: extract.v FSet.vo
@@ -52,6 +54,7 @@ FMapWeakInterface.html: FMapWeakInterface.v FSetInterface.html FSetWeakInterface
 FMapWeakList.html: FMapWeakList.v FSetInterface.html FSetWeakInterface.html FMapWeakInterface.html
 FSetRBT.html: FSetRBT.v FSetInterface.html FSetList.html FSetBridge.html
 FSetAVL.html: FSetAVL.v FSetInterface.html FSetList.html
-FSetAVL2.html: FSetAVL2.v FSetInterface.html FSetList.html Int.html
+FSetAVL_nodep.html: FSetAVL_nodep.v FSetInterface.html FSetList.html
+FSetAVL_int.html: FSetAVL_int.v FSetInterface.html FSetList.html Int.html
 FSet.html: FSet.v FSetInterface.html FSetBridge.html FSetProperties.html FSetEqProperties.html FSetList.html FSetRBT.html FSetAVL.html
 extract.html: extract.v FSet.html

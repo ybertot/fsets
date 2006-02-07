@@ -85,7 +85,8 @@ VFILES=Int.v\
   FMapWeakList.v\
   FSetRBT.v\
   FSetAVL.v\
-  FSetAVL2.v\
+  FSetAVL_nodep.v\
+  FSetAVL_int.v\
   FSet.v\
   extract.v
 VOFILES=$(VFILES:.v=.vo)
@@ -108,7 +109,8 @@ all: Int.vo\
   FMapWeakList.vo\
   FSetRBT.vo\
   FSetAVL.vo\
-  FSetAVL2.vo\
+  FSetAVL_nodep.vo\
+  FSetAVL_int.vo\
   FSet.vo\
   extract.vo\
   PrecedenceGraph

@@ -12,7 +12,8 @@ FMapWeakInterface.v
 FMapWeakList.v
 FSetRBT.v 
 FSetAVL.v 
-FSetAVL2.v 
+FSetAVL_nodep.v
+FSetAVL_int.v 
 FSet.v 
 extract.v 
 PrecedenceGraph

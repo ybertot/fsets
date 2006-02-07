@@ -146,26 +146,32 @@ End Int.
 
 Module MoreInt (I:Int).
  Import I.
+ Open Scope Z_scope.
+
+  Lemma max_spec : forall (x y:Z), 
+  x >= y /\ Zmax x y = x  \/
+  x <= y /\ Zmax x y = y.
+  Proof.
+  intros; unfold Zmax, Zle, Zge.
+  destruct (Zcompare x y); [ left | right | left ]; split; auto; discriminate.
+  Qed.
+
+  Ltac omega_max := i2z; 
+  let om x y := 
+    generalize (max_spec x y); 
+    let z := fresh "z" in let Hz := fresh "Hz" in 
+    (set (z:=Zmax x y) in *; clearbody z; intro Hz)
+  in 
+  match goal with 
+    | |- context id [ Zmax ?x ?y ] => om x y; omega_max
+    | H:context id [ Zmax ?x ?y ] |- _ => om x y; omega_max
+    | _ => intros; try omega
+  end.
+
+  Ltac false_omega := elimtype False; iomega.
+  Ltac false_omega_max := elimtype False; omega_max.
+
  Open Scope Int_scope.
-
- (** additional (provable) properties on [int]. For now we only need a 
-      alternative definition of [max] more suitable for proving. *)     
-
- Definition max_if (x y:int) : int := if ge_lt_dec x y then x else y.
-
- Lemma max_equiv : forall x y, max x y = max_if x y.
-   intros; unfold max_if.
-   destruct (ge_lt_dec x y) as [H|H]; i2z.
-   unfold Zmax; unfold Zge in *.
-   destruct ({{x}} ?= {{y}}); auto with zarith.
-   destruct H; auto.
-   unfold Zmax; rewrite H; auto.
- Qed.
-
-  Ltac MaxCase x y :=
-    repeat rewrite max_equiv; unfold max_if in |- *; 
-    case (ge_lt_dec x y); simpl in |- *. 
-
 End MoreInt.
 
 
