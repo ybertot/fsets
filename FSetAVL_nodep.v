@@ -1838,65 +1838,8 @@ Proof.
  exact (fun s => cardinal_elements_aux_1 s []).
 Qed.
 
-(** NB: the remaining functions (union, subset, compare) are still defined
-  in a dependent style, due to the use of well-founded induction.
-  In the meantime, we provide additionally a different implementation for union 
-  less efficient, but using structural induction, hence computable within Coq. *)
-
-(** Alternative union. Complexity : [min(|s|,|s'|)*log(max(|s|,|s'|))] *)
-Definition union' s s' := 
-  if Z_ge_lt_dec (height s) (height s') then fold add s' s else fold add s s'.
-
-Lemma fold_add_avl : forall s s', avl s -> avl s' -> avl (fold add s s').
-Proof. 
- induction s; simpl; intros; inv avl; auto.
-Qed.
-
-Lemma union'_avl : forall s s', avl s -> avl s' -> avl (union' s s').
-Proof. 
- unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')); apply fold_add_avl; auto.
-Qed.
-
-Lemma fold_add_bst : forall s s', bst s -> avl s -> bst s' -> avl s' -> bst (fold add s s').
-Proof. 
- induction s; simpl; intros; inv avl; inv bst; auto.
- apply IHs2; auto.
- apply add_bst; auto.
- apply fold_add_avl; auto.
- apply add_avl; auto.
- apply fold_add_avl; auto.
-Qed.
-
-Lemma union'_bst : forall s s', bst s -> avl s -> bst s' -> avl s' -> bst (union' s s').
-Proof. 
- unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')); apply fold_add_bst; auto.
-Qed.
-
-Lemma fold_add_in : forall s s' y, bst s -> avl s -> bst s' -> avl s' -> 
- (In y (fold add s s') <-> In y s \/ In y s').
-Proof. 
- induction s; simpl; intros; inv avl; inv bst; auto.
- intuition_in.
- rewrite IHs2; auto.
- apply add_bst; auto.
- apply fold_add_bst; auto.
- apply fold_add_avl; auto.
- apply add_avl; auto.
- apply fold_add_avl; auto.
- rewrite add_in; auto.
- apply fold_add_avl; auto.
- rewrite IHs1; auto.
- intuition_in.
-Qed.
-
-Lemma union'_in : forall s s' y, bst s -> avl s -> bst s' -> avl s' -> 
- (In y (union' s s') <-> In y s \/ In y s').
-Proof.
- unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')).
- rewrite fold_add_in; intuition.
- apply fold_add_in; auto.
-Qed.
-
+(** NB: the remaining functions (union, subset, compare, equal) are still defined
+  in a dependent style, due to the use of well-founded induction. *)
 
 (** Induction over cardinals *)
 
@@ -2566,6 +2509,101 @@ Proof.
  right; intro; apply (lt_not_eq s' s); auto; apply eq_sym; auto.
 Qed.
 
+(**  We provide additionally a different implementation for union, subset and 
+  equal, which is less efficient, but uses structural induction, hence  computes 
+  within Coq. *)
+
+(** Alternative union based on fold. 
+  Complexity : [min(|s|,|s'|)*log(max(|s|,|s'|))] *)
+
+Definition union' s s' := 
+  if Z_ge_lt_dec (height s) (height s') then fold add s' s else fold add s s'.
+
+Lemma fold_add_avl : forall s s', avl s -> avl s' -> avl (fold add s s').
+Proof. 
+ induction s; simpl; intros; inv avl; auto.
+Qed.
+Hint Resolve fold_add_avl.
+
+Lemma union'_avl : forall s s', avl s -> avl s' -> avl (union' s s').
+Proof. 
+ unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')); auto.
+Qed.
+
+Lemma fold_add_bst : forall s s', bst s -> avl s -> bst s' -> avl s' -> 
+ bst (fold add s s').
+Proof. 
+ induction s; simpl; intros; inv avl; inv bst; auto.
+ apply IHs2; auto.
+ apply add_bst; auto.
+Qed.
+
+Lemma union'_bst : forall s s', bst s -> avl s -> bst s' -> avl s' -> 
+ bst (union' s s').
+Proof. 
+ unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')); 
+  apply fold_add_bst; auto.
+Qed.
+
+Lemma fold_add_in : forall s s' y, bst s -> avl s -> bst s' -> avl s' -> 
+ (In y (fold add s s') <-> In y s \/ In y s').
+Proof. 
+ induction s; simpl; intros; inv avl; inv bst; auto.
+ intuition_in.
+ rewrite IHs2; auto.
+ apply add_bst; auto.
+ apply fold_add_bst; auto.
+ rewrite add_in; auto.
+ rewrite IHs1; auto.
+ intuition_in.
+Qed.
+
+Lemma union'_in : forall s s' y, bst s -> avl s -> bst s' -> avl s' -> 
+ (In y (union' s s') <-> In y s \/ In y s').
+Proof.
+ unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')).
+ rewrite fold_add_in; intuition.
+ apply fold_add_in; auto.
+Qed.
+
+(** Alternative subset based on diff. *)
+
+Definition subset' s s' := is_empty (diff s s').
+
+Lemma subset'_1 : forall s s', bst s -> avl s -> bst s' -> avl s' -> 
+ Subset s s' -> subset' s s' = true.
+Proof. 
+ unfold subset', Subset; intros; apply is_empty_1; red; intros.
+ rewrite (diff_in); intuition.
+Qed.
+
+Lemma subset'_2 : forall s s', bst s -> avl s -> bst s' -> avl s' ->
+ subset' s s' = true -> Subset s s'.
+Proof. 
+ unfold subset', Subset; intros; generalize (is_empty_2 _ H3 a); unfold Empty.
+ rewrite (diff_in); intuition.
+ generalize (mem_2 s' a) (mem_1 s' a); destruct (mem a s'); intuition.
+Qed.
+
+(** Alternative equal based on subset *)
+
+Definition equal' s s' := subset' s s' && subset' s' s.
+
+Lemma equal'_1 : forall s s', bst s -> avl s -> bst s' -> avl s' ->
+ Equal s s' -> equal' s s' = true.
+Proof. 
+ unfold equal', Equal; intros.
+ rewrite subset'_1; firstorder; simpl.
+ apply subset'_1; firstorder.
+Qed.
+
+Lemma equal'_2 : forall s s', bst s -> avl s -> bst s' -> avl s' ->
+ equal' s s' = true -> Equal s s'.
+Proof. 
+ unfold equal', Equal; intros; destruct (andb_prop _ _ H3); split; 
+  apply subset'_2; auto.
+Qed. 
+
 End Raw.
 
 (** * Encapsulation
@@ -2602,28 +2640,36 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  Definition empty := Bbst _ empty_bst empty_avl.
  Definition is_empty s := is_empty s.
-
- Definition add x s := Bbst _ (add_bst s x (is_bst s) (is_avl s)) (add_avl s x (is_avl s)). 
- Definition remove x s := Bbst _ (remove_bst s x (is_bst s) (is_avl s)) (remove_avl s x (is_avl s)). 
  Definition singleton x := Bbst _ (singleton_bst x) (singleton_avl x).
- Definition inter s s' := Bbst _ (inter_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
-                                                  (inter_avl _ _ (is_avl s) (is_avl s')).
- Definition diff s s' := Bbst _ (diff_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
-                                                (diff_avl _ _ (is_avl s) (is_avl s')).
+ Definition add x s := 
+   Bbst _ (add_bst s x (is_bst s) (is_avl s)) 
+          (add_avl s x (is_avl s)). 
+ Definition remove x s := 
+   Bbst _ (remove_bst s x (is_bst s) (is_avl s)) 
+          (remove_avl s x (is_avl s)). 
+ Definition inter s s' := 
+   Bbst _ (inter_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
+          (inter_avl _ _ (is_avl s) (is_avl s')).
+ Definition diff s s' := 
+   Bbst _ (diff_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
+          (diff_avl _ _ (is_avl s) (is_avl s')).
  Definition elements s := elements s.
  Definition min_elt s := min_elt s.
  Definition max_elt s := max_elt s.
  Definition choose s := choose s.
  Definition fold (B : Set) (f : elt -> B -> B) s := fold f s. 
  Definition cardinal s := cardinal s.
- Definition filter (f : elt -> bool) s := Bbst _ (filter_bst f _ (is_bst s) (is_avl s)) 
-                                                                        (filter_avl f _ (is_avl s)). 
+ Definition filter (f : elt -> bool) s := 
+   Bbst _ (filter_bst f _ (is_bst s) (is_avl s))
+          (filter_avl f _ (is_avl s)). 
  Definition for_all (f : elt -> bool) s := for_all f s.
  Definition exists_ (f : elt -> bool) s := exists_ f s.
  Definition partition (f : elt -> bool) s :=
    let p := partition f s in
-   (Bbst (fst p) (partition_bst_1 f _ (is_bst s) (is_avl s)) (partition_avl_1 f _ (is_avl s)),
-    Bbst (snd p) (partition_bst_2 f _ (is_bst s) (is_avl s)) (partition_avl_2 f _ (is_avl s))).
+   (Bbst (fst p) (partition_bst_1 f _ (is_bst s) (is_avl s)) 
+                 (partition_avl_1 f _ (is_avl s)),
+    Bbst (snd p) (partition_bst_2 f _ (is_bst s) (is_avl s)) 
+                 (partition_avl_2 f _ (is_avl s))).
 
  Definition union s s' :=
    let (u,p) := union _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s') in 
@@ -2631,12 +2677,15 @@ Module Make (X: OrderedType) <: S with Module E := X.
    let (a,_) := p in 
    Bbst u b a.
 
- Definition union' s s' := Bbst _ (union'_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
-                                                  (union'_avl _ _ (is_avl s) (is_avl s')).
+ Definition union' s s' := 
+   Bbst _ (union'_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
+          (union'_avl _ _ (is_avl s) (is_avl s')).
 
- Definition equal s s' := if equal _ _ (is_bst s) (is_bst s') then true else false. 
+ Definition equal s s':= if equal _ _ (is_bst s) (is_bst s') then true else false. 
+ Definition equal' s s' := equal' s s'.
 
- Definition subset s s' := if subset _ _ (is_bst s) (is_bst s') then true else false.
+ Definition subset s s':= if subset _ _ (is_bst s) (is_bst s') then true else false.
+ Definition subset' s s' := subset' s s'.
 
  Definition eq s s' := eq s s'.
  Definition lt s s' := lt s s'.
@@ -2668,6 +2717,11 @@ Module Make (X: OrderedType) <: S with Module E := X.
  unfold equal; destruct (Raw.equal s s'); simpl; intuition; discriminate.
  Qed.
 
+ Definition equal'_1 s s' :=
+  equal'_1 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
+ Definition equal'_2 s s' :=
+  equal'_2 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
+
  Lemma subset_1 : Subset s s' -> subset s s' = true.
  Proof. 
  unfold subset; destruct (Raw.subset s s'); simpl; intuition.
@@ -2677,6 +2731,11 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Proof. 
  unfold subset; destruct (Raw.subset s s'); simpl; intuition discriminate.
  Qed.
+
+ Definition subset'_1 s s' := 
+  subset'_1 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
+ Definition subset'_2 s s' := 
+  subset'_2 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
 
  Definition empty_1 : Empty empty := empty_1.
 
@@ -2714,27 +2773,30 @@ Module Make (X: OrderedType) <: S with Module E := X.
  unfold remove, In; simpl; rewrite remove_in; intuition.
  Qed.
 
- Definition singleton_1 : In y (singleton x) -> E.eq x y := singleton_1 x y.
- Definition singleton_2 : E.eq x y -> In y (singleton x) := singleton_2 x y. 
+ Definition singleton_1 := singleton_1 x y.
+ Definition singleton_2 := singleton_2 x y. 
 
  Lemma union_1 : In x (union s s') -> In x s \/ In x s'.
  Proof.
  unfold union, In; simpl.
- destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) as (u,(b,(a,i))).
+ destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) 
+  as (u,(b,(a,i))).
  simpl in *; rewrite i; auto.
  Qed.
 
  Lemma union_2 : In x s -> In x (union s s'). 
  Proof.
  unfold union, In; simpl.
- destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) as (u,(b,(a,i))).
+ destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) 
+  as (u,(b,(a,i))).
  simpl in *; rewrite i; auto.
  Qed.
 
  Lemma union_3 : In x s' -> In x (union s s').
  Proof.
  unfold union, In; simpl.
- destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) as (u,(b,(a,i))).
+ destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) 
+  as (u,(b,(a,i))).
  simpl in *; rewrite i; auto.
  Qed.
 
@@ -2812,26 +2874,22 @@ Module Make (X: OrderedType) <: S with Module E := X.
  intro; unfold filter, In; simpl; rewrite filter_in; intuition.
  Qed.
 
- Definition for_all_1 : compat_bool E.eq f -> 
-  For_all (fun x => f x = true) s -> for_all f s = true   := for_all_1 f s.
- Definition for_all_2 : compat_bool E.eq f ->
-      for_all f s = true -> For_all (fun x => f x = true) s   := for_all_2 f s.
+ Definition for_all_1 := for_all_1 f s.
+ Definition for_all_2 := for_all_2 f s.
 
- Definition exists_1 : compat_bool E.eq f ->
-      Exists (fun x => f x = true) s -> exists_ f s = true   := exists_1 f s.
- Definition exists_2 : compat_bool E.eq f ->
-      exists_ f s = true -> Exists (fun x => f x = true) s  := exists_2 f s.
+ Definition exists_1 := exists_1 f s.
+ Definition exists_2 := exists_2 f s.
 
- Lemma partition_1 :
-      compat_bool E.eq f -> Equal (fst (partition f s)) (filter f s).
+ Lemma partition_1 : compat_bool E.eq f -> 
+  Equal (fst (partition f s)) (filter f s).
  Proof.
  unfold partition, filter, Equal, In; simpl ;intros H a.
  rewrite partition_in_1; auto.
  rewrite filter_in; intuition.
  Qed.
 
- Lemma partition_2 :
-      compat_bool E.eq f -> Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
+ Lemma partition_2 : compat_bool E.eq f -> 
+  Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
  Proof.
  unfold partition, filter, Equal, In; simpl ;intros H a.
  rewrite partition_in_2; auto.
@@ -2856,16 +2914,16 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  Definition elements_3 : sort E.lt (elements s) := elements_sort _ (is_bst s).
 
- Definition min_elt_1 : min_elt s = Some x -> In x s := min_elt_1 s x.
- Definition min_elt_2 : min_elt s = Some x -> In y s -> ~ E.lt y x := min_elt_2 s x y (is_bst s). 
- Definition min_elt_3 : min_elt s = None -> Empty s := min_elt_3 s.
+ Definition min_elt_1 := min_elt_1 s x.
+ Definition min_elt_2 := min_elt_2 s x y (is_bst s). 
+ Definition min_elt_3 := min_elt_3 s.
 
- Definition max_elt_1 : max_elt s = Some x -> In x s := max_elt_1 s x.
- Definition max_elt_2 : max_elt s = Some x -> In y s -> ~ E.lt x y := max_elt_2 s x y (is_bst s).
- Definition max_elt_3 : max_elt s = None -> Empty s := max_elt_3 s.
+ Definition max_elt_1 := max_elt_1 s x.
+ Definition max_elt_2 := max_elt_2 s x y (is_bst s).
+ Definition max_elt_3 := max_elt_3 s.
 
- Definition choose_1 : choose s = Some x -> In x s := choose_1 s x.
- Definition choose_2 : choose s = None -> Empty s := choose_2 s.
+ Definition choose_1 := choose_1 s x.
+ Definition choose_2 := choose_2 s.
 
  Definition eq_refl s := eq_refl s.
  Definition eq_sym s s' := eq_sym s s'.
