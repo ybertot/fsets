@@ -1839,7 +1839,64 @@ Proof.
 Qed.
 
 (** NB: the remaining functions (union, subset, compare) are still defined
-  in a dependent style, due to the use of well-founded induction. *)
+  in a dependent style, due to the use of well-founded induction.
+  In the meantime, we provide additionally a different implementation for union 
+  less efficient, but using structural induction, hence computable within Coq. *)
+
+(** Alternative union. Complexity : [min(|s|,|s'|)*log(max(|s|,|s'|))] *)
+Definition union' s s' := 
+  if Z_ge_lt_dec (height s) (height s') then fold add s' s else fold add s s'.
+
+Lemma fold_add_avl : forall s s', avl s -> avl s' -> avl (fold add s s').
+Proof. 
+ induction s; simpl; intros; inv avl; auto.
+Qed.
+
+Lemma union'_avl : forall s s', avl s -> avl s' -> avl (union' s s').
+Proof. 
+ unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')); apply fold_add_avl; auto.
+Qed.
+
+Lemma fold_add_bst : forall s s', bst s -> avl s -> bst s' -> avl s' -> bst (fold add s s').
+Proof. 
+ induction s; simpl; intros; inv avl; inv bst; auto.
+ apply IHs2; auto.
+ apply add_bst; auto.
+ apply fold_add_avl; auto.
+ apply add_avl; auto.
+ apply fold_add_avl; auto.
+Qed.
+
+Lemma union'_bst : forall s s', bst s -> avl s -> bst s' -> avl s' -> bst (union' s s').
+Proof. 
+ unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')); apply fold_add_bst; auto.
+Qed.
+
+Lemma fold_add_in : forall s s' y, bst s -> avl s -> bst s' -> avl s' -> 
+ (In y (fold add s s') <-> In y s \/ In y s').
+Proof. 
+ induction s; simpl; intros; inv avl; inv bst; auto.
+ intuition_in.
+ rewrite IHs2; auto.
+ apply add_bst; auto.
+ apply fold_add_bst; auto.
+ apply fold_add_avl; auto.
+ apply add_avl; auto.
+ apply fold_add_avl; auto.
+ rewrite add_in; auto.
+ apply fold_add_avl; auto.
+ rewrite IHs1; auto.
+ intuition_in.
+Qed.
+
+Lemma union'_in : forall s s' y, bst s -> avl s -> bst s' -> avl s' -> 
+ (In y (union' s s') <-> In y s \/ In y s').
+Proof.
+ unfold union'; intros; destruct (Z_ge_lt_dec (height s) (height s')).
+ rewrite fold_add_in; intuition.
+ apply fold_add_in; auto.
+Qed.
+
 
 (** Induction over cardinals *)
 
@@ -2574,6 +2631,9 @@ Module Make (X: OrderedType) <: S with Module E := X.
    let (a,_) := p in 
    Bbst u b a.
 
+ Definition union' s s' := Bbst _ (union'_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
+                                                  (union'_avl _ _ (is_avl s) (is_avl s')).
+
  Definition equal s s' := if equal _ _ (is_bst s) (is_bst s') then true else false. 
 
  Definition subset s s' := if subset _ _ (is_bst s) (is_bst s') then true else false.
@@ -2676,6 +2736,21 @@ Module Make (X: OrderedType) <: S with Module E := X.
  unfold union, In; simpl.
  destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) as (u,(b,(a,i))).
  simpl in *; rewrite i; auto.
+ Qed.
+
+ Lemma union'_1 : In x (union' s s') -> In x s \/ In x s'.
+ Proof.
+ unfold union', In; simpl; rewrite union'_in; intuition.
+ Qed.
+
+ Lemma union'_2 : In x s -> In x (union' s s'). 
+ Proof.
+ unfold union', In; simpl; rewrite union'_in; intuition.
+ Qed.
+
+ Lemma union'_3 : In x s' -> In x (union' s s').
+ Proof.
+ unfold union', In; simpl; rewrite union'_in; intuition.
  Qed.
 
  Lemma inter_1 : In x (inter s s') -> In x s.
