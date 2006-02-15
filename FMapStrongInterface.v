@@ -61,10 +61,9 @@ Module UOT_to_OT (U:UsualOrderedType) : OrderedType := U.
 
 Module Type S.
 
-  Parameter key : Set.
+  Declare Module E : UsualOrderedType.
 
-  (* unused afterwards, for compatibility with [FMapInterface.S] *)
-  Definition keq := @eq key.  
+  Definition key := E.t.
 
   Parameter t : Set -> Set. (** the abstract type of maps *)
  
@@ -125,6 +124,12 @@ Module Type S.
          [m] or [m']. The presence and value for a key [k] is determined by [f e e'] 
          where [e] and [e'] are the (optional) bindings of [k] in [m] and [m']. *)
 
+    Parameter elements : t elt -> list (key*elt).
+    (** Not present in Ocaml. 
+         [elements m] returns an assoc list corresponding to the bindings of [m].
+         Elements of this list are sorted with respect to their first components. 
+         Useful to specify [fold] ... *)
+
     Parameter fold : forall A: Set, (key -> elt -> A -> A) -> t elt -> A -> A.
     (** [fold f m a] computes [(f kN dN ... (f k1 d1 a)...)], 
 	where [k1] ... [kN] are the keys of all bindings in [m] 
@@ -152,6 +157,8 @@ Module Type S.
       
       Definition eq_key_elt (p p':key*elt) := 
           (fst p) = (fst p') /\ (snd p) = (snd p').
+
+      Definition lt_key (p p':key*elt) := E.lt (fst p) (fst p').
 
     (** Specification of [MapsTo] *)
       Parameter MapsTo_1 : x = y -> MapsTo x e m -> MapsTo y e m.
@@ -181,15 +188,17 @@ Module Type S.
       Parameter find_1 : MapsTo x e m -> find x m = Some e. 
       Parameter find_2 : find x m = Some e -> MapsTo x e m.
 
+   (** Specification of [elements] *)
+      Parameter elements_1 : 
+        MapsTo x e m -> InList eq_key_elt (x,e) (elements m).
+      Parameter elements_2 : 
+        InList eq_key_elt (x,e) (elements m) -> MapsTo x e m.
+      Parameter elements_3 : sort lt_key (elements m).  
+
     (** Specification of [fold] *)  
-      Parameter
-	fold_1 :
+      Parameter fold_1 :
 	forall (A : Set) (i : A) (f : key -> elt -> A -> A),
-	  exists l : list (key*elt),
-            Unique eq_key l /\
-            (forall (k:key)(x:elt), MapsTo k x m <-> InList eq_key_elt (k,x) l) 
-            /\
-            fold f m i = fold_right (fun p => f (fst p) (snd p)) i l.
+        fold f m i = fold_left (fun a p => f (fst p) (snd p) a) (elements m) i.
  
    Definition Equal cmp m m' := 
          (forall k, In k m <-> In k m') /\ 
