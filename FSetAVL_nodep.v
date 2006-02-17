@@ -162,36 +162,6 @@ Qed.
 
 Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node.
 
-Lemma lt_left :
- forall (x y : elt) (l r : tree) (h : Z),
- lt_tree x (Node l y r h) -> lt_tree x l.
-Proof.
- red; intuition.
-Qed.
-
-Lemma lt_right :
- forall (x y : elt) (l r : tree) (h : Z),
- lt_tree x (Node l y r h) -> lt_tree x r.
-Proof.
- red; intuition.
-Qed.
-
-Lemma gt_left :
- forall (x y : elt) (l r : tree) (h : Z),
- gt_tree x (Node l y r h) -> gt_tree x l.
-Proof.
- red; intuition.
-Qed.
-
-Lemma gt_right :
- forall (x y : elt) (l r : tree) (h : Z),
- gt_tree x (Node l y r h) -> gt_tree x r.
-Proof.
- red; intuition.
-Qed.
-
-Hint Resolve lt_left lt_right gt_left gt_right.
-
 Lemma lt_tree_not_in :
  forall (x : elt) (t : tree), lt_tree x t -> ~ In x t.
 Proof.
