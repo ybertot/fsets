@@ -160,9 +160,9 @@ Module Type S.
 
     (** Specification of [elements] *)
       Parameter elements_1 : 
-        MapsTo x e m -> InList eq_key_elt (x,e) (elements m).
+        MapsTo x e m -> InA eq_key_elt (x,e) (elements m).
       Parameter elements_2 : 
-        InList eq_key_elt (x,e) (elements m) -> MapsTo x e m.
+        InA eq_key_elt (x,e) (elements m) -> MapsTo x e m.
       Parameter elements_3 : sort lt_key (elements m).  
 
     (** Specification of [fold] *)  
@@ -205,10 +205,6 @@ Module Type S.
      Parameter map2_2 : forall (elt elt' elt'':Set)(m: t elt)(m': t elt')
 	(x:key)(f:option elt->option elt'->option elt''), 
         In x (map2 f m m') -> In x m \/ In x m'.
-
-  Notation "∅" := empty.
-  Notation "a ∈ b" := (In a b) (at level 20).
-  Notation "a ∉ b" := (~ a ∈ b) (at level 20).
 
   Hint Immediate MapsTo_1 mem_2 is_empty_2.
   

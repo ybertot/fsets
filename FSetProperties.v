@@ -70,28 +70,18 @@ Module Properties (M: S).
   Import Peano. (* to unmask [lt] *)
   
   Module ME := OrderedTypeFacts E.  
-
-  (** * Alternative (weaker) specification for [fold],
-        based on [empty] ([fold_1]) and [add] ([fold_2]). *)
-
-  Section Old_Spec_Now_Properties. 
-
    (** Results about lists without duplicates *)
 
-   Section Unique_Remove.
+  Notation NoRedon := (noredonA E.eq).
 
-   Fixpoint remove_list (x : elt) (s : list elt) {struct s} : 
-    list elt :=
-     match s with
-     | [] => []
-     | y :: l =>
-         if ME.eq_dec x y then l else y :: remove_list x l
-     end. 
+  Section noredonA_Remove.
 
-   Lemma remove_list_correct :
-    forall (s : list elt) (x : elt),
-    Unique E.eq s ->
-    Unique E.eq (remove_list x s) /\
+  Definition remove_list x l := 
+    remove_1st (fun y => if ME.eq_dec x y then true else false) l.
+ 
+  Lemma remove_list_correct :
+    forall s x,
+    NoRedon s -> NoRedon (remove_list x s) /\
     (forall y : elt, ME.In y (remove_list x s) <-> ME.In y s /\ ~ E.eq x y).
    Proof.
    simple induction s; simpl in |- *.
@@ -121,8 +111,8 @@ Module Properties (M: S).
 
    Lemma remove_list_equal :
     forall (s s' : list elt) (x : elt),
-    Unique E.eq (x :: s) ->
-    Unique E.eq s' -> ListEq (x :: s) s' -> ListEq s (remove_list x s').
+    NoRedon (x :: s) ->
+    NoRedon s' -> ListEq (x :: s) s' -> ListEq s (remove_list x s').
    Proof.  
    unfold ListEq in |- *; intros. 
    inversion_clear H.
@@ -141,8 +131,8 @@ Module Properties (M: S).
 
    Lemma remove_list_add :
     forall (s s' : list elt) (x x' : elt),
-    Unique E.eq s ->
-    Unique E.eq (x' :: s') ->
+    NoRedon s ->
+    NoRedon (x' :: s') ->
     ~ E.eq x x' ->
     ~ ME.In x s -> ListAdd x s (x' :: s') -> ListAdd x (remove_list x' s) s'.
    Proof.
@@ -172,7 +162,7 @@ Module Properties (M: S).
     compat_op E.eq eqA f ->
     transpose eqA f ->
     forall (s : list elt) (x : elt),
-    Unique E.eq s ->
+    NoRedon s ->
     ME.In x s ->
     eqA (fold_right f i s) (f x (fold_right f i (remove_list x s))).
    Proof.
@@ -197,8 +187,8 @@ Module Properties (M: S).
     compat_op E.eq eqA f ->
     transpose eqA f ->
     forall s s' : list elt,
-    Unique E.eq s ->
-    Unique E.eq s' ->
+    NoRedon s ->
+    NoRedon s' ->
     ListEq s s' -> eqA (fold_right f i s) (fold_right f i s').
    Proof.
    simple induction s.
@@ -226,8 +216,8 @@ Module Properties (M: S).
     compat_op E.eq eqA f ->
     transpose eqA f ->
     forall (s' s : list elt) (x : elt),
-    Unique E.eq s ->
-    Unique E.eq s' ->
+    NoRedon s ->
+    NoRedon s' ->
     ~ ME.In x s ->
     ListAdd x s s' -> eqA (fold_right f i s') (f x (fold_right f i s)).
    Proof.   
@@ -270,101 +260,14 @@ Module Properties (M: S).
    elim H1; auto; intros; elim n; auto.
    Qed.
 
-  End Unique_Remove.
-
-  Lemma fold_right_append : forall (A B:Set) (l l':list A)(f:A->B->B)(i:B), 
-     fold_right f i (l++l') = fold_right f (fold_right f i l') l.
-  Proof.
-  induction l.
-  simpl; auto.
-  simpl; intros.
-  f_equal; auto.
-  Qed.
-
-  Lemma fold_left_rev_right : 
-     forall (A B:Set) (l:list A)(f:A->B->B)(i:B), 
-       fold_right f i (rev l) = fold_left (fun x y => f y x) l i.
-  Proof.
-  induction l.
-  simpl; auto.
-  intros.
-  simpl.
-  rewrite fold_right_append; simpl.
-  auto.
-  Qed.
-
-  Lemma In_rev : forall (A:Set)(l:list A)(x:A), List.In x l <-> List.In x (rev l).
-  Proof.
-  induction l.
-  simpl; intuition.
-  intros.
-  simpl.
-  intuition.
-  subst.
-  apply in_or_app; right; simpl; auto.
-  apply in_or_app; left; firstorder.
-  destruct (in_app_or _ _ _ H); firstorder.
-  Qed.
-  
-  Lemma app_length : forall (A:Set)(l l':list A), length (l++l') = length l + length l'.
-  Proof. 
-  induction l; simpl; auto.
-  Qed.
-
-  Lemma rev_length : forall (A:Set)(l:list A), length (rev l) = length l.
-  Proof. 
-  induction l; simpl; auto.
-  rewrite app_length; simpl; auto.
-  rewrite IHl; omega.
-  Qed.
-
-  Lemma Unique_app : forall
-    (l l':list elt), 
-    Unique E.eq l -> Unique E.eq l' -> 
-    (forall x, InList E.eq x l -> InList E.eq x l' -> False) -> 
-    Unique E.eq (l++l').
-  Proof.
-  induction l; simpl; auto; intros.
-  inversion_clear H.
-  constructor.
-  intro.
-  destruct (InList_alt E.eq a (l++l')) as (alt1,alt2).
-  destruct (alt1 H) as (y,(H4,H5)); clear alt1 alt2.
-  destruct (in_app_or _ _ _ H5).
-  elim H2.
-  destruct (InList_alt E.eq a l) as (alt1,alt2).
-  apply alt2; clear alt1 alt2.
-  exists y; auto.
-  apply (H1 a).
-  auto.
-  destruct (InList_alt E.eq a l') as (alt1,alt2).
-  apply alt2; clear alt1 alt2.
-  exists y; auto.
-  apply IHl; auto.
-  intros.
-  apply (H1 x); auto.
-  Qed.
+  End noredonA_Remove.
 
 
-  Lemma Unique_rev : forall (l:list elt), Unique E.eq l -> Unique E.eq (rev l).
-  Proof.
-  induction l.
-  simpl; auto.
-  simpl; intros.
-  inversion_clear H.
-  apply Unique_app; auto.
-  constructor; auto.
-  intro H2; inversion H2.
-  intros.
-  apply H0.
-  inversion_clear H2.
-  destruct (InList_alt E.eq x (rev l)) as (alt1,alt2).
-  destruct (alt1 H) as (y, (H4,H5)); clear alt1 alt2.
-  destruct (InList_alt E.eq a l) as (alt1,alt2).
-  apply alt2; exists y; split; eauto.
-  rewrite In_rev; auto.
-  inversion H3.
-  Qed.
+  (** * Alternative (weaker) specification for [fold],
+        based on [empty] ([fold_1]) and [add] ([fold_2]). *)
+
+  Section Old_Spec_Now_Properties. 
+
 
   (** When [FSets] was first designed, the order in which Ocaml's [Set.fold]
         takes the set elements was unspecified. This specification reflects this fact: 
@@ -373,19 +276,17 @@ Module Properties (M: S).
   Lemma fold_0 : 
       forall (s:t) (A : Set) (i : A) (f : elt -> A -> A),
       exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\
+        NoRedon l /\
+        (forall x : elt, In x s <-> InA E.eq x l) /\
         fold f s i = fold_right f i l.
   Proof.
   intros; exists (rev (elements s)).
   split.
-  apply Unique_rev.
-  apply ME.Sort_Unique.
-  apply elements_3.
+  apply noredonA_rev; eauto.
   split.
   intros.
-  destruct (InList_alt E.eq x (rev (elements s))).
-  destruct (InList_alt E.eq x (elements s)).
+  destruct (InA_alt E.eq x (rev (elements s))).
+  destruct (InA_alt E.eq x (elements s)).
   split; intros.
   destruct (H1 (elements_1 H3)) as (y, (H4,H5)).
   apply H0; exists y; split; auto.
@@ -400,18 +301,16 @@ Module Properties (M: S).
 
   Lemma cardinal_0 :
     forall s, exists l : list elt,
-        Unique E.eq l /\
-        (forall x : elt, In x s <-> InList E.eq x l) /\ cardinal s = length l.
+        noredonA E.eq l /\
+        (forall x : elt, In x s <-> InA E.eq x l) /\ cardinal s = length l.
   Proof. 
   intros; exists (rev (elements s)).
   split.
-  apply Unique_rev.
-  apply ME.Sort_Unique.
-  apply elements_3.
+  apply noredonA_rev; eauto.
   split.
   intros.
-  destruct (InList_alt E.eq x (rev (elements s))).
-  destruct (InList_alt E.eq x (elements s)).
+  destruct (InA_alt E.eq x (rev (elements s))).
+  destruct (InA_alt E.eq x (elements s)).
   split; intros.
   destruct (H1 (elements_1 H3)) as (y, (H4,H5)).
   apply H0; exists y; split; auto.

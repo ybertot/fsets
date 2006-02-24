@@ -16,86 +16,20 @@
 (** Set interfaces *)
 
 Require Export Bool.
-Require Export List.
-Require Export Sorting.
-Require Export Setoid.
+Require Export Lib.
+Require Export OrderedType.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(** Misc properties used in specifications. *)
-
-Section Misc.
-Variable A B : Set.
-Variable eqA : A -> A -> Prop. 
-Variable eqB : B -> B -> Prop.
-
 (** Compatibility of a  boolean function with respect to an equality. *)
-Definition compat_bool (f : A -> bool) :=
+Definition compat_bool (A:Set)(eqA: A->A->Prop)(f: A-> bool) :=
   forall x y : A, eqA x y -> f x = f y.
 
 (** Compatibility of a predicate with respect to an equality. *)
-Definition compat_P (P : A -> Prop) := forall x y : A, eqA x y -> P x -> P y.
+Definition compat_P (A:Set)(eqA: A->A->Prop)(P : A -> Prop) :=
+  forall x y : A, eqA x y -> P x -> P y.
 
-(** Being in a list modulo an equality relation. *)
-Inductive InList (x : A) : list A -> Prop :=
-  | InList_cons_hd :
-      forall (y : A) (l : list A), eqA x y -> InList x (y :: l)
-  | InList_cons_tl :
-      forall (y : A) (l : list A), InList x l -> InList x (y :: l).
-
-Hint Constructors InList.
-
-Lemma InList_alt : forall x l, InList x l <-> exists y, eqA x y /\ List.In y l.
-Proof. 
- induction l; intuition.
- inversion H.
- firstorder.
- inversion H1; firstorder.
- firstorder; subst; auto.
-Qed.
-
-(** A list without redondancy. *)
-Inductive Unique : list A -> Prop :=
-  | Unique_nil : Unique nil
-  | Unique_cons :
-      forall (x : A) (l : list A),
-      ~ InList x l -> Unique l -> Unique (x :: l).
-
-End Misc.
-
-Hint Constructors InList.
-Hint Constructors Unique.
-Hint Constructors sort.
-Hint Constructors lelistA.
 Hint Unfold compat_bool compat_P.
-
-(** * Ordered types *)
-
-Inductive Compare (X : Set) (lt eq : X -> X -> Prop) (x y : X) : Set :=
-  | Lt : lt x y -> Compare lt eq x y
-  | Eq : eq x y -> Compare lt eq x y
-  | Gt : lt y x -> Compare lt eq x y.
-
-Module Type OrderedType.
-
-  Parameter t : Set.
-
-  Parameter eq : t -> t -> Prop.
-  Parameter lt : t -> t -> Prop.
-
-  Axiom eq_refl : forall x : t, eq x x.
-  Axiom eq_sym : forall x y : t, eq x y -> eq y x.
-  Axiom eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
- 
-  Axiom lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
-  Axiom lt_not_eq : forall x y : t, lt x y -> ~ eq x y.
-
-  Parameter compare : forall x y : t, Compare lt eq x y.
-
-  Hint Immediate eq_sym.
-  Hint Resolve eq_refl eq_trans lt_not_eq lt_trans.
-
-End OrderedType.
 
 (** * Non-dependent signature
 
@@ -216,10 +150,8 @@ Module Type S.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
   Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) (s : t) :=
-    forall x : elt, In x s -> P x.
-  Definition Exists (P : elt -> Prop) (s : t) :=
-    exists x : elt, In x s /\ P x.
+  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 
   (** Specification of [In] *)
   Parameter In_1 : E.eq x y -> In x s -> In y s.
@@ -322,8 +254,8 @@ Module Type S.
       Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
 
   (** Specification of [elements] *)
-  Parameter elements_1 : In x s -> InList E.eq x (elements s).
-  Parameter elements_2 : InList E.eq x (elements s) -> In x s.
+  Parameter elements_1 : In x s -> InA E.eq x (elements s).
+  Parameter elements_2 : InA E.eq x (elements s) -> In x s.
   Parameter elements_3 : sort E.lt (elements s).  
 
   (** Specification of [min_elt] *)
@@ -344,17 +276,6 @@ Module Type S.
 
   End Filter.
   End Spec.
-
-  Notation "∅" := empty.
-  Notation "a ⋃ b" := (union a b) (at level 20).
-  Notation "a ⋂ b" := (inter a b) (at level 20). 
-  Notation "∥ a ∥" := (cardinal a) (at level 20).
-  Notation "a ∈ b" := (In a b) (at level 20).
-  Notation "a ∉ b" := (~ a ∈ b) (at level 20).
-  Notation "a ≡ b" := (Equal a b) (at level 20).
-  Notation "a ≢ b" := (~ a ≡ b) (at level 20).
-  Notation "a ⊆ b" := (Subset a b) (at level 20).
-  Notation "a ⊈ b" := (~ a ⊆ b) (at level 20).  
 
   Hint Immediate In_1.
   
@@ -391,13 +312,10 @@ Module Type Sdep.
   Parameter In : elt -> t -> Prop.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
+  Definition Add x s s' := forall y, In y s' <-> E.eq y x \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) (s : t) :=
-    forall x : elt, In x s -> P x.
-  Definition Exists (P : elt -> Prop) (s : t) :=
-    exists x : elt, In x s /\ P x.
+  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 
   Parameter eq_In : forall (s : t) (x y : elt), E.eq x y -> In x s -> In y s.
 
@@ -469,7 +387,7 @@ Module Type Sdep.
     elements :
       forall s : t,
       {l : list elt |
-      sort E.lt l /\ (forall x : elt, In x s <-> InList E.eq x l)}.
+      sort E.lt l /\ (forall x : elt, In x s <-> InA E.eq x l)}.
 
   Parameter
     fold :
@@ -494,352 +412,4 @@ Module Type Sdep.
 
   Parameter choose : forall s : t, {x : elt | In x s} + {Empty s}.
 
-  Notation "∅" := empty.
-  Notation "a ⋃ b" := (union a b) (at level 20).
-  Notation "a ⋂ b" := (inter a b) (at level 20).
-  Notation "a ∈ b" := (In a b) (at level 20).
-  Notation "a ∉ b" := (~ a ∈ b) (at level 20).
-  Notation "a ≡ b" := (Equal a b) (at level 20).
-  Notation "a ≢ b" := (~ a ≡ b) (at level 20).
-  Notation "a ⊆ b" := (Subset a b) (at level 20).
-  Notation "a ⊈ b" := (~ a ⊆ b) (at level 20).  
-	
 End Sdep.
-
-(** * Ordered types properties *)
-
-(** Additional properties that can be derived from signature
-    [OrderedType]. *)
-
-Require Import Field_Compl.
-
-Module OrderedTypeFacts (O: OrderedType). 
-
-  Lemma lt_antirefl : forall x, ~ O.lt x x.
-  Proof.
-   intros; intro; absurd (O.eq x x); auto. 
-  Qed.
-
-  Lemma lt_eq : forall x y z, O.lt x y -> O.eq y z -> O.lt x z.
-  Proof. 
-   intros; destruct (O.compare x z); auto.
-   elim (O.lt_not_eq H); apply O.eq_trans with z; auto.
-   elim (O.lt_not_eq (O.lt_trans l H)); auto.
-  Qed. 
-
-  Lemma eq_lt : forall x y z, O.eq x y -> O.lt y z -> O.lt x z.    
-  Proof.
-   intros; destruct (O.compare x z); auto.
-   elim (O.lt_not_eq H0); apply O.eq_trans with x; auto.
-   elim (O.lt_not_eq (O.lt_trans H0 l)); auto.
-  Qed. 
-
-  Lemma le_eq : forall x y z, ~O.lt x y -> O.eq y z -> ~O.lt x z.
-  Proof.
-   intros; intro; destruct H; apply lt_eq with z; auto.
-  Qed.
-
-  Lemma eq_le : forall x y z, O.eq x y -> ~O.lt y z -> ~O.lt x z.
-  Proof.
-   intros; intro; destruct H0; apply eq_lt with x; auto.
-  Qed.
-
-  Lemma neq_eq : forall x y z, ~O.eq x y -> O.eq y z -> ~O.eq x z.
-  Proof.
-   intros; intro; destruct H; apply O.eq_trans with z; auto.
-  Qed.
-
-  Lemma eq_neq : forall x y z, O.eq x y -> ~O.eq y z -> ~O.eq x z.
-  Proof.
-   intros; intro; destruct H0; apply O.eq_trans with x; auto.
-  Qed.
-
-  Hint Immediate eq_lt lt_eq le_eq eq_le neq_eq eq_neq.
-
-  Lemma le_lt_trans : forall x y z, ~O.lt y x -> O.lt y z -> O.lt x z.
-  Proof.
-   intros; destruct (O.compare y x); auto.
-   elim (H l).
-   apply eq_lt with y; auto.
-   apply O.lt_trans with y; auto.
-  Qed.
-
-  Lemma lt_le_trans : forall x y z, O.lt x y -> ~O.lt z y -> O.lt x z.
-  Proof.
-   intros; destruct (O.compare z y); auto.
-   elim (H0 l).
-   apply lt_eq with y; auto.
-   apply O.lt_trans with y; auto.
-  Qed.
-
-  Lemma le_neq : forall x y, ~O.lt x y -> ~O.eq x y -> O.lt y x.
-  Proof. 
-   intros; destruct (O.compare x y); intuition.
-  Qed.
-
-  Lemma neq_sym : forall x y, ~O.eq x y -> ~O.eq y x.
-  Proof. 
-   intuition.
-  Qed.
-
-Ltac revert H := generalize H; clear H.
-
-Ltac abstraction := match goal with 
- (* First, some obvious simplifications *)
- | H : False |- _ => elim H
- | H : O.lt ?x ?x |- _ => elim (lt_antirefl H)
- | H : ~O.eq ?x ?x |- _ => elim (H (O.eq_refl x))
- | H : O.eq ?x ?x |- _ => clear H; abstraction
- | H : ~O.lt ?x ?x |- _ => clear H; abstraction
- | |- O.eq ?x ?x => exact (O.eq_refl x)
- | |- O.lt ?x ?x => elimtype False; abstraction
- | |- ~ _ => intro; abstraction
- | H1: ~O.lt ?x ?y, H2: ~O.eq ?x ?y |- _ => 
-     generalize (le_neq H1 H2); clear H1 H2; intro; abstraction
- | H1: ~O.lt ?x ?y, H2: ~O.eq ?y ?x |- _ => 
-     generalize (le_neq H1 (neq_sym H2)); clear H1 H2; intro; abstraction
- (* Then, we generalize all interesting facts *)
- | H : O.lt ?x ?y |- _ => revert H; abstraction
- | H : ~O.lt ?x ?y |- _ => revert H; abstraction  
- | H : ~O.eq ?x ?y |- _ =>  revert H; abstraction
- | H : O.eq ?x ?y |- _ =>  revert H; abstraction
- | _ => idtac
-end.
-
-Ltac do_eq a b Eq := match goal with 
- | |- O.lt ?x ?y -> _ => let H := fresh "H" in 
-     (intro H; 
-      (generalize (eq_lt (O.eq_sym Eq) H); clear H; intro H) ||
-      (generalize (lt_eq H Eq); clear H; intro H) || 
-      idtac); 
-      do_eq a b Eq
- | |- ~O.lt ?x ?y -> _ => let H := fresh "H" in 
-     (intro H; 
-      (generalize (eq_le (O.eq_sym Eq) H); clear H; intro H) ||
-      (generalize (le_eq H Eq); clear H; intro H) || 
-      idtac); 
-      do_eq a b Eq 
- | |- O.eq ?x ?y -> _ => let H := fresh "H" in 
-     (intro H; 
-      (generalize (O.eq_trans (O.eq_sym Eq) H); clear H; intro H) ||
-      (generalize (O.eq_trans H Eq); clear H; intro H) || 
-      idtac); 
-      do_eq a b Eq 
- | |- ~O.eq ?x ?y -> _ => let H := fresh "H" in 
-     (intro H; 
-      (generalize (eq_neq (O.eq_sym Eq) H); clear H; intro H) ||
-      (generalize (neq_eq H Eq); clear H; intro H) || 
-      idtac); 
-      do_eq a b Eq 
- | |- O.lt a ?y => apply eq_lt with b; [exact Eq|]
- | |- O.lt ?y a => apply lt_eq with b; [|exact (O.eq_sym Eq)]
- | |- O.eq a ?y => apply O.eq_trans with b; [exact Eq|]
- | |- O.eq ?y a => apply O.eq_trans with b; [|exact (O.eq_sym Eq)]
- | _ => idtac
- end.
-
-Ltac propagate_eq := abstraction; clear; match goal with 
- (* the abstraction tactic leaves equality facts in head position...*)
- | |- O.eq ?a ?b -> _ => 
-     let Eq := fresh "Eq" in (intro Eq; do_eq a b Eq; clear Eq); 
-     propagate_eq 
- | _ => idtac
-end.
-
-Ltac do_lt x y Lt := match goal with 
- (* Lt *)
- | |- O.lt x y -> _ => intros _; do_lt x y Lt
- | |- O.lt y ?z -> _ => let H := fresh "H" in 
-     (intro H; generalize (O.lt_trans Lt H); intro); do_lt x y Lt
- | |- O.lt ?z x -> _ => let H := fresh "H" in 
-     (intro H; generalize (O.lt_trans H Lt); intro); do_lt x y Lt
- | |- O.lt _ _ -> _ => intro; do_lt x y Lt
- (* Ge *)
- | |- ~O.lt y x -> _ => intros _; do_lt x y Lt
- | |- ~O.lt x ?z -> _ => let H := fresh "H" in 
-     (intro H; generalize (le_lt_trans H Lt); intro); do_lt x y Lt
- | |- ~O.lt ?z y -> _ => let H := fresh "H" in 
-     (intro H; generalize (lt_le_trans Lt H); intro); do_lt x y Lt
- | |- ~O.lt _ _ -> _ => intro; do_lt x y Lt
- | _ => idtac
- end.
-
-Definition hide_lt := O.lt.
-
-Ltac propagate_lt := abstraction; match goal with 
- (* when no [=] remains, the abstraction tactic leaves [<] facts first. *)
- | |- O.lt ?x ?y -> _ => 
-     let Lt := fresh "Lt" in (intro Lt; do_lt x y Lt; 
-     change (hide_lt x y) in Lt); 
-     propagate_lt 
- | _ => unfold hide_lt in *
-end.
-
-(* TODO : 
-  - propagate_lt n'est sans doute pas complet
-  - un propagate_le
-  - exploiter les hypotheses negatives restant a la fin
-*) 
-
-Ltac order := 
- intros; 
- propagate_eq; 
- propagate_lt; 
- auto; 
- propagate_lt; 
- eauto.
-
-Ltac false_order := elimtype False; order.
-
-  Lemma gt_not_eq : forall x y, O.lt y x -> ~ O.eq x y.
-  Proof.
-    order.
-  Qed.	
- 
-  Lemma eq_not_lt : forall x y : O.t, O.eq x y -> ~ O.lt x y.
-  Proof. 
-    order.
-  Qed.
-
-  Hint Resolve gt_not_eq eq_not_lt.
-
-  Lemma eq_not_gt : forall x y : O.t, O.eq x y -> ~ O.lt y x.
-  Proof. 
-   order.
-  Qed.
-
-  Lemma lt_not_gt : forall x y : O.t, O.lt x y -> ~ O.lt y x.
-  Proof.  
-   order.
-  Qed.
-
-  Hint Resolve eq_not_gt lt_antirefl lt_not_gt.
-
-  Lemma elim_compare_eq :
-   forall x y : O.t,
-   O.eq x y -> exists H : O.eq x y, O.compare x y = Eq _ H.
-  Proof. 
-   intros; case (O.compare x y); intros H'; try solve [false_order].
-   exists H'; auto.   
-  Qed.
-
-  Lemma elim_compare_lt :
-   forall x y : O.t,
-   O.lt x y -> exists H : O.lt x y, O.compare x y = Lt _ H.
-  Proof. 
-   intros; case (O.compare x y); intros H'; try solve [false_order].
-   exists H'; auto. 
-  Qed.
-
-  Lemma elim_compare_gt :
-   forall x y : O.t,
-   O.lt y x -> exists H : O.lt y x, O.compare x y = Gt _ H.
-  Proof. 
-   intros; case (O.compare x y); intros H'; try solve [false_order].
-   exists H'; auto.   
-  Qed.
-
-  Ltac compare := 
-    match goal with 
-      | |- ?e => match e with 
-           | context ctx [ O.compare ?a ?b ] =>
-                let H := fresh in 
-                (destruct (O.compare a b) as [H|H|H]; 
-                 try solve [ intros; false_order])
-         end
-    end.
-
-  Ltac compare_eq x y :=
-    elim (elim_compare_eq (x:=x) (y:=y));
-     [ intros _1 _2; rewrite _2; clear _1 _2 | auto ]. 
-
-  Ltac compare_lt x y :=
-    elim (elim_compare_lt (x:=x) (y:=y));
-     [ intros _1 _2; rewrite _2; clear _1 _2 | auto ]. 
-
-  Ltac compare_gt x y :=
-    elim (elim_compare_gt (x:=x) (y:=y));
-     [ intros _1 _2; rewrite _2; clear _1 _2 | auto ].
-
-  Lemma eq_dec : forall x y : O.t, {O.eq x y} + {~ O.eq x y}.
-  Proof.
-   intros; elim (O.compare x y); [ right | left | right ]; auto.
-  Qed.
- 
-  Lemma lt_dec : forall x y : O.t, {O.lt x y} + {~ O.lt x y}.
-  Proof.
-   intros; elim (O.compare x y); [ left | right | right ]; auto.
-  Qed.
-
-  (** Results concerning lists modulo E.eq *)
-
-  Notation Sort := (sort O.lt).
-  Notation Inf := (lelistA O.lt).
-  Notation In := (InList O.eq).
-
-  Lemma In_eq :
-   forall (s : list O.t) (x y : O.t), O.eq x y -> In x s -> In y s.
-  Proof. 
-   intros s x y.
-   do 2 (setoid_rewrite InList_alt).
-   firstorder eauto.
-  Qed.
-  Hint Immediate In_eq.
-
-  Lemma Inf_lt :
-   forall (s : list O.t) (x y : O.t), O.lt x y -> Inf y s -> Inf x s.
-  Proof.
-  intro s; case s; constructor; inversion H0; eauto.
-  Qed.
- 
-  Lemma Inf_eq :
-   forall (s : list O.t) (x y : O.t), O.eq x y -> Inf y s -> Inf x s.
-  Proof.
-  intro s; case s; constructor; inversion H0; order.
-  Qed.
-  Hint Resolve Inf_lt Inf_eq. 
-
-  Lemma In_sort :
-   forall (s : list O.t) (x a : O.t), Inf a s -> In x s -> Sort s -> O.lt a x.
-  Proof. 
-  simple induction s.
-  intros; inversion H0.
-  intros.
-  inversion_clear H0; inversion_clear H2; inversion_clear H1.
-  order.
-  eauto.
-  Qed.
-  
-  Lemma Inf_In :
-   forall (l : list O.t) (x : O.t),
-   (forall y : O.t, List.In y l -> O.lt x y) -> Inf x l.
-  Proof.
-    simple induction l; simpl in |- *; intros; constructor; auto.
-  Qed.
- 
-  Lemma Inf_In_2 :
-   forall (l : list O.t) (x : O.t),
-   (forall y : O.t, In y l -> O.lt x y) -> Inf x l.
-  Proof.
-    simple induction l; simpl in |- *; intros; constructor; auto.
-  Qed.
-  
-  Lemma In_InList : forall (l : list O.t) (x : O.t), List.In x l -> In x l.
-  Proof.
-   simple induction l; simpl in |- *; intuition.
-    subst; auto.  
-  Qed.
-  Hint Resolve In_InList.
-
-  Lemma Sort_Unique : forall l : list O.t, Sort l -> Unique O.eq l.
-  Proof.
-  simple induction l; auto.
-  intros x l' H H0.
-  inversion_clear H0.
-  constructor; auto.  
-  intro.
-  assert (O.lt x x) by eapply In_sort; eauto.
-  order.
-  Qed.
-
-End OrderedTypeFacts.

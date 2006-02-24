@@ -71,7 +71,11 @@ COQLIBS=-I .
 #                                 #
 ###################################
 
-VFILES=Int.v\
+VFILES=MoreList.v\
+  Lib.v\
+  OrderedType.v\
+  DecidableType.v\
+  Int.v\
   FSetBridge.v\
   FSetInterface.v\
   FSetList.v\
@@ -95,7 +99,11 @@ GFILES=$(VFILES:.v=.g)
 HTMLFILES=$(VFILES:.v=.html)
 GHTMLFILES=$(VFILES:.v=.g.html)
 
-all: Int.vo\
+all: MoreList.vo\
+  Lib.vo\
+  OrderedType.vo\
+  DecidableType.vo\
+  Int.vo\
   FSetBridge.vo\
   FSetInterface.vo\
   FSetList.vo\

@@ -1601,7 +1601,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma elements_tree_aux_acc_1 :
    forall (s : tree) (acc : list elt) (x : elt),
-   InList E.eq x acc -> InList E.eq x (elements_tree_aux acc s).
+   InA E.eq x acc -> InA E.eq x (elements_tree_aux acc s).
   Proof.
     simple induction s; simpl in |- *; intuition.
   Qed.
@@ -1609,7 +1609,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma elements_tree_aux_1 :
    forall (s : tree) (acc : list elt) (x : elt),
-   In_tree x s -> InList E.eq x (elements_tree_aux acc s).
+   In_tree x s -> InA E.eq x (elements_tree_aux acc s).
   Proof.
     simple induction s; simpl in |- *; intuition.
     inversion H.
@@ -1618,7 +1618,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma elements_tree_1 :
    forall (s : tree) (x : elt),
-   In_tree x s -> InList E.eq x (elements_tree s).
+   In_tree x s -> InA E.eq x (elements_tree s).
   Proof.
     unfold elements_tree in |- *; intros; apply elements_tree_aux_1; auto.
   Qed.
@@ -1626,8 +1626,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma elements_tree_aux_acc_2 :
    forall (s : tree) (acc : list elt) (x : elt),
-   InList E.eq x (elements_tree_aux acc s) ->
-   InList E.eq x acc \/ In_tree x s.
+   InA E.eq x (elements_tree_aux acc s) ->
+   InA E.eq x acc \/ In_tree x s.
   Proof.
     simple induction s; simpl in |- *; intuition.
     elim (H _ _ H1); intuition.
@@ -1638,7 +1638,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma elements_tree_2 :
    forall (s : tree) (x : elt),
-   InList E.eq x (elements_tree s) -> In_tree x s.
+   InA E.eq x (elements_tree s) -> In_tree x s.
   Proof.
     unfold elements_tree in |- *; intros.
     elim (elements_tree_aux_acc_2 _ _ _ H); auto.
@@ -1652,7 +1652,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
    forall acc : list elt,
    sort E.lt acc ->
    (forall x : elt,
-    InList E.eq x acc -> forall y : elt, In_tree y s -> E.lt y x) ->
+    InA E.eq x acc -> forall y : elt, In_tree y s -> E.lt y x) ->
    sort E.lt (elements_tree_aux acc s).
   Proof.
     simple induction s; simpl in |- *; intuition.
@@ -1661,7 +1661,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     constructor. 
     apply H0; auto.
     inversion H1; auto.
-    apply ME.Inf_In_2.
+    apply ME.In_Inf.
     replace X.eq with E.eq; replace X.lt with E.lt; auto.
     intros.
     elim (elements_tree_aux_acc_2 t2 acc y); intuition.
@@ -1689,7 +1689,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Definition elements :
     forall s : t,
     {l : list elt |
-    sort E.lt l /\ (forall x : elt, In x s <-> InList E.eq x l)}.
+    sort E.lt l /\ (forall x : elt, In x s <-> InA E.eq x l)}.
   Proof.
     intros (s, Hs, Hrb); unfold In in |- *; simpl in |- *.
     exists (elements_tree s); repeat split.
@@ -1753,7 +1753,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H0.
     apply (X.lt_not_eq (x:=t0) (y:=a)); auto.
     assert (X.lt a t0).
-    apply ME.In_sort with l; auto.
+    apply ME.Sort_Inf_In with l; auto.
     apply (ME.lt_not_gt (x:=t0) (y:=a)); auto.
     firstorder.
     apply H; auto.
@@ -1762,7 +1762,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply H2; auto.
     inversion_clear H6; auto.
     assert (X.lt t0 x).
-    apply ME.In_sort with l0; auto.
+    apply ME.Sort_Inf_In with l0; auto.
     elim (X.lt_not_eq (x:=t0) (y:=x)); auto.
     apply X.eq_trans with a; auto.
     apply le_trans with (length (t0 :: l0)).
@@ -1772,7 +1772,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (ME.In x (a :: l)); firstorder.
     inversion_clear H6; auto.
     assert (X.lt a x).
-    apply ME.In_sort with (t0 :: l0); auto.
+    apply ME.Sort_Inf_In with (t0 :: l0); auto.
     elim (X.lt_not_eq (x:=a) (y:=x)); auto.
   Qed.
 
@@ -2742,9 +2742,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     unfold L.eq, L.Equal in |- *; intuition.
     inversion_clear H1; generalize (H0 a); clear H0; intuition.
-    apply L.In_eq with x; auto.
+    apply InA_eqA with x; eauto.
     inversion_clear H1; generalize (H0 a); clear H0; intuition.
-    apply L.In_eq with y; auto.
+    apply InA_eqA with y; eauto.
   Qed.
 
   Hint Resolve lt_nil_elements_tree_Node lt_app lt_app_eq lt_eq_1 lt_eq_2
@@ -3147,7 +3147,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     apply sort_app; inversion H0; auto.
     intros; apply H8; auto.
     apply in_flatten_e; auto.
-    apply L.MX.Inf_In.
+    apply L.MX.ListIn_Inf.
     inversion_clear H0.
     intros; elim (in_app_or _ _ _ H0); intuition.
     apply H4; apply in_flatten_e; auto.

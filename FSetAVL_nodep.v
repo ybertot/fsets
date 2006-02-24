@@ -269,13 +269,9 @@ Ltac avl_nns :=
 
 Definition Equal s s' := forall a : elt, In a s <-> In a s'.
 Definition Subset s s' := forall a : elt, In a s -> In a s'.
-Definition Add (x : elt) (s s' : t) :=
-  forall y : elt, In y s' <-> X.eq y x \/ In y s.
 Definition Empty s := forall a : elt, ~ In a s.
-Definition For_all (P : elt -> Prop) (s : t) :=
-  forall x : elt, In x s -> P x.
-Definition Exists (P : elt -> Prop) (s : t) :=
-  exists x : elt, In x s /\ P x.
+Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 
 (** * Empty set *)
 
@@ -1404,7 +1400,7 @@ Fixpoint elements_aux (acc : list X.t) (t : tree) {struct t} : list X.t :=
 Definition elements := elements_aux [].
 
 Lemma elements_aux_in : forall s acc x, 
- InList X.eq x (elements_aux acc s) <-> In x s \/ InList X.eq x acc.
+ InA X.eq x (elements_aux acc s) <-> In x s \/ InA X.eq x acc.
 Proof.
  induction s as [ | l Hl x r Hr h ]; simpl; auto.
  intuition.
@@ -1415,14 +1411,14 @@ Proof.
  intuition; inversion_clear H3; intuition.
 Qed.
 
-Lemma elements_in : forall s x, InList X.eq x (elements s) <-> In x s. 
+Lemma elements_in : forall s x, InA X.eq x (elements s) <-> In x s. 
 Proof. 
  intros; generalize (elements_aux_in s [] x); intuition.
  inversion_clear H0.
 Qed.
 
 Lemma elements_aux_sort : forall s acc, bst s -> sort X.lt acc ->
- (forall x y : elt, InList X.eq x acc -> In y s -> X.lt y x) ->
+ (forall x y : elt, InA X.eq x acc -> In y s -> X.lt y x) ->
  sort X.lt (elements_aux acc s).
 Proof.
  induction s as [ | l Hl y r Hr h]; simpl; intuition.
@@ -1430,7 +1426,7 @@ Proof.
  apply Hl; auto.
  constructor. 
  apply Hr; auto.
- apply MX.Inf_In_2; intros.
+ apply MX.In_Inf; intros.
  destruct (elements_aux_in r acc y0); intuition.
  intros.
  inversion_clear H.
@@ -1831,7 +1827,7 @@ Proof.
  inversion_clear H0.
  order.
  assert (X.lt a t).
- apply MX.In_sort with l; auto.
+ apply MX.Sort_Inf_In with l; auto.
  order.
  firstorder.
  apply H; auto.
@@ -1840,7 +1836,7 @@ Proof.
  apply H2; auto.
  inversion_clear H6; auto.
  assert (X.lt t x).
- apply MX.In_sort with l0; auto.
+ apply MX.Sort_Inf_In with l0; auto.
  order.
  apply le_trans with (length (t :: l0)).
  simpl in |- *; omega.
@@ -1849,7 +1845,7 @@ Proof.
  assert (MX.In x (a :: l)); firstorder.
  inversion_clear H6; auto.
  assert (X.lt a x).
- apply MX.In_sort with (t :: l0); auto.
+ apply MX.Sort_Inf_In with (t :: l0); auto.
  elim (X.lt_not_eq (x:=a) (y:=x)); auto.
 Qed.
 
@@ -2277,7 +2273,7 @@ Proof.
  intros; apply H8; auto.
  destruct (elements_in t x0); auto.
  apply in_flatten_e; auto.
- apply L.MX.Inf_In.
+ apply L.MX.ListIn_Inf.
  inversion_clear H0.
  intros; elim (in_app_or _ _ _ H0); intuition.
  destruct (elements_in t y); auto.
@@ -2413,9 +2409,9 @@ Lemma l_eq_cons :
 Proof.
  unfold L.eq, L.Equal in |- *; intuition.
  inversion_clear H1; generalize (H0 a); clear H0; intuition.
- apply L.In_eq with x; auto.
+ apply InA_eqA with x; eauto.
  inversion_clear H1; generalize (H0 a); clear H0; intuition.
- apply L.In_eq with y; auto.
+ apply InA_eqA with y; eauto.
 Qed.
 
 Definition compare_aux :
@@ -2594,12 +2590,9 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition In (x : elt) (s : t) := In x s.
  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
  Definition Subset s s' := forall a : elt, In a s -> In a s'.
- Definition Add (x : elt) (s s' : t) :=
-   forall y : elt, In y s' <-> X.eq y x \/ In y s.
  Definition Empty s := forall a : elt, ~ In a s.
- Definition For_all (P : elt -> Prop) (s : t) :=
-   forall x : elt, In x s -> P x.
- Definition Exists (P : elt -> Prop) (s : t) := exists x : elt, In x s /\ P x.
+ Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+ Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 
  Implicit Types s : t.
  Implicit Types x y : elt.
@@ -2872,12 +2865,12 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  End Filter.
 
- Lemma elements_1 : In x s -> InList E.eq x (elements s).
+ Lemma elements_1 : In x s -> InA E.eq x (elements s).
  Proof. 
  unfold elements, In; rewrite elements_in; auto.
  Qed.
 
- Lemma elements_2 : InList E.eq x (elements s) -> In x s.
+ Lemma elements_2 : InA E.eq x (elements s) -> In x s.
  Proof. 
  unfold elements, In; rewrite elements_in; auto.
  Qed.

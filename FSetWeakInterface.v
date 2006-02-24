@@ -16,32 +16,20 @@
 (** Set interfaces for types with only a decidable equality, but no ordering *)
 
 Require Export Bool.
-Require Export List.
-Require Export Sorting.
-Require Export Setoid.
+Require Export Lib.
+Require Export DecidableType.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Require Import FSetInterface. 
+(** Compatibility of a  boolean function with respect to an equality. *)
+Definition compat_bool (A:Set)(eqA: A->A->Prop)(f: A-> bool) :=
+  forall x y : A, eqA x y -> f x = f y.
 
-(** * Types with decidable Equalities *)
+(** Compatibility of a predicate with respect to an equality. *)
+Definition compat_P (A:Set)(eqA: A->A->Prop)(P : A -> Prop) :=
+  forall x y : A, eqA x y -> P x -> P y.
 
-Module Type DecidableType. 
-
-  Parameter t : Set.
-
-  Parameter eq : t -> t -> Prop.
-
-  Axiom eq_refl : forall x : t, eq x x.
-  Axiom eq_sym : forall x y : t, eq x y -> eq y x.
-  Axiom eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-
-  Parameter eq_dec : forall x y : t, { eq x y } + { ~ eq x y }.
-
-  Hint Immediate eq_sym.
-  Hint Resolve eq_refl eq_trans.
-
-End DecidableType. 
+Hint Unfold compat_bool compat_P.
 
 (** * Non-dependent signature
 
@@ -143,13 +131,9 @@ Module Type S.
   Parameter In : elt -> t -> Prop.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) (s : t) :=
-    forall x : elt, In x s -> P x.
-  Definition Exists (P : elt -> Prop) (s : t) :=
-    exists x : elt, In x s /\ P x.
+  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 
   (** Specification of [In] *)
   Parameter In_1 : E.eq x y -> In x s -> In y s.
@@ -243,8 +227,8 @@ Module Type S.
       Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
 
   (** Specification of [elements] *)
-  Parameter elements_1 : In x s -> InList E.eq x (elements s).
-  Parameter elements_2 : InList E.eq x (elements s) -> In x s.
+  Parameter elements_1 : In x s -> InA E.eq x (elements s).
+  Parameter elements_2 : InA E.eq x (elements s) -> In x s.
 
   (** Specification of [choose] *)
   Parameter choose_1 : choose s = Some x -> In x s.
@@ -252,17 +236,6 @@ Module Type S.
 
   End Filter.
   End Spec.
-
-  Notation "∅" := empty.
-  Notation "a ⋃ b" := (union a b) (at level 20).
-  Notation "a ⋂ b" := (inter a b) (at level 20). 
-  Notation "∥ a ∥" := (cardinal a) (at level 20).
-  Notation "a ∈ b" := (In a b) (at level 20).
-  Notation "a ∉ b" := (~ a ∈ b) (at level 20).
-  Notation "a ≡ b" := (Equal a b) (at level 20).
-  Notation "a ≢ b" := (~ a ≡ b) (at level 20).
-  Notation "a ⊆ b" := (Subset a b) (at level 20).
-  Notation "a ⊈ b" := (~ a ⊆ b) (at level 20).  
 
   Hint Immediate In_1.
   

@@ -17,13 +17,11 @@
     interface [FSetInterface.S] using strictly ordered list. *)
 
 Require Export FSetInterface.
-
 Set Implicit Arguments.
 Unset Strict Implicit.
 
 (** Usual syntax for lists. *)
 Notation "[]" := nil (at level 0).
-
 
 (** * Functions over lists
 
@@ -35,6 +33,7 @@ Module Raw (X: OrderedType).
  
   Module E := X.
   Module MX := OrderedTypeFacts X.
+  Import MX.
 
   Definition elt := X.t.
   Definition t := list elt.
@@ -206,33 +205,15 @@ Module Raw (X: OrderedType).
 
   (** ** Proofs of set operation specifications. *)
 
-  Definition In : elt -> t -> Prop := InList X.eq.
-
   Notation Sort := (sort X.lt).
   Notation Inf := (lelistA X.lt).
-  Notation "'In' x l" := (InList X.eq x l) (at level 10, x, l at next level).
+  Notation In := (InA X.eq).
 
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> X.eq y x \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) (s : t) :=
-    forall x : elt, In x s -> P x.
-  Definition Exists (P : elt -> Prop) (s : t) :=
-    exists x : elt, In x s /\ P x.
-
-  Definition In_eq :
-    forall (s : t) (x y : elt), X.eq x y -> In x s -> In y s := MX.In_eq.
-  Definition Inf_lt :
-    forall (s : t) (x y : elt), X.lt x y -> Inf y s -> Inf x s := MX.Inf_lt.
-  Definition Inf_eq :
-    forall (s : t) (x y : elt), X.eq x y -> Inf y s -> Inf x s := MX.Inf_eq.
-  Definition In_sort :
-    forall (s : t) (x a : elt), Inf a s -> In x s -> Sort s -> X.lt a x :=
-    MX.In_sort.
-  Hint Resolve Inf_lt Inf_eq. 
-  Hint Immediate In_eq.
+  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+  Definition Exists (P : elt -> Prop) (s : t) := exists x, In x s /\ P x.
 
   Lemma mem_1 :
    forall (s : t) (Hs : Sort s) (x : elt), In x s -> mem x s = true. 
@@ -242,8 +223,8 @@ Module Raw (X: OrderedType).
   inversion_clear Hs.
   inversion_clear H0.
   simpl; MX.compare; trivial.
-  simpl; MX.compare_gt x a; auto.
-  eapply In_sort; eauto.
+  simpl; compare_gt x a; auto.
+  eapply Sort_Inf_In; eauto.
   Qed.
 
   Lemma mem_2 : forall (s : t) (x : elt), mem x s = true -> In x s.
@@ -332,8 +313,8 @@ Module Raw (X: OrderedType).
   simpl; intros; case (X.compare x a); intuition; inversion_clear Hs. 
   inversion_clear H1.
   absurd (X.eq x a); eauto. 
-  absurd (X.lt a x); auto; eapply In_sort; eauto.
-  absurd (X.lt a x); auto; eapply In_sort; eauto.
+  absurd (X.lt a x); auto; eapply Sort_Inf_In; eauto.
+  absurd (X.lt a x); auto; eapply Sort_Inf_In; eauto.
   inversion_clear H1; firstorder. 
   absurd (X.eq x a); eauto.
   Qed.
@@ -396,7 +377,7 @@ Module Raw (X: OrderedType).
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), Sort (union s s').
   Proof.
   DoubleInd; case (X.compare x x'); intuition; constructor; auto.
-  eauto.
+  eauto using Inf_eq.
   change (Inf x' (union (x :: l) l')); firstorder.
   Qed.  
   
@@ -439,7 +420,7 @@ Module Raw (X: OrderedType).
   Lemma inter_sort :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), Sort (inter s s').
   Proof.
-  DoubleInd; case (X.compare x x'); eauto.
+  DoubleInd; case (X.compare x x'); eauto using Inf_eq.
   Qed.  
   
   Lemma inter_1 :
@@ -467,8 +448,8 @@ Module Raw (X: OrderedType).
 
   inversion_clear His. 
   absurd (X.lt i x); eauto.
-  apply In_sort with (x' :: l'); auto.
-  constructor; eapply MX.eq_lt; eauto.
+  apply Sort_Inf_In with (x' :: l'); auto.
+  constructor; eapply eq_lt; eauto.
   eapply In_eq; eauto.
   eapply In_eq; eauto.
 
@@ -477,8 +458,8 @@ Module Raw (X: OrderedType).
   change (In i (inter (x :: l) l')). 
   inversion_clear His'.
   absurd (X.lt i x'); eauto.
-  apply In_sort with (x :: l); auto. 
-  constructor; eapply MX.eq_lt; eauto.
+  apply Sort_Inf_In with (x :: l); auto. 
+  constructor; eapply eq_lt; eauto.
   eapply In_eq; eauto.
   eapply In_eq; eauto.
   Qed.
@@ -518,20 +499,20 @@ Module Raw (X: OrderedType).
 
   inversion_clear H.
   absurd (X.lt x x); eauto. 
-  apply In_sort with (x' :: l'); auto. 
+  apply Sort_Inf_In with (x' :: l'); auto. 
   eapply In_eq; eauto.
   eauto.
   
   inversion_clear H3.
   generalize (diff_1 H1 H5 H); intros. 
   absurd (X.lt x x0); eauto.
-  apply In_sort with l; eauto.
+  apply Sort_Inf_In with l; eauto.
   eauto.
   
   inversion_clear H3. 
   generalize (diff_1 Hs H5 H); intros. 
   absurd (X.lt x' x'); eauto.
-  apply In_sort with (x :: l); auto.
+  apply Sort_Inf_In with (x :: l); auto.
   eapply In_eq; eauto.
   eauto.  
   Qed.
@@ -566,23 +547,23 @@ Module Raw (X: OrderedType).
   assert (A : In x (x' :: l')); auto; inversion_clear A.
   absurd (X.eq x x'); eauto.
   absurd (X.lt x' x); auto.
-  apply In_sort with l'; eauto.
+  apply Sort_Inf_In with l'; eauto.
   
   apply Hrec; intuition; elim (H a); intros.
   assert (A : In a (x' :: l')); auto; inversion_clear A; auto.
   absurd (X.lt x' x); auto. 
-  apply In_sort with l; auto;
+  apply Sort_Inf_In with l; auto;
    [ apply Inf_eq with x; auto | apply In_eq with a; eauto ].
   assert (A : In a (x :: l)); auto; inversion_clear A; auto.
   absurd (X.lt x x'); auto. 
-  apply In_sort with l'; auto;
+  apply Sort_Inf_In with l'; auto;
    [ apply Inf_eq with x'; auto | apply In_eq with a; eauto ].
 
   elim (H x'); intros.
   assert (A : In x' (x :: l)); auto; inversion_clear A.
   absurd (X.eq x' x); eauto.
   absurd (X.lt x x'); auto.
-  apply In_sort with l; eauto.
+  apply Sort_Inf_In with l; eauto.
   Qed.
 
   Lemma equal_2 : forall s s' : t, equal s s' = true -> Equal s s'.
@@ -616,12 +597,12 @@ Module Raw (X: OrderedType).
   assert (A : In x (x' :: l')); auto; inversion_clear A.
   absurd (X.eq x x'); eauto.
   absurd (X.lt x' x); auto.
-  apply In_sort with l'; eauto.
+  apply Sort_Inf_In with l'; eauto.
   
   apply Hrec; intuition.
   assert (A : In a (x' :: l')); auto; inversion_clear A; auto.
   absurd (X.lt x' x); auto. 
-  apply In_sort with l; auto;
+  apply Sort_Inf_In with l; auto;
    [ apply Inf_eq with x; auto | apply In_eq with a; eauto ].
 
   apply Hrec; intuition.
@@ -629,7 +610,7 @@ Module Raw (X: OrderedType).
   inversion_clear H0.  
   absurd (X.lt x' x); eauto.
   absurd (X.lt x x'); auto. 
-  apply In_sort with l; eauto.
+  apply Sort_Inf_In with l; eauto.
   Qed.
 
   Lemma subset_2 : forall s s' : t, subset s s' = true -> Subset s s'.
@@ -735,7 +716,7 @@ Module Raw (X: OrderedType).
   assert (~ X.lt x0 e).
    eapply H; eauto.
   intro.
-  elim H1; apply X.lt_trans with x; auto; eapply MX.lt_eq; eauto.
+  elim H1; apply X.lt_trans with x; auto; eapply lt_eq; eauto.
   eapply H; eauto.
   Qed. 
 
@@ -987,10 +968,10 @@ Module Raw (X: OrderedType).
   intros x l s'' H'; inversion_clear H'; auto.
   intros x x' l l' E s'' H'; inversion_clear H'; auto. 
   eauto.
-  constructor 2; apply MX.lt_eq with x'; auto.
+  constructor 2; apply lt_eq with x'; auto.
   intros.
   inversion_clear H3.
-  constructor 2; apply MX.eq_lt with y; auto.
+  constructor 2; apply eq_lt with y; auto.
   constructor 3; eauto.  
   Qed. 
 
@@ -1007,17 +988,17 @@ Module Raw (X: OrderedType).
   assert (X : In x (y :: s'0)); auto; inversion_clear X.
   absurd (X.eq x y); eauto.
   absurd (X.lt y x); auto.
-  eapply In_sort; eauto.
+  eapply Sort_Inf_In; eauto.
   inversion_clear Hs; inversion_clear Hs'.
   elim H2; auto; intuition.
   elim (H3 a); intros.
   assert (X : In a (y :: s'0)); auto; inversion_clear X; auto.
   absurd (X.lt x a); eauto.
-  eapply In_sort with s0; eauto.
+  eapply Sort_Inf_In with s0; eauto.
   elim (H3 a); intros.
   assert (X : In a (x :: s0)); auto; inversion_clear X; auto.
   absurd (X.lt y a); eauto.
-  eapply In_sort with s'0; eauto.
+  eapply Sort_Inf_In with s'0; eauto.
   Qed.
 
   Definition compare :
@@ -1057,17 +1038,14 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition t := slist. 
  Definition elt := X.t.
  
- Definition In (x : elt) (s : t) := Raw.In x s.
+ Definition In (x : elt) (s : t) := InA X.eq x s.(this).
  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
  Definition Subset s s' := forall a : elt, In a s -> In a s'.
- Definition Add (x : elt) (s s' : t) :=
-   forall y : elt, In y s' <-> X.eq y x \/ In y s.
  Definition Empty s := forall a : elt, ~ In a s.
- Definition For_all (P : elt -> Prop) (s : t) :=
-   forall x : elt, In x s -> P x.
- Definition Exists (P : elt -> Prop) (s : t) := exists x : elt, In x s /\ P x.
+ Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+ Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
   
- Definition In_1 (s : t) := Raw.In_eq (s:=s).
+ Definition In_1 (s : t) := Raw.MX.In_eq (l:=s.(this)).
  
  Definition mem (x : elt) (s : t) := Raw.mem x s.
  Definition mem_1 (s : t) := Raw.mem_1 (sorted s). 

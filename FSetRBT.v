@@ -1527,9 +1527,9 @@ Unset Strict Implicit.
      olai_sort : sort E.lt l';
      olai_length : Zlength l' = Zlength l - n;
      olai_same :
-      forall x : elt, InList E.eq x l <-> In_tree x r \/ InList E.eq x l';
+      forall x : elt, InA E.eq x l <-> In_tree x r \/ InA E.eq x l';
      olai_order :
-      forall x y : elt, In_tree x r -> InList E.eq y l' -> E.lt x y}.
+      forall x y : elt, In_tree x r -> InA E.eq y l' -> E.lt x y}.
   Set Strict Implicit.
 Unset Implicit Arguments.
 
@@ -1587,7 +1587,7 @@ Unset Implicit Arguments.
    inversion_clear H3; auto; inversion_clear H2.
    inversion_clear H2; try solve [ inversion H4 ].
    inversion_clear Hl1.
-   apply ME.In_sort with l'; auto.
+   apply ME.Sort_Inf_In with l'; auto.
    eapply ME.Inf_eq; eauto.   
   (* k>0 *)
   clear k Hk; intros k Hk Hrec n Hn l Hl1 Hl2.
@@ -1625,7 +1625,7 @@ Unset Implicit Arguments.
    assert (sorted := olai_sort o1). 
    inversion_clear sorted.   
    unfold gt_tree in |- *; intros.
-   apply ME.In_sort with l''; auto.
+   apply ME.Sort_Inf_In with l''; auto.
    elim (olai_same o2 y); auto.
    (* inv2 : rb *)  
    elim (Z_of_nat_complete k); [ intros kn; case kn | omega ].
@@ -1650,7 +1650,7 @@ Unset Implicit Arguments.
    rewrite (olai_length o1); unfold Zpred in |- *; omega.
    (* inv5 : same *)
    intro y; generalize (olai_same o1 y); generalize (olai_same o2 y).
-   assert (InList E.eq y (x :: l'') <-> E.eq y x \/ InList E.eq y l'').
+   assert (InA E.eq y (x :: l'') <-> E.eq y x \/ InA E.eq y l'').
     split; intro H; inversion H; auto.
    generalize H; clear H A B Hn Hn1 Hn2 o1 o2.
    intuition; inversion_clear H9; intuition.
@@ -1660,7 +1660,7 @@ Unset Implicit Arguments.
    assert (sorted := olai_sort o1).
    inversion_clear sorted.
    apply ME.eq_lt with x; auto.
-   apply ME.In_sort with l''; auto.  
+   apply ME.Sort_Inf_In with l''; auto.  
    generalize (olai_same o2 b); intros (_, X); auto.
    apply (olai_order o1 (x:=a) (y:=b)); auto.
    constructor 2.
@@ -1676,7 +1676,7 @@ Unset Implicit Arguments.
 
   Definition of_list :
     forall l : list elt,
-    sort E.lt l -> {s : t | forall x : elt, In x s <-> InList E.eq x l}. 
+    sort E.lt l -> {s : t | forall x : elt, In x s <-> InA E.eq x l}. 
   Proof.
   intros.
   set (n := Zlength l) in *.
@@ -1719,7 +1719,7 @@ Unset Implicit Arguments.
 
   Lemma elements_tree_aux_acc_1 :
    forall (s : tree) (acc : list elt) (x : elt),
-   InList E.eq x acc -> InList E.eq x (elements_tree_aux acc s).
+   InA E.eq x acc -> InA E.eq x (elements_tree_aux acc s).
   Proof.
     simple induction s; simpl in |- *; intuition.
   Qed.
@@ -1727,7 +1727,7 @@ Unset Implicit Arguments.
 
   Lemma elements_tree_aux_1 :
    forall (s : tree) (acc : list elt) (x : elt),
-   In_tree x s -> InList E.eq x (elements_tree_aux acc s).
+   In_tree x s -> InA E.eq x (elements_tree_aux acc s).
   Proof.
     simple induction s; simpl in |- *; intuition.
     inversion H.
@@ -1736,7 +1736,7 @@ Unset Implicit Arguments.
 
   Lemma elements_tree_1 :
    forall (s : tree) (x : elt),
-   In_tree x s -> InList E.eq x (elements_tree s).
+   In_tree x s -> InA E.eq x (elements_tree s).
   Proof.
     unfold elements_tree in |- *; intros; apply elements_tree_aux_1; auto.
   Qed.
@@ -1744,8 +1744,8 @@ Unset Implicit Arguments.
 
   Lemma elements_tree_aux_acc_2 :
    forall (s : tree) (acc : list elt) (x : elt),
-   InList E.eq x (elements_tree_aux acc s) ->
-   InList E.eq x acc \/ In_tree x s.
+   InA E.eq x (elements_tree_aux acc s) ->
+   InA E.eq x acc \/ In_tree x s.
   Proof.
     simple induction s; simpl in |- *; intuition.
     elim (H _ _ H1); intuition.
@@ -1756,7 +1756,7 @@ Unset Implicit Arguments.
 
   Lemma elements_tree_2 :
    forall (s : tree) (x : elt),
-   InList E.eq x (elements_tree s) -> In_tree x s.
+   InA E.eq x (elements_tree s) -> In_tree x s.
   Proof.
     unfold elements_tree in |- *; intros.
     elim (elements_tree_aux_acc_2 _ _ _ H); auto.
@@ -1770,7 +1770,7 @@ Unset Implicit Arguments.
    forall acc : list elt,
    sort E.lt acc ->
    (forall x : elt,
-    InList E.eq x acc -> forall y : elt, In_tree y s -> E.lt y x) ->
+    InA E.eq x acc -> forall y : elt, In_tree y s -> E.lt y x) ->
    sort E.lt (elements_tree_aux acc s).
   Proof.
     simple induction s; simpl in |- *; intuition.
@@ -1779,7 +1779,7 @@ Unset Implicit Arguments.
     constructor. 
     apply H0; auto.
     inversion H1; auto.
-    apply ME.Inf_In_2.
+    apply ME.In_Inf.
     replace X.eq with E.eq; replace X.lt with E.lt; auto.
     intros.
     elim (elements_tree_aux_acc_2 t2 acc y); intuition.
@@ -1807,7 +1807,7 @@ Unset Implicit Arguments.
   Definition elements :
     forall s : t,
     {l : list elt |
-    sort E.lt l /\ (forall x : elt, In x s <-> InList E.eq x l)}.
+    sort E.lt l /\ (forall x : elt, In x s <-> InA E.eq x l)}.
   Proof.
     intros (s, Hs, Hrb); unfold In in |- *; simpl in |- *.
     exists (elements_tree s); repeat split.
@@ -1825,7 +1825,7 @@ Unset Implicit Arguments.
   Proof.
   intros (l, Hl).
   elim (of_list l Hl); intros s Hls. 
-  exists s; unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *; firstorder.
+  exists s; unfold Lists.In in |- *; simpl in |- *; firstorder.
   Qed.
 
   Definition to_slist :
@@ -1833,7 +1833,7 @@ Unset Implicit Arguments.
   Proof.
   intro s; elim (elements s); intros l (Hl1, Hl2).
   exists (Lists.Build_slist Hl1).
-  unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *; firstorder.
+  unfold Lists.In in |- *; simpl in |- *; firstorder.
   Qed.
 
   (** * Union *)
@@ -2173,9 +2173,9 @@ Set Firstorder Depth 5.
   Proof.
     unfold eq, Equal, eql, Lists.eq, Lists.Raw.eq, Lists.Raw.Equal in |- *.
     intros s s'.
-    elim (to_slist s); unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *;
+    elim (to_slist s); unfold Lists.In in |- *; simpl in |- *;
      intros l Hl.
-    elim (to_slist s'); unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *;
+    elim (to_slist s'); unfold Lists.In in |- *; simpl in |- *;
      intros l' Hl'.
     firstorder.
    Qed.
@@ -2184,9 +2184,9 @@ Set Firstorder Depth 5.
   Proof.
     unfold eq, Equal, eql, Lists.eq, Lists.Raw.eq, Lists.Raw.Equal in |- *.
     intros s s'.
-    elim (to_slist s); unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *;
+    elim (to_slist s); unfold Lists.In in |- *; simpl in |- *;
      intros l Hl.
-    elim (to_slist s'); unfold Lists.In, Lists.Raw.In in |- *; simpl in |- *;
+    elim (to_slist s'); unfold Lists.In in |- *; simpl in |- *;
      intros l' Hl'.
     firstorder.
   Qed.

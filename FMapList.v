@@ -24,341 +24,35 @@ Unset Strict Implicit.
 Notation "[]" := nil (at level 0).
 Arguments Scope list [type_scope].
 
-Ltac absurd_hyp h := 
-  let T := type of h in 
-  absurd T.
-
 Module Raw (X:OrderedType).
   Module E := X.
   Module MX := OrderedTypeFacts X.
+  Module PX := PairOrderedType X.
+  Import MX. 
+  Import PX. 
 
   Definition key := X.t.
   Definition t (elt:Set) := list (X.t * elt).
 
   Section Elt.
-
   Variable elt : Set.
 
+(* Now in PairOrderedtype: 
   Definition eqk (p p':key*elt) := X.eq (fst p) (fst p').
   Definition eqke (p p':key*elt) := 
           X.eq (fst p) (fst p') /\ (snd p) = (snd p').
   Definition ltk (p p':key*elt) := X.lt (fst p) (fst p').
-
-  Hint Unfold eqk eqke ltk.
-  Hint Extern 2 (eqke ?a ?b) => split.
-
-  Ltac simpl_eqke :=
-    match goal with
-    	H:(eqke _ _) |- _ => 
-          let x:= fresh "eqk" in 
-	  let y := fresh "eqe" in (destruct H as (x,y); simpl in y; simpl in x)
-    end.
-
-  Ltac sintuition := try simpl_eqke; intuition.
-
-  (* eqk, eqke are equalities, ltk is a strict order *)
- 
-  Lemma eqk_refl : forall e, eqk e e.
-    auto.
-  Qed.
-
-  Lemma eqke_refl : forall e, eqke e e.
-    auto.
-  Qed.
-
-  Lemma eqk_sym : forall e e', eqk e e' -> eqk e' e.
-    auto.
-  Qed.
-
-  Lemma eqke_sym : forall e e', eqke e e' -> eqke e' e.
-    intros; sintuition.
-  Qed.
-
-  Lemma eqk_trans : forall e e' e'', eqk e e' -> eqk e' e'' -> eqk e e''.
-    eauto. 
-  Qed.
-
-  Lemma eqke_trans : forall e e' e'', eqke e e' -> eqke e' e'' -> eqke e e''.
-    unfold eqke; intuition eauto; congruence.
-  Qed.
-
-  Hint Resolve eqk_trans eqke_trans eqk_sym eqke_sym eqk_refl eqke_refl.
-
-  Lemma ltk_trans : forall e e' e'', ltk e e' -> ltk e' e'' -> ltk e e''.
-     eauto.
-  Qed.
-
-  Lemma ltk_not_eqk : forall e e', ltk e e' -> ~ eqk e e'.
-    unfold eqk, ltk; auto. (* Hint Unfold devrait rendre ce unfold inutile ? *)
-  Qed.  
-
-   Lemma eqk_not_ltk : forall x x', eqk x x' -> ~ltk x x'.
-     unfold eqk, ltk; auto.
-   Qed.
-   Hint Resolve ltk_not_eqk eqk_not_ltk. 
-
-   Lemma ltk_eqk : forall e e' e'', ltk e e' -> eqk e' e'' -> ltk e e''.
-      eauto.
-   Qed.
-   Hint Resolve ltk_eqk.
-
-   Hint Resolve MX.eq_lt MX.lt_eq.
-
-   Lemma eqk_ltk : forall e e' e'', ltk e e'' -> eqk e e' -> ltk e' e''.
-      intros (k,e) (k',e') (k'',e'').
-      unfold ltk, eqk; eauto.
-   Qed.
-   Hint Resolve eqk_ltk.
-
-   (* eqke is a stricter equality than eqk *)
- 
-   Lemma eqke_eqk : forall x x', eqke x x' -> eqk x x'.
-     unfold eqk, eqke; intuition.
-   Qed.
-   Hint Resolve eqke_eqk.
-
-  (* ltk ignore the second components *)
-
-   Lemma ltk_right_r : forall x k e e', ltk x (k,e) -> ltk x (k,e').
-      auto.
-    Qed.
-    Hint Resolve ltk_right_r.
-
-    Lemma ltk_right_l : forall x k e e', ltk (k,e) x -> ltk (k,e') x.
-      auto.
-    Qed.
-    Hint Resolve ltk_right_l.
-
-
-  Definition MapsTo (k:key)(e:elt):= InList eqke (k,e).
+  Definition MapsTo (k:key)(e:elt):= InA eqke (k,e).
   Definition In k m := exists e:elt, MapsTo k e m.
-
-  Hint Unfold MapsTo In.
-
-  Lemma InList_eqke_eqk : 
-     forall x m, InList eqke x m -> InList eqk x m.
-  Proof.
-    induction 1; sintuition.
-  Qed.
-  Hint Resolve InList_eqke_eqk.
-
-  (* An alternative formulation for [In k l] is [exists e, InList eqk (k,e) l] *)
-
-  Lemma InList_eqk_In : forall k e l, InList eqk (k,e) l -> In k l.
-  Proof.
-     induction 1.
-     destruct y.
-     exists e0.
-     eauto.
-     induction IHInList.
-     exists x;eauto.
-  Qed.
-  Hint Resolve InList_eqk_In.
-
-  Lemma In_InList_eqk : forall k e l, In k l -> InList eqk (k,e) l.
-  Proof.
-     induction 1.
-     induction H; simpl; sintuition.
-  Qed.
-  Hint Resolve In_InList_eqk.
-
-  Lemma altern_In : forall k l, In k l <-> exists e:elt, InList eqk (k,e) l.
-  Proof.
-   split.
-   destruct 1. 
-   exists x; auto. 
-   intros (x,H); eauto.
-  Qed.
-
-(*
-    (* could also be proved as a corollary of previous lemma *)
-    Lemma InList_In : forall k e l, InList eqke (k,e) l -> In k l.
-      intros k e l H. exists e;auto.
-    Qed.
-    Hint Resolve InList_In.
 *)
 
-    Lemma notin_empty : forall k, ~ In k [].
-      intros k abs.
-      inversion abs.
-      inversion H.
-    Qed.
-    Hint Resolve notin_empty.
-
-
-    Notation Sort := (sort ltk).
-    Notation Inf := (lelistA ltk).
-
-    Hint Resolve nil_sort cons_sort.
-
-    Lemma lt_sort_tl : forall e l, Sort (e::l) -> Sort l.
-      intros e l sorted.
-      inversion sorted.
-      inversion H1; auto.
-    Qed.
-     Hint Resolve lt_sort_tl.
-
-    Lemma lt_sort_tl2 : forall e e' l, Sort (e::e'::l) -> Sort (e::l).
-      intros e e' l sorted.
-      inversion sorted.
-      inversion H1.
-      apply cons_sort.
-      assumption.
-      inversion H6.
-      apply nil_leA.
-      apply cons_leA.
-      subst.
-      apply ltk_trans with e';auto.
-      inversion sorted.
-      inversion H4.
-      assumption.
-    Qed.
-    Hint Resolve lt_sort_tl2.
-
-    Lemma all_lt_Inf: forall x l, 
-      (forall e, InList eqke e l -> ltk x e) -> Inf x l.
-      destruct l;auto.
-    Qed.
-    Hint Resolve all_lt_Inf.
-
-    Lemma sort_in_tl : forall e l e', Sort (e::l) -> InList eqk e' l -> ltk e e'.
-      intros e l e' sorted Hin.
-      induction Hin;eauto.
-
-      apply ltk_eqk with y;eauto.
-      inversion sorted.
-      subst.
-      inversion H3;eauto.
-    Qed.
-
-    Lemma sort_in : forall l e e', Sort (e::l) -> InList eqk e' (e::l) 
-      -> ltk e e' \/ eqk e e'.
-      intros l e e' sorted Hin.
-      inversion Hin;eauto.
-      left.
-      apply sort_in_tl with l;assumption.
-    Qed.
-
-    Lemma sort_lt_notin : forall l k e, Sort l -> Inf (k,e) l ->  ~In k l.
-      intros l k e sorted Hlt.
-      inversion Hlt.
-      intro abs. inversion abs. inversion H0. 
-      intro Hin. subst.
-      inversion Hin.
-      assert (ltk b (k,x) \/ eqk b (k,x)).
-      eapply sort_in with l0. auto.
-      auto.
-      decompose [or] H1;clear H1.
-      assert (ltk (k,x) b).
-      apply ltk_right_l with e;assumption.
-      absurd (ltk b (k, x));auto.
-      destruct b.
-      unfold ltk; simpl.
-      apply MX.lt_not_gt;auto.
-
-      destruct b.
-      unfold eqk in H2; simpl in H2.
-      unfold ltk in H; simpl in H.
-      absurd (X.eq k0 k); simpl;eauto.
-    Qed.
-    Hint Resolve sort_lt_notin.
-
-(*
-    Lemma sort_lt_notin2 : forall l k e, Sort l -> Inf (k,e) l -> 
-          ~(exists e:elt, InList eqk (k,e) l).
-    Proof.
-      intros.
-      generalize (altern_In k l).
-      generalize (sort_lt_notin H H0).
-      intuition.
-    Qed.
-*)
-
-    Lemma sorted_unique: forall l, Sort l -> Unique eqk l.
-      intros l sorted.
-      induction sorted;auto.
-      apply Unique_cons;auto.
-      destruct a;auto.
-      assert (abs:~In k l).
-      eapply sort_lt_notin with e;auto.
-      intro abs2.
-      elim abs.
-      eauto.
-    Qed.
-
-(*
-    Lemma sorted_unique_key_eq: forall l, Unique eqk l -> Unique eqke l.
-      induction 1;auto.
-    Qed.
-*)
-
-    Lemma Inf_eq : forall x x' l, eqk x x' -> Inf x l -> Inf x' l.
-    Proof.  
-     intros x x' l H H0.
-     inversion H0; eauto.
-    Qed.
-
-    Lemma Inf_lt : forall x x' l, ltk x x' -> Inf x' l -> Inf x l.
-    Proof.
-     induction 2; auto.
-     constructor.
-     eapply ltk_trans; eauto.
-   Qed.     
-
-   Hint Resolve Inf_eq Inf_lt.
-
-   Lemma sorted_in_cons_not_eq : forall x l k e, Sort ((k,e)::l) -> In x l -> ~X.eq x k.
-      intros x l k e sorted.
-      inversion_clear sorted.
-      intros Hin.
-      intro abs.
-      absurd (In x l);auto.
-      eapply sort_lt_notin with e;auto.      
-      eapply Inf_eq with (k,e);simpl;auto.
-    Qed.
-
-    Lemma In_inv : forall k k' e l, In k ((k',e) :: l) -> X.eq k k' \/ In k l.
-      intros k k' e l H.
-      inversion H.
-      inversion_clear H0; unfold eqke in H1; simpl in *; intuition; eauto.
-    Qed.      
-
-    Lemma In_inv2 : forall x x' l, 
-      InList eqk x (x' :: l) -> eqk x x' \/ InList eqk x l.
-      intros x x' l inlist.
-      inversion inlist;auto.
-    Qed.
-
-    Lemma In_inv3 : forall x x' l, 
-      InList eqke x (x' :: l) -> eqke x x' \/ InList eqke x l.
-      intros x x' l inlist.
-      inversion inlist;auto.
-    Qed.
-
-    Lemma In_inv4 : forall k k' e e' l, 
-      InList eqk (k, e) ((k', e') :: l) -> ~ X.eq k k' -> InList eqk (k, e) l.
-      intros k k' e e' l H H0.
-      elim (@In_inv2 (k,e) (k',e') l);intros;auto.
-      elim H0;auto.
-    Qed.
-
-    Lemma In_inv5 : forall x x' l, 
-      InList eqke x (x' :: l) -> ~ eqk x x' -> InList eqke x l.
-      intros x x' l H H0.
-      induction (@In_inv3 x x' l);auto. 
-      elim H0.
-      unfold eqke in *; unfold eqk; intuition.
-    Qed.
-
-    Lemma InList_eqk : forall x x' l, 
-      InList eqk x l -> eqk x x' -> InList eqk x' l.
-      intros x x' l H H0.
-      induction H;eauto.
-    Qed.
-
-    Hint Resolve In_inv4 In_inv5.
-
-   (** end of auxiliary results *)
+  Notation eqk := (eqk (elt:=elt)).   
+  Notation eqke := (eqke (elt:=elt)).
+  Notation ltk := (ltk (elt:=elt)).
+  Notation MapsTo := (MapsTo (elt:=elt)).
+  Notation In := (In (elt:=elt)).
+  Notation Sort := (sort ltk).
+  Notation Inf := (lelistA (ltk)).
 
     Definition empty : t elt := [].
 
@@ -367,12 +61,12 @@ Module Raw (X:OrderedType).
     Definition Empty m := forall (a : key)(e:elt) , ~ MapsTo a e m.
 
     Lemma empty_1 : Empty empty.
-      unfold Empty,empty,MapsTo.
+    Proof.  
+      unfold Empty,empty.
       intros a e.
       intro abs.
       inversion abs.
     Qed.
-
     Hint Resolve empty_1.
 
     Lemma empty_sorted : Sort empty.
@@ -385,16 +79,16 @@ Module Raw (X:OrderedType).
     (** Specification of [is_empty] *)
 
     Lemma is_empty_1 :forall m, Empty m -> is_empty m = true. 
-      unfold Empty,MapsTo.
+    Proof.
+      unfold Empty, PX.MapsTo.
       intros m.
       case m;auto.
-      intros p l inlist.
-      destruct p.
-      absurd (InList eqke (k, e) ((k, e) :: l));auto.
+      intros (k,e) l inlist.
+      absurd (InA eqke (k, e) ((k, e) :: l));auto.
     Qed.
 
-
     Lemma is_empty_2 : forall m, is_empty m = true -> Empty m.
+    Proof.  
       intros m.
       case m;auto.
       intros p l abs.
@@ -416,13 +110,14 @@ Module Raw (X:OrderedType).
     (** Specification of [mem] *)
 
     Lemma mem_1 : forall m (Hm:Sort m) x, In x m -> mem x m = true.
+    Proof.  
       intros m Hm x; generalize Hm; clear Hm.      
       functional induction mem x m;intros sorted belong1;trivial.
       
       inversion belong1. inversion H.
       
       absurd (In k ((k', e) :: l));try assumption.
-      eapply sort_lt_notin with e;auto.
+      eapply Sort_Inf_NotIn with e;auto.
 
       apply H.
       elim (sort_inv sorted);auto.
@@ -433,11 +128,13 @@ Module Raw (X:OrderedType).
 
 
     Lemma mem_2 : forall m (Hm:Sort m) x, mem x m = true -> In x m. 
-      intros m Hm x; generalize Hm; clear Hm; unfold In,MapsTo.
+    Proof.
+      intros m Hm x; generalize Hm; clear Hm; unfold PX.In,PX.MapsTo.
       functional induction mem x m; intros sorted hyp;try ((inversion hyp);fail).
       exists e;eauto. 
       induction H; eauto.
-    Save.
+      inversion_clear sorted; auto.
+    Qed.
 
 
     Fixpoint find (k:key) (s: t elt) {struct s} : option elt :=
@@ -454,12 +151,14 @@ Module Raw (X:OrderedType).
     (** Specification of [find] *)
 
     Lemma find_2 :  forall m x e, find x m = Some e -> MapsTo x e m.
-      intros m x. unfold MapsTo.
+    Proof.
+      intros m x. unfold PX.MapsTo.
       functional induction find x m;simpl;intros e' eqfind; inversion eqfind; auto.
     Qed.
 
     Lemma find_1 :  forall m (Hm:Sort m) x e, MapsTo x e m -> find x m = Some e. 
-      intros m Hm x e; generalize Hm; clear Hm; unfold MapsTo.
+    Proof.
+      intros m Hm x e; generalize Hm; clear Hm; unfold PX.MapsTo.
       functional induction find x m;simpl; subst; try clear H_eq_1.
 
       inversion 2.
@@ -467,23 +166,23 @@ Module Raw (X:OrderedType).
       intros; elimtype False.
       inversion_clear H.
       absurd (X.eq k k'); auto.
-      unfold eqke in H0; simpl in H0; intuition. 
-      assert (H2 := sort_in_tl Hm (InList_eqke_eqk H0)).
-      unfold ltk in H2; simpl in H2; intuition. 
+      destruct H0; simpl in *; intuition. 
+      assert (H2 := Sort_In_cons_1 Hm (InA_eqke_eqk H0)).
+      compute in H2; intuition. 
       absurd (X.lt k k'); auto.
-    
-     intros.
-     inversion_clear H.
-     unfold eqke in H0; simpl in H0; intuition congruence. 
-     assert (H2 := sort_in_tl Hm (InList_eqke_eqk H0)).
-     unfold ltk in H2; simpl in H2; intuition. 
-     absurd (X.eq k k'); auto.
-
-     intros.
-     inversion_clear H0.
-     absurd (X.eq k k'); auto.
-     unfold eqke in H1; simpl in H1; intuition.
-     eauto.
+      
+      intros.
+      inversion_clear H.
+      destruct H0; simpl in *; intuition congruence. 
+      assert (H2 := Sort_In_cons_1 Hm (InA_eqke_eqk H0)).
+      compute in H2; intuition.
+      absurd (X.eq k k'); auto.
+      
+      intros.
+      inversion_clear Hm; inversion_clear H0.
+      absurd (X.eq k k'); auto.
+      destruct H3; simpl in *; auto.
+      eauto.
     Qed.
 
 
@@ -502,27 +201,28 @@ Module Raw (X:OrderedType).
     (** Specification of [add] *)
 
     Lemma add_1 : forall m x y e, X.eq y x -> MapsTo y e (add x e m).
+    Proof.
       intros m x y e; generalize y; clear y.
-      unfold MapsTo.
+      unfold PX.MapsTo.
       functional induction add x e m;simpl;auto.
     Qed.
 
     Lemma add_2 : forall m x y e e', 
       ~ X.eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
+    Proof.
       intros m x  y e e'. 
-      generalize y e; clear y e; unfold MapsTo.
+      generalize y e; clear y e; unfold PX.MapsTo.
       functional induction add x e' m;simpl;auto.
-      intros y' e' eqky' mapsto1.
-      
-      assert (InList eqke (y', e') l); intuition; eauto.
+      intros y' e' eqky';  inversion_clear 1; destruct H0; simpl in *; intuition.
+      elimtype False; eauto.
 
-      intros y' e' eqky' mapsto1.
-      elim (@In_inv3 (y',e') (k',y) l);auto.
+      intros y' e' eqky'; inversion_clear 1; intuition.
     Qed.
       
     Lemma add_3 : forall m x y e e',
       ~ X.eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
-      intros m x y e e'. generalize y e; clear y e; unfold MapsTo.
+    Proof.
+      intros m x y e e'. generalize y e; clear y e; unfold PX.MapsTo.
       functional induction add x e' m;simpl;eauto.
       intros e' y' eqky' Hinlist.
       inversion Hinlist;eauto.
@@ -536,20 +236,20 @@ Module Raw (X:OrderedType).
      intros.
      destruct a as (x'',e'').
      inversion_clear H.
-     unfold ltk in H0,H1; simpl in H0, H1.
+     compute in H0,H1.
      simpl; case (X.compare x x''); intuition.
   Qed.
   Hint Resolve add_Inf.
 
   Lemma add_sorted : forall m (Hm:Sort m) x e, Sort (add x e m).
   Proof.
-  induction m.
-  simpl; intuition.
-  intros.
-  destruct a as (x',e').
-  simpl; case (X.compare x x'); intuition; inversion_clear Hm; auto.
-  constructor; auto.
-  apply Inf_eq with (x',e'); auto.
+   induction m.
+   simpl; intuition.
+   intros.
+   destruct a as (x',e').
+   simpl; case (X.compare x x'); intuition; inversion_clear Hm; auto.
+   constructor; auto.
+   apply Inf_eq with (x',e'); auto.
   Qed.  
 
   Fixpoint remove (k : key) (s : t elt) {struct s} : t elt :=
@@ -568,50 +268,52 @@ Module Raw (X:OrderedType).
 
     Lemma remove_1 : forall m (Hm:Sort m) x y, X.eq y x -> ~ In y (remove x m).
       intros m Hm x y; generalize Hm; clear Hm.
+    Proof.
       functional induction remove x m;simpl;intros;auto.
+      
+      red; inversion 1; inversion H1.
 
       subst.
-      eapply sort_lt_notin with x.
+      eapply Sort_Inf_NotIn with x.
       eauto.
       apply cons_leA;simpl.
-      unfold ltk; eapply MX.lt_eq;eauto.
+      red; eapply MX.lt_eq;eauto.
       
-      eapply sort_lt_notin with x. eauto. 
-      inversion Hm.
+      inversion_clear Hm.
+      eapply Sort_Inf_NotIn with x. eauto. 
       eapply Inf_eq with (k',x) ;simpl;auto.
       intuition; eauto.
 
+      inversion_clear Hm.
       assert (notin:~ In y (remove k l)). apply H;eauto.
       intros (x0,abs).
       inversion_clear abs; eauto. 
-      simpl_eqke; simpl in *; subst.
-      absurd (X.eq y k');eauto.
-      Qed.
+      destruct H3; simpl in *; subst.
+      clear H_eq_1; order.
+    Qed.
       
       
     Lemma remove_2 : forall m (Hm:Sort m) x y e, 
       ~ X.eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
-      intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
+      intros m Hm x y e; generalize Hm; clear Hm; unfold PX.MapsTo.
+    Proof.  
       functional induction remove x m;auto.
       intros sorted noteqky inlist.
-      elim (@In_inv3 (y, e) (k', x) l);auto;simpl;intuition;eauto.
-      intros sorted noteqky inlist.
-      elim (@In_inv3 (y, e) (k', x) l); auto. 
-      intro inlist2.
+      inversion_clear inlist; compute in H; intuition; elimtype False; eauto.
 
-      assert (InList eqke (y, e) (remove k l));auto.
-      apply H;auto.
-      eauto.
+      intros sorted noteqky inlist.
+      inversion_clear sorted; auto.
+      inversion_clear inlist; auto.
     Qed.
 
 
     Lemma remove_3 : forall m (Hm:Sort m) x y e, MapsTo y e (remove x m) -> MapsTo y e m.
-      intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
+    Proof.
+      intros m Hm x y e; generalize Hm; clear Hm; unfold PX.MapsTo.
       functional induction remove x m;auto.
       intros sorted inlist.
-      elim (@In_inv3 (y, e) (k', x) (remove k l)); auto.
-      intros inlist2.
-      eauto.
+      inversion_clear sorted.
+      inversion_clear inlist; auto.
     Qed.
 
    Lemma remove_Inf :
@@ -622,45 +324,32 @@ Module Raw (X:OrderedType).
      intros.
      destruct a as (x'',e'').
      inversion_clear H.
-     unfold ltk in H0; simpl in H0.
+     compute in H0.
      simpl; case (X.compare x x''); intuition.
      inversion_clear Hm.
-     eapply Inf_lt; eauto.
-     unfold ltk; auto.
+     eapply Inf_lt; eauto; auto.
   Qed.
   Hint Resolve remove_Inf.
 
   Lemma remove_sorted : forall m (Hm:Sort m) x, Sort (remove x m).
   Proof.
-  induction m.
-  simpl; intuition.
-  intros.
-  destruct a as (x',e').
-  simpl; case (X.compare x x'); intuition; inversion_clear Hm; auto.
+    induction m.
+    simpl; intuition.
+    intros.
+    destruct a as (x',e').
+    simpl; case (X.compare x x'); intuition; inversion_clear Hm; auto.
   Qed.  
 
-
-    (** Specification of [MapsTo] *)
-
-    Lemma MapsTo_1 : forall m x y e, X.eq x y -> MapsTo x e m -> MapsTo y e m.
-      unfold MapsTo.
-      intros m x y e eqxy inlist.
-      induction inlist;eauto.
-
-      apply InList_cons_hd;auto.
-      eapply eqke_trans with (x, e);auto.
-    Qed.
-
-    Definition elements (m: t elt) := m.
+  Definition elements (m: t elt) := m.
 
     Lemma elements_1 : forall m x e, 
-        MapsTo x e m -> InList eqke (x,e) (elements m).
+        MapsTo x e m -> InA eqke (x,e) (elements m).
     Proof.
     auto.
     Qed.
 
     Lemma elements_2 : forall m x e, 
-        InList eqke (x,e) (elements m) -> MapsTo x e m.
+        InA eqke (x,e) (elements m) -> MapsTo x e m.
     Proof. 
     auto.
     Qed.
@@ -701,6 +390,7 @@ Module Raw (X:OrderedType).
          (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
 
      (** Specification of [equal] *)
+
         Lemma equal_1 : forall m (Hm:Sort m) m' (Hm': Sort m') cmp, 
            Equal cmp m m' -> equal cmp m m' = true. 
         Proof. 
@@ -728,7 +418,7 @@ Module Raw (X:OrderedType).
         inversion_clear Hm'.
         assert (Inf (x,e) l').
         eapply Inf_lt; eauto; auto. (* eauto n'est pas strictement plus fort que auto ??! *)
-        elim (sort_lt_notin H5 H7 H4).
+        elim (Sort_Inf_NotIn H5 H7 H4).
         
         subst.
         assert (cmp e e' = true).
@@ -743,17 +433,17 @@ Module Raw (X:OrderedType).
          destruct H3 as (e'', hyp); exists e''; auto.
        destruct (In_inv (H4 H6)); auto.
        inversion_clear Hm.
-       elim (sort_lt_notin H8 H9).
+       elim (Sort_Inf_NotIn H8 H9).
        destruct H3 as (e'', hyp); exists e''; auto.
-       apply MapsTo_1 with k; eauto.
+       apply MapsTo_eq with k; eauto.
        destruct (H1 k).
        assert (In k ((x',e') ::l')).
          destruct H3 as (e'', hyp); exists e''; auto.
        destruct (In_inv (H5 H6)); auto.
        inversion_clear Hm'.
-       elim (sort_lt_notin H8 H9).
+       elim (Sort_Inf_NotIn H8 H9).
        destruct H3 as (e'', hyp); exists e''; auto.
-       apply MapsTo_1 with k; eauto.
+       apply MapsTo_eq with k; eauto.
        apply H2 with k; destruct (MX.eq_dec x k); auto.
 
         subst; clear H_eq_3.
@@ -766,7 +456,7 @@ Module Raw (X:OrderedType).
         inversion_clear Hm.
         assert (Inf (x',e') l).
         eapply Inf_lt; eauto; auto. (* eauto n'est pas strictement plus fort que auto ??! *)
-        elim (sort_lt_notin H5 H7 H4).
+        elim (Sort_Inf_NotIn H5 H7 H4).
      Qed.
 
       Lemma equal_2 : forall m (Hm:Sort m) m' (Hm:Sort m') cmp, 
@@ -782,6 +472,7 @@ Module Raw (X:OrderedType).
        destruct (In_inv H1).
        exists e'; eauto.
        destruct (H7 k).
+       red.
        destruct (H10 H9) as (e'',hyp).
        exists e''; eauto.
 
@@ -798,15 +489,15 @@ Module Raw (X:OrderedType).
        inversion_clear Hm; inversion_clear Hm'.
        destruct (H H0 H6 H4).
        inversion_clear H1.
-       simpl_eqke; simpl in *; subst.
+       destruct H10; simpl in *; subst.
        inversion_clear H2. 
-       simpl_eqke; simpl in *; subst; auto.
-       elim (sort_lt_notin H6 H7).
-       exists e'0; apply MapsTo_1 with k; eauto.
+       destruct H10; simpl in *; subst; auto.
+       elim (Sort_Inf_NotIn H6 H7).
+       exists e'0; apply MapsTo_eq with k; eauto.
        inversion_clear H2. 
-       simpl_eqke; simpl in *; subst; auto.
-       elim (sort_lt_notin H0 H5).
-       exists e1; apply MapsTo_1 with k; eauto.
+       destruct H1; simpl in *; subst; auto.
+       elim (Sort_Inf_NotIn H0 H5).
+       exists e1; apply MapsTo_eq with k; eauto.
        apply H9 with k; eauto.
       Qed. 
 
@@ -915,8 +606,6 @@ Module Raw (X:OrderedType).
         unfold eqke in *; simpl in *; intuition congruence.
         destruct IHm as (y, hyp); auto.
         exists y; intuition.
-        constructor 2.
-        unfold MapsTo in *; auto.
       Qed.  
 
 
@@ -1103,7 +792,7 @@ Module Raw (X:OrderedType).
     inversion_clear Hm; inversion_clear Hm'.
     constructor; eauto.
     eapply combine_lelistA with (e':=e'); eauto.
-    eapply Inf_eq; eauto; red; eauto.
+    apply Inf_eq with (k',e'); auto.
     inversion_clear Hm; inversion_clear Hm'.
     constructor; auto.
     change (lelistA (ltk (elt:=option elt * option elt')) (k', (None, Some e'))
@@ -1233,7 +922,7 @@ Module Raw (X:OrderedType).
     case_eq (find x m0); intros; auto.
     assert (ltk (elt:=option elt * option elt') (x,(oo,oo')) (k,(oo,oo'))).
      red; auto.
-    destruct (sort_lt_notin H0 (Inf_lt H4 H1)).
+    destruct (Sort_Inf_NotIn H0 (Inf_lt H4 H1)).
     exists p; apply find_2; eauto.
     (* x = k *)
     assert (at_least_one_then_f o o' = f oo oo').
@@ -1246,7 +935,7 @@ Module Raw (X:OrderedType).
     case_eq (find x m0); intros; auto.
     assert (eqk (elt:=option elt * option elt') (k,(oo,oo')) (x,(oo,oo'))).
      red; auto.
-    destruct (sort_lt_notin H0 (Inf_eq H5 H1)).
+    destruct (Sort_Inf_NotIn H0 (Inf_eq (eqk_sym H5) H1)).
     exists p; apply find_2; eauto.
     (* k < x *)
     unfold f'; simpl.
@@ -1268,7 +957,7 @@ Module Raw (X:OrderedType).
     case_eq (find x m0); intros; auto.
     assert (ltk (elt:=option elt * option elt') (x,(oo,oo')) (k,(oo,oo'))).
      red; auto.
-    destruct (sort_lt_notin H0 (Inf_lt H3 H1)).
+    destruct (Sort_Inf_NotIn H0 (Inf_lt H3 H1)).
     exists p; apply find_2; eauto.
     (* x = k *)
     discriminate.
@@ -1323,7 +1012,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
   Definition key := X.t.
 
-  Record slist (elt:Set) : Set :=  {this :> Raw.t elt; sorted : sort (@Raw.ltk elt) this}.
+  Record slist (elt:Set) : Set :=  {this :> Raw.t elt; sorted : sort (@Raw.PX.ltk elt) this}.
   Definition t (elt:Set) := slist elt. 
 
  Section Elt. 
@@ -1345,8 +1034,8 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition fold A f m i := @Raw.fold elt A f m.(this) i.
  Definition equal cmp m m' := @Raw.equal elt cmp m.(this) m'.(this).
 
- Definition MapsTo x e m := Raw.MapsTo x e m.(this).
- Definition In x m := Raw.In x m.(this).
+ Definition MapsTo x e m := Raw.PX.MapsTo x e m.(this).
+ Definition In x m := Raw.PX.In x m.(this).
  Definition Empty m := Raw.Empty m.(this).
  Definition Equal cmp m m' := @Raw.Equal elt cmp m.(this) m'.(this).
 
@@ -1357,7 +1046,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  Definition lt_key (p p':key*elt) := X.lt (fst p) (fst p').
 
- Definition MapsTo_1 m := @Raw.MapsTo_1 elt m.(this).
+ Definition MapsTo_1 m := @Raw.PX.MapsTo_eq elt m.(this).
 
  Definition mem_1 m := @Raw.mem_1 elt m.(this) m.(sorted).
  Definition mem_2 m := @Raw.mem_2 elt m.(this) m.(sorted).
@@ -1567,9 +1256,9 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
     destruct (Data.compare e e').
     apply Lt; unfold lt; simpl;
      destruct (X.compare x x'); auto; absurd (X.eq x x'); eauto.
-    assert (Hm11 : sort (Raw.ltk (elt:=Data.t)) m1).
+    assert (Hm11 : sort (Raw.PX.ltk (elt:=Data.t)) m1).
      inversion_clear Hm1; auto.
-    assert (Hm22 : sort (Raw.ltk (elt:=Data.t)) m2).
+    assert (Hm22 : sort (Raw.PX.ltk (elt:=Data.t)) m2).
      inversion_clear Hm2; auto.
     destruct (IHm1 Hm11 (Build_slist Hm22)).
     apply Lt; unfold lt; simpl; MapS.Raw.MX.compare; right; auto.
