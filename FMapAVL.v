@@ -1451,6 +1451,7 @@ Qed.
 
 (*** MANQUE ENCORE: map mapi map2 ***)
 
+End Elt.
 End Raw.
 (*
 (** * Encapsulation
