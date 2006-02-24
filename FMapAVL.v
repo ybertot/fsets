@@ -536,51 +536,45 @@ end.
 
 Lemma bal_bst : forall l x e r, bst l -> bst r -> 
  lt_tree x l -> gt_tree x r -> bst (bal l x e r).
-Admitted. (*
 Proof.
  (* intros l x r; functional induction bal l x r. MARCHE PAS !*) 
  bal_tac;
  inv bst; repeat apply create_bst; auto; unfold create; 
  apply lt_tree_node || apply gt_tree_node; auto; 
  eapply lt_tree_trans || eapply gt_tree_trans || eauto; eauto.
-Qed.*)
+Qed.
 
 Lemma bal_avl : forall l x e r, avl l -> avl r -> 
  -3 <= height l - height r <= 3 -> avl (bal l x e r).
-Admitted. (*
 Proof.
  bal_tac; inv avl; repeat apply create_avl; simpl in *; auto; omega_max.
-Qed.*)
+Qed.
 
 Lemma bal_height_1 : forall l x e r, avl l -> avl r -> 
  -3 <= height l - height r <= 3 ->
  0 <= height (bal l x e r) - max (height l) (height r) <= 1.
-Admitted. (*
 Proof.
  bal_tac; inv avl; avl_nns; simpl in *; omega_max.
-Qed.*)
+Qed.
 
 Lemma bal_height_2 : 
  forall l x e r, avl l -> avl r -> -2 <= height l - height r <= 2 -> 
  height (bal l x e r) = max (height l) (height r) +1.
-Admitted. (*
 Proof.
  bal_tac; inv avl; simpl in *; omega_max.
-Qed.*)
+Qed.
 
 Lemma bal_in : forall l x e r y, avl l -> avl r -> 
  (In y (bal l x e r) <-> X.eq y x \/ In y l \/ In y r).
-Admitted. (*
 Proof.
  bal_tac; bal_tac_imp; repeat rewrite create_in; intuition_in.
-Qed.*)
+Qed.
 
 Lemma bal_mapsto : forall l x e r y e', avl l -> avl r -> 
  (MapsTo y e' (bal l x e r) <-> MapsTo y e' (create l x e r)).
-Admitted. (*
 Proof.
  bal_tac; bal_tac_imp; unfold create; intuition_in.
-Qed.*)
+Qed.
 
 Ltac omega_bal := match goal with 
   | H:avl ?l, H':avl ?r |- context id [ bal ?l ?x ?e ?r ] => 
@@ -602,7 +596,6 @@ Fixpoint add (x:key)(e:elt)(s:t) { struct s } : t := match s with
 
 Lemma add_avl_1 :  forall m x e, avl m -> 
  avl (add x e m) /\ 0 <= height (add x e m) - height m <= 1.
-Admitted. (*
 Proof. 
  intros m x e; functional induction add x e m; intros; inv avl; simpl in *; 
   try solve [intuition].
@@ -616,7 +609,7 @@ Proof.
  split.
  apply bal_avl; auto; omega.
  omega_bal.
-Qed.*)
+Qed.
 
 Lemma add_avl : forall m x e, avl m -> avl (add x e m).
 Proof.
@@ -626,7 +619,6 @@ Hint Resolve add_avl.
 
 Lemma add_in : forall m x y e, avl m -> 
  (In y (add x e m) <-> X.eq y x \/ In y m).
-Admitted. (*
 Proof.
  intros m x y e; functional induction add x e m; auto; intros.
  intuition_in.
@@ -642,7 +634,7 @@ Proof.
  inv avl.
  rewrite bal_in; auto.
  rewrite (H H2); intuition_in.
-Qed.*)
+Qed.
 
 Lemma add_bst : forall m x e, bst m -> avl m -> bst (add x e m).
 Proof. 
@@ -1597,43 +1589,82 @@ Proof.
 unfold anti_elements, empty; intros; apply anti_elements_bst_aux; auto.
 Qed.
 
-(* MARCHE PAS...
+Lemma add_spec : forall (m: t elt'') x y e , bst _ m -> avl _ m -> 
+  find _ x (add _ y e m) = if eq_dec x y then Some e else find _ x m.
+Proof.
+intros.
+destruct (eq_dec x y).
+apply find_1.
+apply add_bst; auto.
+eapply MapsTo_1 with y; eauto.
+apply add_1; auto.
+case_eq (find _ x m); intros.
+apply find_1.
+apply add_bst; auto.
+apply add_2; auto.
+apply find_2; auto.
+case_eq (find _ x (add _ y e m)); auto; intros.
+rewrite <- H1; symmetry.
+apply find_1; auto.
+eapply add_3; eauto.
+apply find_2; eauto.
+Qed.
+
 Lemma anti_elements_mapsto_aux : forall (l:list (key*elt'')) m k e,
-  avl _ m -> 
-(*  (forall x, L.PX.In x l -> In _ x m -> False) ->  *)
-  (MapsTo _ k e (L.fold (add _) l m) <-> L.PX.MapsTo k e l \/ 
-       (~L.PX.In k l /\ MapsTo _ k e m)).
+  bst _ m -> avl _ m -> noredonA (eqk (elt:=elt'')) l -> 
+  (forall x, L.PX.In x l -> In _ x m -> False) -> 
+  (MapsTo _ k e (L.fold (add _) l m) <-> L.PX.MapsTo k e l \/ MapsTo _ k e m).
 Proof.
 induction l. 
 simpl; auto.
 intuition.
-right; auto.
-split; auto.
-inversion 1.
-inversion H2.
-inversion H1.
+inversion H4.
 simpl; destruct a; intros.
-rewrite IHl.
+rewrite IHl; clear IHl.
+apply add_bst; auto.
 apply add_avl; auto.
-intuition.
-destruct (eq_dec k0 k).
-(* prouver que e0 = e, via l'unicité de MapsTo *)
-admit.
-right; split. 
-swap H0.
-destruct (In_inv H1); auto.
-order.
+inversion H1; auto.
+intros.
+inversion_clear H1.
+assert (~X.eq x k).
+ swap H5.
+ destruct H3.
+ apply InA_eqA with (x,x0); eauto.
+apply (H2 x).
+destruct H3; exists x0; auto.
+revert H4; do 2 rewrite <- In_alt; destruct 1; exists x0; auto.
 eapply add_3; eauto.
-inversion_clear H1; auto.
-compute in H0; destruct H0.
-subst; right; split.
+intuition.
+assert (find _ k0 (add _ k e m) = Some e0).
+ apply find_1; auto.
+ apply add_bst; auto.
+clear H4. 
+rewrite add_spec in H3; auto.
+destruct (eq_dec k0 k).
+inversion_clear H3; subst; auto.
+right; apply find_2; auto.
+inversion_clear H4; auto.
+compute in H3; destruct H3.
+subst; right; apply add_1; auto.
+inversion_clear H1.
+destruct (eq_dec k0 k).
+destruct (H2 k); eauto.
+rewrite <- In_alt; exists e0; auto.
+eapply MapsTo_1; eauto.
+right; apply add_2; auto.
+Qed.
 
-apply add_1; auto.
-*)
 
-Lemma anti_elements_mapsto : forall l k e, 
-  MapsTo _ k e (anti_elements l) <-> L.PX.MapsTo k e l.
-Admitted.
+Lemma anti_elements_mapsto : forall l k e, noredonA (eqk (elt:=elt'')) l ->
+  (MapsTo _ k e (anti_elements l) <-> L.PX.MapsTo k e l).
+Proof. 
+intros. 
+unfold anti_elements.
+rewrite anti_elements_mapsto_aux; auto; unfold empty; auto.
+inversion 2.
+intuition.
+inversion H1.
+Qed.
 
 Lemma map2_avl : forall (m: t elt)(m': t elt'), avl _ (map2 m m').
 Proof.
@@ -1669,14 +1700,15 @@ case_eq (L.find x l); intros.
 apply find_1.
 apply anti_elements_bst; auto.
 rewrite anti_elements_mapsto.
+apply L.PX.Sort_noredonA; auto.
 apply L.find_2; auto.
 case_eq (find elt'' x (anti_elements l)); auto; intros.
 rewrite <- H0; symmetry.
 apply L.find_1; auto.
 rewrite <- anti_elements_mapsto.
+apply L.PX.Sort_noredonA; auto.
 apply find_2; auto.
 Qed.
-
 
 Lemma map2_1 : forall (m: t elt)(m': t elt')(x:key), bst _ m -> bst _ m' -> 
   In _ x m \/ In _ x m' -> find _ x (map2 m m') = f (find _ x m) (find _ x m').       
@@ -1707,6 +1739,10 @@ rewrite <- In_alt.
 destruct 1.
 exists x0.
 rewrite <- anti_elements_mapsto; auto.
+apply L.PX.Sort_noredonA; auto.
+apply L.map2_sorted; auto.
+apply elements_sort; auto.
+apply elements_sort; auto.
 Qed.
 
 End Map2.
