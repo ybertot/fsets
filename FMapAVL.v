@@ -536,45 +536,51 @@ end.
 
 Lemma bal_bst : forall l x e r, bst l -> bst r -> 
  lt_tree x l -> gt_tree x r -> bst (bal l x e r).
+Admitted. (*
 Proof.
  (* intros l x r; functional induction bal l x r. MARCHE PAS !*) 
  bal_tac;
  inv bst; repeat apply create_bst; auto; unfold create; 
  apply lt_tree_node || apply gt_tree_node; auto; 
  eapply lt_tree_trans || eapply gt_tree_trans || eauto; eauto.
-Qed.
+Qed.*)
 
 Lemma bal_avl : forall l x e r, avl l -> avl r -> 
  -3 <= height l - height r <= 3 -> avl (bal l x e r).
+Admitted. (*
 Proof.
  bal_tac; inv avl; repeat apply create_avl; simpl in *; auto; omega_max.
-Qed.
+Qed.*)
 
 Lemma bal_height_1 : forall l x e r, avl l -> avl r -> 
  -3 <= height l - height r <= 3 ->
  0 <= height (bal l x e r) - max (height l) (height r) <= 1.
+Admitted. (*
 Proof.
  bal_tac; inv avl; avl_nns; simpl in *; omega_max.
-Qed.
+Qed.*)
 
 Lemma bal_height_2 : 
  forall l x e r, avl l -> avl r -> -2 <= height l - height r <= 2 -> 
  height (bal l x e r) = max (height l) (height r) +1.
+Admitted. (*
 Proof.
  bal_tac; inv avl; simpl in *; omega_max.
-Qed.
+Qed.*)
 
 Lemma bal_in : forall l x e r y, avl l -> avl r -> 
  (In y (bal l x e r) <-> X.eq y x \/ In y l \/ In y r).
+Admitted. (*
 Proof.
  bal_tac; bal_tac_imp; repeat rewrite create_in; intuition_in.
-Qed.
+Qed.*)
 
 Lemma bal_mapsto : forall l x e r y e', avl l -> avl r -> 
  (MapsTo y e' (bal l x e r) <-> MapsTo y e' (create l x e r)).
+Admitted. (*
 Proof.
  bal_tac; bal_tac_imp; unfold create; intuition_in.
-Qed.
+Qed.*)
 
 Ltac omega_bal := match goal with 
   | H:avl ?l, H':avl ?r |- context id [ bal ?l ?x ?e ?r ] => 
@@ -596,6 +602,7 @@ Fixpoint add (x:key)(e:elt)(s:t) { struct s } : t := match s with
 
 Lemma add_avl_1 :  forall m x e, avl m -> 
  avl (add x e m) /\ 0 <= height (add x e m) - height m <= 1.
+Admitted. (*
 Proof. 
  intros m x e; functional induction add x e m; intros; inv avl; simpl in *; 
   try solve [intuition].
@@ -609,7 +616,7 @@ Proof.
  split.
  apply bal_avl; auto; omega.
  omega_bal.
-Qed.
+Qed.*)
 
 Lemma add_avl : forall m x e, avl m -> avl (add x e m).
 Proof.
@@ -619,6 +626,7 @@ Hint Resolve add_avl.
 
 Lemma add_in : forall m x y e, avl m -> 
  (In y (add x e m) <-> X.eq y x \/ In y m).
+Admitted. (*
 Proof.
  intros m x y e; functional induction add x e m; auto; intros.
  intuition_in.
@@ -634,7 +642,7 @@ Proof.
  inv avl.
  rewrite bal_in; auto.
  rewrite (H H2); intuition_in.
-Qed.
+Qed.*)
 
 Lemma add_bst : forall m x e, bst m -> avl m -> bst (add x e m).
 Proof. 
@@ -1449,9 +1457,260 @@ Proof.
  rewrite <- Equal_elements; auto.
 Qed.
 
-(*** MANQUE ENCORE: map mapi map2 ***)
-
 End Elt.
+
+Section Elts. 
+
+Variable elt elt' elt'' : Set.
+
+Notation t := tree.
+Hint Constructors MapsTo In avl bst.
+
+Section Map. 
+Variable f : elt -> elt'. 
+
+Fixpoint map (m:t elt) {struct m} : t elt' := 
+  match m with 
+   | Leaf   => Leaf _
+   | Node l v d r h => Node _ (map l) v  (f d) (map r) h
+  end.
+
+Lemma map_height : forall m, height _ (map m) = height _ m.
+Proof. 
+destruct m; simpl; auto.
+Qed.
+
+Lemma map_avl : forall m, avl _ m -> avl _ (map m).
+Proof.
+induction m; simpl; auto.
+inversion_clear 1; constructor; auto; do 2 rewrite map_height; auto.
+Qed.
+
+Lemma map_1 : forall (m: tree elt)(x:key)(e:elt), 
+    MapsTo _ x e m -> MapsTo _ x (f e) (map m).
+Proof.
+induction m; simpl; inversion_clear 1; auto.
+Qed.
+
+Lemma map_2 : forall (m: t elt)(x:key), 
+    In _ x (map m) -> In _ x m.
+Proof.
+induction m; simpl; inversion_clear 1; auto.
+Qed.
+
+Lemma map_bst : forall m, bst _ m -> bst _ (map m).
+Proof.
+induction m; simpl; auto.
+inversion_clear 1; constructor; auto.
+red; intros; apply H2; apply map_2; auto.
+red; intros; apply H3; apply map_2; auto.
+Qed.
+
+End Map.
+Section Mapi. 
+Variable f : key -> elt -> elt'. 
+
+Fixpoint mapi (m:t elt) {struct m} : t elt' := 
+  match m with 
+   | Leaf   => Leaf _
+   | Node l v d r h => Node _ (mapi l) v  (f v d) (mapi r) h
+  end.
+
+Lemma mapi_height : forall m, height _ (mapi m) = height _ m.
+Proof. 
+destruct m; simpl; auto.
+Qed.
+
+Lemma mapi_avl : forall m, avl _ m -> avl _ (mapi m).
+Proof.
+induction m; simpl; auto.
+inversion_clear 1; constructor; auto; do 2 rewrite mapi_height; auto.
+Qed.
+
+Lemma mapi_1 : forall (m: tree elt)(x:key)(e:elt), 
+    MapsTo _ x e m -> exists y, X.eq y x /\ MapsTo _ x (f y e) (mapi m).
+Proof.
+induction m; simpl; inversion_clear 1; auto.
+exists k; auto.
+destruct (IHm1 _ _ H0).
+exists x0; intuition.
+destruct (IHm2 _ _ H0).
+exists x0; intuition.
+Qed.
+
+Lemma mapi_2 : forall (m: t elt)(x:key), 
+    In _ x (mapi m) -> In _ x m.
+Proof.
+induction m; simpl; inversion_clear 1; auto.
+Qed.
+
+Lemma mapi_bst : forall m, bst _ m -> bst _ (mapi m).
+Proof.
+induction m; simpl; auto.
+inversion_clear 1; constructor; auto.
+red; intros; apply H2; apply mapi_2; auto.
+red; intros; apply H3; apply mapi_2; auto.
+Qed.
+
+End Mapi.
+
+Section Map2.
+Variable f : option elt -> option elt' -> option elt''.
+
+(* Not exactly pretty nor perfect, but should suffice as a first naive implem. 
+    Anyway, map2 isn't in Ocaml...
+*)
+
+Definition anti_elements (l:list (key*elt'')) := L.fold (add _) l (empty _).
+
+Definition map2 (m:t elt)(m':t elt') : t elt'' := 
+  anti_elements (L.map2 f (elements _ m) (elements _ m')).
+
+Lemma anti_elements_avl_aux : forall (l:list (key*elt''))(m:t elt''), 
+  avl _ m -> avl _ (L.fold (add _) l m).
+Proof.
+unfold anti_elements; induction l.
+simpl; auto.
+simpl; destruct a; intros.
+apply IHl.
+apply add_avl; auto.
+Qed.
+
+Lemma anti_elements_avl : forall l, avl _ (anti_elements l).
+Proof.
+unfold anti_elements, empty; intros; apply anti_elements_avl_aux; auto.
+Qed.
+
+Lemma anti_elements_bst_aux : forall (l:list (key*elt''))(m:t elt''), 
+  bst _ m -> avl _ m -> bst _ (L.fold (add _) l m).
+Proof.
+induction l.
+simpl; auto.
+simpl; destruct a; intros.
+apply IHl.
+apply add_bst; auto.
+apply add_avl; auto.
+Qed.
+
+Lemma anti_elements_bst : forall l, bst _ (anti_elements l).
+Proof.
+unfold anti_elements, empty; intros; apply anti_elements_bst_aux; auto.
+Qed.
+
+(* MARCHE PAS...
+Lemma anti_elements_mapsto_aux : forall (l:list (key*elt'')) m k e,
+  avl _ m -> 
+(*  (forall x, L.PX.In x l -> In _ x m -> False) ->  *)
+  (MapsTo _ k e (L.fold (add _) l m) <-> L.PX.MapsTo k e l \/ 
+       (~L.PX.In k l /\ MapsTo _ k e m)).
+Proof.
+induction l. 
+simpl; auto.
+intuition.
+right; auto.
+split; auto.
+inversion 1.
+inversion H2.
+inversion H1.
+simpl; destruct a; intros.
+rewrite IHl.
+apply add_avl; auto.
+intuition.
+destruct (eq_dec k0 k).
+(* prouver que e0 = e, via l'unicité de MapsTo *)
+admit.
+right; split. 
+swap H0.
+destruct (In_inv H1); auto.
+order.
+eapply add_3; eauto.
+inversion_clear H1; auto.
+compute in H0; destruct H0.
+subst; right; split.
+
+apply add_1; auto.
+*)
+
+Lemma anti_elements_mapsto : forall l k e, 
+  MapsTo _ k e (anti_elements l) <-> L.PX.MapsTo k e l.
+Admitted.
+
+Lemma map2_avl : forall (m: t elt)(m': t elt'), avl _ (map2 m m').
+Proof.
+unfold map2; intros; apply anti_elements_avl; auto.
+Qed.
+
+Lemma map2_bst : forall (m: t elt)(m': t elt'), bst _ (map2 m m').
+Proof.
+unfold map2; intros; apply anti_elements_bst; auto.
+Qed.
+
+Lemma find_elements : forall (elt:Set)(m: t elt) x, bst _ m -> 
+  L.find x (elements _ m) = find _ x m.
+Proof. 
+intros.
+case_eq (find elt0 x m); intros.
+apply L.find_1.
+apply elements_sort; auto.
+red; rewrite elements_mapsto.
+apply find_2; auto.
+case_eq (L.find x (elements elt0 m)); auto; intros.
+rewrite <- H0; symmetry.
+apply find_1; auto.
+rewrite <- elements_mapsto.
+apply L.find_2; auto.
+Qed.
+
+Lemma find_anti_elements : forall (l: list (key*elt'')) x, sort (@ltk _) l -> 
+  find _ x (anti_elements l) = L.find x l.
+Proof.
+intros.
+case_eq (L.find x l); intros.
+apply find_1.
+apply anti_elements_bst; auto.
+rewrite anti_elements_mapsto.
+apply L.find_2; auto.
+case_eq (find elt'' x (anti_elements l)); auto; intros.
+rewrite <- H0; symmetry.
+apply L.find_1; auto.
+rewrite <- anti_elements_mapsto.
+apply find_2; auto.
+Qed.
+
+
+Lemma map2_1 : forall (m: t elt)(m': t elt')(x:key), bst _ m -> bst _ m' -> 
+  In _ x m \/ In _ x m' -> find _ x (map2 m m') = f (find _ x m) (find _ x m').       
+Proof. 
+unfold map2; intros.
+rewrite find_anti_elements; auto.
+rewrite <- find_elements; auto.
+rewrite <- find_elements; auto.
+apply L.map2_1; auto.
+apply elements_sort; auto.
+apply elements_sort; auto.
+do 2 rewrite elements_in; auto.
+apply L.map2_sorted; auto.
+apply elements_sort; auto.
+apply elements_sort; auto.
+Qed.
+
+Lemma map2_2 : forall (m: t elt)(m': t elt')(x:key), bst _ m -> bst _ m' -> 
+  In _ x (map2 m m') -> In _ x m \/ In _ x m'.
+Proof.
+unfold map2; intros.
+do 2 rewrite <- elements_in.
+apply L.map2_2 with (f:=f); auto.
+apply elements_sort; auto.
+apply elements_sort; auto.
+revert H1.
+rewrite <- In_alt.
+destruct 1.
+exists x0.
+rewrite <- anti_elements_mapsto; auto.
+Qed.
+
+End Map2.
+End Elts.
 End Raw.
 (*
 (** * Encapsulation
