@@ -660,7 +660,7 @@ Proof.
    intros; inv bst; inv avl; try rewrite bal_mapsto; unfold create; eauto.
 Qed. 
 
-Lemma add_2 : forall m x y e e', avl m -> ~X.eq y x -> 
+Lemma add_2 : forall m x y e e', avl m -> ~X.eq x y -> 
  MapsTo y e m -> MapsTo y e (add x e' m).
 Proof.
  intros m x y e e'; functional induction add x e' m; 
@@ -669,13 +669,36 @@ Proof.
  clear H_eq_0; order.
 Qed.
 
-Lemma add_3 : forall m x y e e', avl m -> ~X.eq y x -> 
+Lemma add_3 : forall m x y e e', avl m -> ~X.eq x y -> 
  MapsTo y e (add x e' m) -> MapsTo y e m.
 Proof.
  intros m x y e e'; functional induction add x e' m; intro; inv avl; 
   try rewrite bal_mapsto; auto; unfold create; intros; inv MapsTo; auto; 
   try clear H_eq_0; order. 
  (* BUG rewrite bal_mapsto in H2 *)
+Qed.
+
+(* An all-in-one spec for [add] used later in the naive [map2] *)
+
+Lemma add_spec : forall m x y e , bst m -> avl m -> 
+  find x (add y e m) = if eq_dec x y then Some e else find x m.
+Proof.
+intros.
+destruct (eq_dec x y).
+apply find_1.
+apply add_bst; auto.
+eapply MapsTo_1 with y; eauto.
+apply add_1; auto.
+case_eq (find x m); intros.
+apply find_1.
+apply add_bst; auto.
+apply add_2; auto.
+apply find_2; auto.
+case_eq (find x (add y e m)); auto; intros.
+rewrite <- H1; symmetry.
+apply find_1; auto.
+eapply add_3; eauto.
+apply find_2; eauto.
 Qed.
 
 (** * Extraction of minimum binding
@@ -952,7 +975,7 @@ Proof.
  intros; rewrite remove_in; intuition.
 Qed. 
 
-Lemma remove_2 : forall m x y e, bst m -> avl m -> ~X.eq y x -> 
+Lemma remove_2 : forall m x y e, bst m -> avl m -> ~X.eq x y -> 
  MapsTo y e m -> MapsTo y e (remove x m).
 Proof.
  intros m x y e; functional induction remove x m; 
@@ -1084,7 +1107,7 @@ Proof.
 Qed.
 
 Lemma fold_1 : 
- forall (s:t)(Hs:bst s)(A : Set)(f : key -> elt -> A -> A)(i : A),
+ forall (s:t)(Hs:bst s)(A : Set)(i:A)(f : key -> elt -> A -> A),
  fold f s i = fold_left (fun a p => f (fst p) (snd p) a) (elements s) i.
 Proof.
  intros.
@@ -1094,11 +1117,11 @@ Proof.
  unfold L.elements; auto.
 Qed.
 
+(** * Comparison *)
+
 Definition Equal cmp m m' := 
   (forall k, In k m <-> In k m') /\ 
   (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
-
-(** * Comparison *)
 
 (** ** Enumeration of the elements of a tree *)
 
@@ -1300,51 +1323,6 @@ Proof.
  apply flatten_e_elements.
 Qed.
 
-Lemma l_eq_cons :
- forall cmp l1 l2 x y, sort ltk (x::l1) -> sort ltk (y::l2) ->
- eqk x y -> cmp (snd x) (snd y) = true -> 
- (L.Equal cmp l1 l2 <-> L.Equal cmp (x :: l1) (y :: l2)).
-Proof.
- unfold L.Equal in |- *; intros cmp l1 l2 (k,e) (k',e') S1 S2 H H0.
- compute in H, H0; intuition.
- (* -> *)
- destruct (In_inv H1).
- exists e'; eauto.
- destruct (H2 k0).
- destruct (H5 H4).
- exists x; auto.
- destruct (In_inv H1).
- exists e; eauto.
- destruct (H2 k0).
- destruct (H6 H4).
- exists x; auto.
- inversion_clear H4; inversion_clear H1.
- compute in H5, H4; destruct H5; destruct H4; subst; auto.
- compute in H5; destruct H5.
- generalize (Sort_In_cons_1 S1 (InA_eqke_eqk H4)).
- compute; order.
- compute in H4; destruct H4.
- generalize (Sort_In_cons_1 S2 (InA_eqke_eqk H5)).
- compute; order.
- eapply H3; eauto.
- (* <- *)
- assert (H4:=Sort_In_cons_3 S1 H1).
- destruct (H2 k0).
- destruct H5.
- destruct H1; exists x; eauto.
- inversion_clear H5.
- compute in H7; destruct H7; order.
- exists x; eauto. 
- assert (H4:=Sort_In_cons_3 S2 H1).
- destruct (H2 k0).
- destruct H6.
- destruct H1; exists x; eauto.
- inversion_clear H6.
- compute in H7; destruct H7; order.
- exists x; eauto. 
- apply (H3 k0); eauto.
-Qed.
-
 Definition equal_aux : 
  forall (cmp: elt -> elt -> bool)(e1 e2:enumeration), 
  sorted_e e1 -> sorted_e e2 -> 
@@ -1392,11 +1370,11 @@ Proof.
  Measure_e; omega.
  left.
  rewrite H4 in e6; rewrite H7 in e6.
- simpl; rewrite <- l_eq_cons; auto.
+ simpl; rewrite <- L.equal_cons; auto.
  apply (sorted_flatten_e _ H0).
  apply (sorted_flatten_e _ H1).
  right.
- simpl; rewrite <- l_eq_cons; auto.
+ simpl; rewrite <- L.equal_cons; auto.
  apply (sorted_flatten_e _ H0).
  apply (sorted_flatten_e _ H1).
  swap f.
@@ -1449,7 +1427,11 @@ Proof.
  rewrite <- Equal_elements; auto.
 Qed.
 
+Check equal.
+
 End Elt.
+
+Check equal.
 
 Section Elts. 
 
@@ -1589,29 +1571,8 @@ Proof.
 unfold anti_elements, empty; intros; apply anti_elements_bst_aux; auto.
 Qed.
 
-Lemma add_spec : forall (m: t elt'') x y e , bst _ m -> avl _ m -> 
-  find _ x (add _ y e m) = if eq_dec x y then Some e else find _ x m.
-Proof.
-intros.
-destruct (eq_dec x y).
-apply find_1.
-apply add_bst; auto.
-eapply MapsTo_1 with y; eauto.
-apply add_1; auto.
-case_eq (find _ x m); intros.
-apply find_1.
-apply add_bst; auto.
-apply add_2; auto.
-apply find_2; auto.
-case_eq (find _ x (add _ y e m)); auto; intros.
-rewrite <- H1; symmetry.
-apply find_1; auto.
-eapply add_3; eauto.
-apply find_2; eauto.
-Qed.
-
 Lemma anti_elements_mapsto_aux : forall (l:list (key*elt'')) m k e,
-  bst _ m -> avl _ m -> noredonA (eqk (elt:=elt'')) l -> 
+  bst _ m -> avl _ m -> noredunA (eqk (elt:=elt'')) l -> 
   (forall x, L.PX.In x l -> In _ x m -> False) -> 
   (MapsTo _ k e (L.fold (add _) l m) <-> L.PX.MapsTo k e l \/ MapsTo _ k e m).
 Proof.
@@ -1654,8 +1615,7 @@ eapply MapsTo_1; eauto.
 right; apply add_2; auto.
 Qed.
 
-
-Lemma anti_elements_mapsto : forall l k e, noredonA (eqk (elt:=elt'')) l ->
+Lemma anti_elements_mapsto : forall l k e, noredunA (eqk (elt:=elt'')) l ->
   (MapsTo _ k e (anti_elements l) <-> L.PX.MapsTo k e l).
 Proof. 
 intros. 
@@ -1700,13 +1660,13 @@ case_eq (L.find x l); intros.
 apply find_1.
 apply anti_elements_bst; auto.
 rewrite anti_elements_mapsto.
-apply L.PX.Sort_noredonA; auto.
+apply L.PX.Sort_noredunA; auto.
 apply L.find_2; auto.
 case_eq (find elt'' x (anti_elements l)); auto; intros.
 rewrite <- H0; symmetry.
 apply L.find_1; auto.
 rewrite <- anti_elements_mapsto.
-apply L.PX.Sort_noredonA; auto.
+apply L.PX.Sort_noredunA; auto.
 apply find_2; auto.
 Qed.
 
@@ -1739,7 +1699,7 @@ rewrite <- In_alt.
 destruct 1.
 exists x0.
 rewrite <- anti_elements_mapsto; auto.
-apply L.PX.Sort_noredonA; auto.
+apply L.PX.Sort_noredunA; auto.
 apply L.map2_sorted; auto.
 apply elements_sort; auto.
 apply elements_sort; auto.
@@ -1748,7 +1708,7 @@ Qed.
 End Map2.
 End Elts.
 End Raw.
-(*
+
 (** * Encapsulation
 
    Now, in order to really provide a functor implementing [S], we 
@@ -1760,368 +1720,314 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Module Raw := Raw X. 
  Import Raw.
 
- Record bbst : Set := Bbst {this :> t; is_bst : bst this; is_avl: avl this}.
+ Record bbst (elt:Set) : Set := Bbst {this :> tree elt; is_bst : bst _ this; is_avl: avl _ this}.
+ Implicit Arguments this. 
+ Implicit Arguments is_avl. 
+ Implicit Arguments is_bst.
+ 
  Definition t := bbst. 
  Definition key := X.t.
  
- Definition In (x : key) (s : t) := In x s.
- Definition Equal s s' := forall a : key, In a s <-> In a s'.
- Definition Subset s s' := forall a : key, In a s -> In a s'.
- Definition Add (x : key) (s s' : t) :=
-   forall y : key, In y s' <-> X.eq y x \/ In y s.
- Definition Empty s := forall a : key, ~ In a s.
- Definition For_all (P : key -> Prop) (s : t) :=
-   forall x : key, In x s -> P x.
- Definition Exists (P : key -> Prop) (s : t) := exists x : key, In x s /\ P x.
+ Section Elt. 
+ Variable elt elt' elt'': Set.
 
- Implicit Types s : t.
- Implicit Types x y : key.
-  
- Definition In_1 s := In_1 s.
+ Implicit Types m : t elt.
+
+ Definition empty := Bbst _ _ (empty_bst elt) (empty_avl elt).
+ Definition is_empty m := is_empty _ m.(this).
+ Definition add x e m := 
+  Bbst _ _ (add_bst _ _ x e m.(is_bst) m.(is_avl)) (add_avl _ _ x e m.(is_avl)).
+ Definition find x m := find _ x m.(this).
+ Definition remove x m := 
+  Bbst _ _ (remove_bst _ _ x m.(is_bst) m.(is_avl)) (remove_avl _ _ x m.(is_avl)).  
+ Definition mem x m := mem _ x m.(this).
+ Definition map f m : t elt' := 
+  Bbst _ _ (map_bst _ _ f _ m.(is_bst)) (map_avl _ _ f _ m.(is_avl)).
+ Definition mapi f m : t elt' := 
+  Bbst _ _ (mapi_bst _ _ f _ m.(is_bst)) (mapi_avl _ _ f _ m.(is_avl)).
+ Definition map2 f m (m':t elt') : t elt'' := 
+  Bbst _ _ (map2_bst _ _ _ f m m') (map2_avl _ _ _ f m m').
+ Definition elements m := elements elt m.(this).
+ Definition fold A f m i := fold elt A f m.(this) i.
+ Definition equal cmp m m' := 
+   if (equal elt cmp m.(this) m'.(this) m.(is_bst) m'.(is_bst)) then true else false.
+
+ Definition MapsTo x e m := MapsTo _ x e m.(this).
+ Definition In x m := In0 _ x m.(this).
+ Definition Empty m := Empty _ m.(this).
+
+ Definition eq_key := @Raw.PX.eqk elt.
+ Definition eq_key_elt := @Raw.PX.eqke elt.
+ Definition lt_key := @Raw.PX.ltk elt.
+
+ Definition MapsTo_1 m := MapsTo_1 elt m.(this).
  
- Definition mem x s := mem x s.
-
- Definition empty := Bbst _ empty_bst empty_avl.
- Definition is_empty s := is_empty s.
- Definition singleton x := Bbst _ (singleton_bst x) (singleton_avl x).
- Definition add x s := 
-   Bbst _ (add_bst s x (is_bst s) (is_avl s)) 
-          (add_avl s x (is_avl s)). 
- Definition remove x s := 
-   Bbst _ (remove_bst s x (is_bst s) (is_avl s)) 
-          (remove_avl s x (is_avl s)). 
- Definition inter s s' := 
-   Bbst _ (inter_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
-          (inter_avl _ _ (is_avl s) (is_avl s')).
- Definition diff s s' := 
-   Bbst _ (diff_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
-          (diff_avl _ _ (is_avl s) (is_avl s')).
- Definition elements s := elements s.
- Definition min_key s := min_key s.
- Definition max_key s := max_key s.
- Definition choose s := choose s.
- Definition fold (B : Set) (f : key -> B -> B) s := fold f s. 
- Definition cardinal s := cardinal s.
- Definition filter (f : key -> bool) s := 
-   Bbst _ (filter_bst f _ (is_bst s) (is_avl s))
-          (filter_avl f _ (is_avl s)). 
- Definition for_all (f : key -> bool) s := for_all f s.
- Definition exists_ (f : key -> bool) s := exists_ f s.
- Definition partition (f : key -> bool) s :=
-   let p := partition f s in
-   (Bbst (fst p) (partition_bst_1 f _ (is_bst s) (is_avl s)) 
-                 (partition_avl_1 f _ (is_avl s)),
-    Bbst (snd p) (partition_bst_2 f _ (is_bst s) (is_avl s)) 
-                 (partition_avl_2 f _ (is_avl s))).
-
- Definition union s s' :=
-   let (u,p) := union _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s') in 
-   let (b,p) := p in 
-   let (a,_) := p in 
-   Bbst u b a.
-
- Definition union' s s' := 
-   Bbst _ (union'_bst _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s'))  
-          (union'_avl _ _ (is_avl s) (is_avl s')).
-
- Definition equal s s':= if equal _ _ (is_bst s) (is_bst s') then true else false. 
- Definition equal' s s' := equal' s s'.
-
- Definition subset s s':= if subset _ _ (is_bst s) (is_bst s') then true else false.
- Definition subset' s s' := subset' s s'.
-
- Definition eq s s' := eq s s'.
- Definition lt s s' := lt s s'.
-
- Definition compare  s s' : Compare lt eq s s'.
+ Lemma mem_1 : forall m x, In x m -> mem x m = true.
  Proof.
- intros; elim (compare _ _ (is_bst s) (is_bst s'));
-  [ constructor 1 | constructor 2 | constructor 3 ]; 
-  auto. 
- Defined.
-
- (* specs *)
- Section Specs. 
- Variable s s' : t. 
- Variable x y : key.
-
- Hint Resolve is_bst is_avl.
- 
- Definition mem_1 := mem_1 s x (is_bst s). 
- Definition mem_2 := mem_2 s x.
-
- Lemma equal_1 : Equal s s' -> equal s s' = true.
- Proof. 
- unfold equal; destruct (Raw.equal s s'); simpl; auto.
- Qed.
-
- Lemma equal_2 : equal s s' = true -> Equal s s'.
- Proof. 
- unfold equal; destruct (Raw.equal s s'); simpl; intuition; discriminate.
- Qed.
-
- Definition equal'_1 s s' :=
-  equal'_1 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
- Definition equal'_2 s s' :=
-  equal'_2 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
-
- Lemma subset_1 : Subset s s' -> subset s s' = true.
- Proof. 
- unfold subset; destruct (Raw.subset s s'); simpl; intuition.
- Qed.
-
- Lemma subset_2 : subset s s' = true -> Subset s s'.
- Proof. 
- unfold subset; destruct (Raw.subset s s'); simpl; intuition discriminate.
- Qed.
-
- Definition subset'_1 s s' := 
-  subset'_1 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
- Definition subset'_2 s s' := 
-  subset'_2 _ _ (is_bst s) (is_avl s) (is_bst s') (is_avl s').
-
- Definition empty_1 : Empty empty := empty_1.
-
- Definition is_empty_1 : Empty s -> is_empty s = true  := is_empty_1 s.
- Definition is_empty_2 : is_empty s = true -> Empty s  := is_empty_2 s.
- 
- Lemma add_1 : X.eq y x -> In y (add x s).
- Proof. 
- unfold add, In; simpl; rewrite add_in; auto.
- Qed.
-
- Lemma add_2 : In y s -> In y (add x s).
- Proof.
- unfold add, In; simpl; rewrite add_in; auto.
- Qed.
-
- Lemma add_3 : ~ X.eq x y -> In y (add x s) -> In y s. 
- Proof. 
- unfold add, In; simpl; rewrite add_in; intuition.
- elim H; auto.
- Qed.
-
- Lemma remove_1 : E.eq y x -> ~ In y (remove x s).
- Proof. 
- unfold remove, In; simpl; rewrite remove_in; intuition.
- Qed.
-
- Lemma remove_2 : ~ E.eq x y -> In y s -> In y (remove x s).
- Proof. 
- unfold remove, In; simpl; rewrite remove_in; intuition.
- Qed.
-
- Lemma remove_3 : In y (remove x s) -> In y s.
- Proof. 
- unfold remove, In; simpl; rewrite remove_in; intuition.
- Qed.
-
- Definition singleton_1 := singleton_1 x y.
- Definition singleton_2 := singleton_2 x y. 
-
- Lemma union_1 : In x (union s s') -> In x s \/ In x s'.
- Proof.
- unfold union, In; simpl.
- destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) 
-  as (u,(b,(a,i))).
- simpl in *; rewrite i; auto.
- Qed.
-
- Lemma union_2 : In x s -> In x (union s s'). 
- Proof.
- unfold union, In; simpl.
- destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) 
-  as (u,(b,(a,i))).
- simpl in *; rewrite i; auto.
- Qed.
-
- Lemma union_3 : In x s' -> In x (union s s').
- Proof.
- unfold union, In; simpl.
- destruct (Raw.union s s' (is_bst s) (is_avl s) (is_bst s') (is_avl s')) 
-  as (u,(b,(a,i))).
- simpl in *; rewrite i; auto.
- Qed.
-
- Lemma union'_1 : In x (union' s s') -> In x s \/ In x s'.
- Proof.
- unfold union', In; simpl; rewrite union'_in; intuition.
- Qed.
-
- Lemma union'_2 : In x s -> In x (union' s s'). 
- Proof.
- unfold union', In; simpl; rewrite union'_in; intuition.
- Qed.
-
- Lemma union'_3 : In x s' -> In x (union' s s').
- Proof.
- unfold union', In; simpl; rewrite union'_in; intuition.
- Qed.
-
- Lemma inter_1 : In x (inter s s') -> In x s.
- Proof.
- unfold inter, In; simpl; rewrite inter_in; intuition.
- Qed.
-
- Lemma inter_2 : In x (inter s s') -> In x s'.
- Proof. 
- unfold inter, In; simpl; rewrite inter_in; intuition.
- Qed.
-
- Lemma inter_3 : In x s -> In x s' -> In x (inter s s').
- Proof. 
- unfold inter, In; simpl; rewrite inter_in; intuition.
+ unfold In, mem; intros m x; rewrite In_alt; simpl; apply mem_1; auto.
+ apply m.(is_bst).
  Qed.
  
- Lemma diff_1 : In x (diff s s') -> In x s. 
- Proof. 
- unfold diff, In; simpl; rewrite diff_in; intuition.
+ Lemma mem_2 : forall m x, mem x m = true -> In x m. 
+ Proof.
+ unfold In, mem; intros m x; rewrite In_alt; simpl; apply mem_2; auto.
  Qed.
 
- Lemma diff_2 : In x (diff s s') -> ~ In x s'.
- Proof. 
- unfold diff, In; simpl; rewrite diff_in; intuition.
+ Definition empty_1 := empty_1.
+
+ Definition is_empty_1 m := is_empty_1 elt m.(this).
+ Definition is_empty_2 m := is_empty_2 elt m.(this).
+
+ Definition add_1 m x y e := add_1 elt m.(this) x y e m.(is_avl).
+ Definition add_2 m x y e e':= add_2 elt m.(this) x y e e' m.(is_avl).
+ Definition add_3 m x y e e' := add_3 elt m.(this) x y e e' m.(is_avl).
+
+ Lemma remove_1 : forall m x y, E.eq y x -> ~ In y (remove x m).
+ Proof.
+ unfold In, remove; intros m x y; rewrite In_alt; simpl; apply remove_1; auto.
+ apply m.(is_bst).
+ apply m.(is_avl).
  Qed.
 
- Lemma diff_3 : In x s -> ~ In x s' -> In x (diff s s').
- Proof. 
- unfold diff, In; simpl; rewrite diff_in; intuition.
+ Definition remove_2 m x y e := remove_2 elt m.(this) x y e m.(is_bst) m.(is_avl).
+ Definition remove_3 m x y e := remove_3 elt m.(this) x y e m.(is_bst) m.(is_avl).
+
+ Definition find_1 m x e := find_1 elt m.(this) x e m.(is_bst).
+ Definition find_2 m x e := find_2 elt m.(this) x e.
+
+ Definition fold_1 m := fold_1 elt m.(this) m.(is_bst).
+
+ Definition map_1 m x e f := map_1 elt elt' f m.(this) x e.
+ Lemma map_2 : forall m x f, In0 _ x (map f m) -> In0 _ x m.
+ Proof.
+ intros m x f; do 2 rewrite In_alt; simpl; apply map_2; auto.
+ Qed. 
+
+ Definition mapi_1 m x e f := mapi_1 elt elt' f m.(this) x e.
+ Lemma mapi_2 : forall m x f, In0 _ x (mapi f m) -> In0 _ x m.
+ Proof.
+ intros m x f; do 2 rewrite In_alt; simpl; apply mapi_2; auto.
+ Qed. 
+
+ Lemma elements_1 : forall m x e,       
+   MapsTo x e m -> InA eq_key_elt (x,e) (elements m).
+ Proof.
+ intros; unfold elements, MapsTo, eq_key_elt; rewrite elements_mapsto; auto.
+ Qed.
+
+ Lemma elements_2 : forall m x e,   
+   InA eq_key_elt (x,e) (elements m) -> MapsTo x e m.
+ Proof.
+ intros; unfold elements, MapsTo, eq_key_elt; rewrite <- elements_mapsto; auto.
  Qed.
  
- Lemma fold_1 : forall (A : Set) (i : A) (f : key -> A -> A),
-      fold A f s i = fold_left (fun a e => f e a) (elements s) i.
+ Definition elements_3 m := elements_sort elt m.(this) m.(is_bst).
+
+ Definition Equal cmp m m' := 
+   (forall k, In k m <-> In k m') /\ 
+   (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
+
+ Lemma Equal_Equal : forall cmp m m', Equal cmp m m' <-> Raw.Equal _ cmp m m'.
  Proof. 
- unfold fold, elements; intros; apply fold_1; auto.
- Qed.
+ intros; unfold Equal, Raw.Equal, In; intuition.
+ generalize (H0 k); do 2 rewrite In_alt; intuition.
+ generalize (H0 k); do 2 rewrite In_alt; intuition.
+ generalize (H0 k); do 2 rewrite <- In_alt; intuition.
+ generalize (H0 k); do 2 rewrite <- In_alt; intuition.
+ Qed. 
 
- Lemma cardinal_1 : cardinal s = length (elements s).
+ Lemma equal_1 : forall m m' cmp, 
+   Equal cmp m m' -> equal cmp m m' = true. 
  Proof. 
- unfold cardinal, elements; intros; apply cardinal_elements_1; auto.
- Qed.
+ unfold equal; intros m m' cmp; rewrite Equal_Equal.
+ destruct (Raw.equal _ cmp m m'); auto.
+ Qed. 
 
- Section Filter.
- Variable f : key -> bool.
-
- Lemma filter_1 : compat_bool E.eq f -> In x (filter f s) -> In x s. 
+ Lemma equal_2 : forall m m' cmp, 
+   equal cmp m m' = true -> Equal cmp m m'.
  Proof. 
- intro; unfold filter, In; simpl; rewrite filter_in; intuition.
- Qed.
+ unfold equal; intros; rewrite Equal_Equal.
+ destruct (Raw.equal _ cmp m m'); auto; try discriminate.
+ Qed.  
 
- Lemma filter_2 : compat_bool E.eq f -> In x (filter f s) -> f x = true. 
+ End Elt.
+
+ Lemma map2_1 : forall (elt elt' elt'':Set)(m: t elt)(m': t elt')
+    (x:key)(f:option elt->option elt'->option elt''), 
+    In _ x m \/ In _ x m' -> 
+    find _ x (map2 _ _ _ f m m') = f (find _ x m) (find _ x m'). 
  Proof. 
- intro; unfold filter, In; simpl; rewrite filter_in; intuition.
+ unfold find, map2, In; intros elt elt' elt'' m m' x f.
+ do 2 rewrite In_alt; intros; simpl; apply map2_1; auto.
+ apply m.(is_bst).
+ apply m'.(is_bst).
  Qed.
 
- Lemma filter_3 : compat_bool E.eq f -> In x s -> f x = true -> In x (filter f s).
+ Lemma map2_2 : forall (elt elt' elt'':Set)(m: t elt)(m': t elt')
+     (x:key)(f:option elt->option elt'->option elt''), 
+     In _ x (map2 _ _ _ f m m') -> In _ x m \/ In _ x m'.
  Proof. 
- intro; unfold filter, In; simpl; rewrite filter_in; intuition.
+ unfold In, map2; intros elt elt' elt'' m m' x f.
+ do 3 rewrite In_alt; intros; simpl in *; eapply map2_2; eauto.
+ apply m.(is_bst).
+ apply m'.(is_bst).
  Qed.
 
- Definition for_all_1 := for_all_1 f s.
- Definition for_all_2 := for_all_2 f s.
-
- Definition exists_1 := exists_1 f s.
- Definition exists_2 := exists_2 f s.
-
- Lemma partition_1 : compat_bool E.eq f -> 
-  Equal (fst (partition f s)) (filter f s).
- Proof.
- unfold partition, filter, Equal, In; simpl ;intros H a.
- rewrite partition_in_1; auto.
- rewrite filter_in; intuition.
- Qed.
-
- Lemma partition_2 : compat_bool E.eq f -> 
-  Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
- Proof.
- unfold partition, filter, Equal, In; simpl ;intros H a.
- rewrite partition_in_2; auto.
- rewrite filter_in; intuition.
- red; intros.
- f_equal; auto.
- destruct (f a); auto.
- destruct (f a); auto.
- Qed.
-
- End Filter.
-
- Lemma elements_1 : In x s -> InA E.eq x (elements s).
- Proof. 
- unfold elements, In; rewrite elements_in; auto.
- Qed.
-
- Lemma elements_2 : InA E.eq x (elements s) -> In x s.
- Proof. 
- unfold elements, In; rewrite elements_in; auto.
- Qed.
-
- Definition elements_3 : sort E.lt (elements s) := elements_sort _ (is_bst s).
-
- Definition min_key_1 := min_key_1 s x.
- Definition min_key_2 := min_key_2 s x y (is_bst s). 
- Definition min_key_3 := min_key_3 s.
-
- Definition max_key_1 := max_key_1 s x.
- Definition max_key_2 := max_key_2 s x y (is_bst s).
- Definition max_key_3 := max_key_3 s.
-
- Definition choose_1 := choose_1 s x.
- Definition choose_2 := choose_2 s.
-
- Definition eq_refl s := eq_refl s.
- Definition eq_sym s s' := eq_sym s s'.
- Definition eq_trans s s' s'' := eq_trans s s' s''.
-  
- Definition lt_trans s s' s'' := lt_trans s s' s''.
- Definition lt_not_eq s s' := lt_not_eq _ _ (is_bst s) (is_bst s').
-
- End Specs.
 End Make.
 
-(** ** Relations [eq] and [lt] over trees *)
 
-Definition eq : t -> t -> Prop := Equal.
+Module Make_ord (X: OrderedType)(D : OrderedType) <: 
+    Sord with Module Data := D 
+            with Module MapS.E := X.
 
-Lemma eq_refl : forall s : t, eq s s. 
-Proof.
- unfold eq, Equal in |- *; intuition.
-Qed.
+  Module Data := D.
+  Module MapS := Make(X). 
+  Import MapS.
 
-Lemma eq_sym : forall s s' : t, eq s s' -> eq s' s.
-Proof.
- unfold eq, Equal in |- *; firstorder.
-Qed.
+  Module MD := OrderedTypeFacts(D).
+  Import MD.
 
-Lemma eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
-Proof.
- unfold eq, Equal in |- *; firstorder.
-Qed.
+  Module LO := FMapList.Make_ord(X)(D).
 
-Lemma eq_L_eq :
- forall s s' : t, eq s s' -> L.eq (elements s) (elements s').
-Proof.
- unfold eq, Equal, L.eq, L.Equal in |- *; intros.
- generalize (elements_in s a) (elements_in s' a).
- firstorder.
-Qed.
+  Definition t := MapS.t D.t. 
 
-Lemma L_eq_eq :
- forall s s' : t, L.eq (elements s) (elements s') -> eq s s'.
-Proof.
- unfold eq, Equal, L.eq, L.Equal in |- *; intros.
- generalize (elements_in s a) (elements_in s' a).
- firstorder.
-Qed.
-Hint Resolve eq_L_eq L_eq_eq.
+  Definition cmp e e' := match D.compare e e' with Eq _ => true | _ => false end.	
 
-Definition lt (s1 s2 : t) : Prop := L.lt (elements s1) (elements s2).
+  Definition elements (m:t) := 
+    LO.MapS.Build_slist (Raw.elements_sort _ m.(this) m.(is_bst)).
 
-Definition lt_trans (s s' s'' : t) (h : lt s s') 
-  (h' : lt s' s'') : lt s s'' := L.lt_trans h h'.
+  Definition eq : t -> t -> Prop := 
+    fun m1 m2 => LO.eq (elements m1) (elements m2).
 
-Lemma lt_not_eq : forall s s' : t, bst s -> bst s' -> lt s s' -> ~ eq s s'.
-Proof.
- unfold lt in |- *; intros; intro.
- apply L.lt_not_eq with (s := elements s) (s' := elements s'); auto.
-Qed.
-*)
+  Definition lt : t -> t -> Prop := 
+    fun m1 m2 => LO.lt (elements m1) (elements m2).
+
+  Lemma eq_1 : forall m m', Equal _ cmp m m' -> eq m m'.
+  Proof.
+  intros m m'.
+  unfold eq.
+  rewrite Equal_Equal.
+  rewrite Raw.Equal_elements.
+  intros.
+  apply LO.eq_1.
+  auto.
+  Qed.
+
+  Lemma eq_2 : forall m m', eq m m' -> Equal _ cmp m m'.
+  Proof.
+  intros m m'.
+  unfold eq.
+  rewrite Equal_Equal.
+  rewrite Raw.Equal_elements.
+  intros.
+  generalize (LO.eq_2 H).
+  auto.
+  Qed.
+ 
+  Lemma eq_refl : forall m : t, eq m m.
+  Proof. 
+  unfold eq; intros; apply LO.eq_refl.
+  Qed.
+
+  Lemma eq_sym : forall m1 m2 : t, eq m1 m2 -> eq m2 m1.
+  Proof.
+  unfold eq; intros; apply LO.eq_sym; auto.
+  Qed.
+
+  Lemma eq_trans : forall m1 m2 m3 : t, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
+  Proof.
+  unfold eq; intros; eapply LO.eq_trans; eauto.
+  Qed.
+
+  Lemma lt_trans : forall m1 m2 m3 : t, lt m1 m2 -> lt m2 m3 -> lt m1 m3.
+  Proof.
+  unfold lt; intros; eapply LO.lt_trans; eauto.
+  Qed.
+
+  Lemma lt_not_eq : forall m1 m2 : t, lt m1 m2 -> ~ eq m1 m2.
+  Proof.
+  unfold lt, eq; intros; apply LO.lt_not_eq; auto.
+  Qed.
+
+  Import Raw.
+
+  Definition flatten_slist (e:enumeration D.t)(He:sorted_e _ e) := 
+   LO.MapS.Build_slist (sorted_flatten_e _ e He). 
+
+  Definition compare_aux : 
+   forall (e1 e2:enumeration D.t)(He1:sorted_e _ e1)(He2: sorted_e _ e2), 
+   Compare LO.lt LO.eq (flatten_slist e1 He1) (flatten_slist e2 He2).
+  Proof.
+  intros e1 e2; pattern e1, e2 in |- *; apply compare_rec2.
+  simple destruct x; simple destruct x'; intuition.
+  (* x = x' = End *)
+  constructor 2.
+  compute; auto.
+  (* x = End x' = More *)
+  constructor 1.
+  compute; auto.
+  (* x = More x' = End *)
+  constructor 3.
+  compute; auto.
+  (* x = More k t0 t1 e, x' = More k0 t2 t3 e0 *)
+  case (X.compare k k0); intro.
+  (* k < k0 *)
+  constructor 1.
+  compute; MX.compare; auto.
+  (* k = k0 *)
+  destruct (D.compare t0 t2).
+  constructor 1.
+  compute; MX.compare; auto.
+  destruct (cons _ t1 e) as [c1 (H2,(H3,H4))]; try inversion_clear He1; auto.
+  destruct (cons _ t3 e0) as [c2 (H5,(H6,H7))]; try inversion_clear He2; auto.
+  assert (measure_e _ c1 + measure_e _ c2 <
+              measure_e _ (More D.t k t0 t1 e) + 
+              measure_e _ (More D.t k0 t2 t3 e0)).
+  unfold measure_e in *; fold measure_e in *; omega.           
+  destruct (H c1 c2 H0 H2 H5); clear H.
+  constructor 1.
+  unfold flatten_slist, LO.lt in *; simpl; simpl in l.
+  MX.compare.
+  right; split; auto.
+  rewrite <- H7; rewrite <- H4; auto.
+  constructor 2.
+  unfold flatten_slist, LO.eq in *; simpl; simpl in e5.
+  MX.compare.
+  split; auto.
+  rewrite <- H7; rewrite <- H4; auto.
+  constructor 3.
+  unfold flatten_slist, LO.lt in *; simpl; simpl in l.
+  MX.compare.
+  right; split; auto.
+  rewrite <- H7; rewrite <- H4; auto.
+  constructor 3.
+  compute; MX.compare; auto.
+  (* k > k0 *)
+  constructor 3.
+  compute; MX.compare; auto.
+  Qed.
+
+  Definition compare : forall m1 m2, Compare lt eq m1 m2.
+  Proof.
+  intros (m1,m1_bst,m1_avl) (m2,m2_bst,m2_avl); simpl.
+  destruct (cons _ m1 (End _)) as [x1 (H1,H11)]; auto.
+  apply SortedEEnd.
+  inversion_clear 2.
+  destruct (cons _ m2 (End _)) as [x2 (H2,H22)]; auto.
+  apply SortedEEnd.
+  inversion_clear 2.
+  simpl in H11; rewrite <- app_nil_end in H11.
+  simpl in H22; rewrite <- app_nil_end in H22.
+  destruct (compare_aux x1 x2 H1 H2); intuition.
+  constructor 1.
+  unfold lt, LO.lt, Make_ord.elements, flatten_slist in *; simpl in *.
+  rewrite <- H0; rewrite <- H4; auto.
+  constructor 2.
+  unfold eq, LO.eq, Make_ord.elements, flatten_slist in *; simpl in *.
+  rewrite <- H0; rewrite <- H4; auto.
+  constructor 3.
+  unfold lt, LO.lt, Make_ord.elements, flatten_slist in *; simpl in *.
+  rewrite <- H0; rewrite <- H4; auto.
+  Qed.
+
+End Make_ord.

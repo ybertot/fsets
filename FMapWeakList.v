@@ -134,7 +134,7 @@ Module Raw (X:DecidableType).
     Qed.
     Hint Resolve notin_empty.
 
-    Notation noredonA := (noredonA eqk).
+    Notation noredunA := (noredunA eqk).
 
     Lemma In_inv : forall k k' e l, In k ((k',e) :: l) -> X.eq k k' \/ In k l.
       intros k k' e l H.
@@ -194,7 +194,7 @@ Module Raw (X:DecidableType).
 
     Hint Resolve empty_1.
 
-    Lemma empty_unique : noredonA empty.
+    Lemma empty_unique : noredunA empty.
     Proof. 
      unfold empty; auto.
     Qed.
@@ -228,7 +228,7 @@ Module Raw (X:DecidableType).
 
     (** Specification of [mem] *)
 
-    Lemma mem_1 : forall m (Hm:noredonA m) x, In x m -> mem x m = true.
+    Lemma mem_1 : forall m (Hm:noredunA m) x, In x m -> mem x m = true.
     Proof.
       intros m Hm x; generalize Hm; clear Hm.      
       functional induction mem x m;intros unique belong1;trivial.
@@ -242,7 +242,7 @@ Module Raw (X:DecidableType).
     Qed. 
 
 
-    Lemma mem_2 : forall m (Hm:noredonA m) x, mem x m = true -> In x m. 
+    Lemma mem_2 : forall m (Hm:noredunA m) x, mem x m = true -> In x m. 
     Proof.
       intros m Hm x; generalize Hm; clear Hm; unfold In,MapsTo.
       functional induction mem x m; intros unique hyp;try ((inversion hyp);fail).
@@ -266,7 +266,7 @@ Module Raw (X:DecidableType).
       functional induction find x m;simpl;intros e' eqfind; inversion eqfind; auto.
     Qed.
 
-    Lemma find_1 :  forall m (Hm:noredonA m) x e, MapsTo x e m -> find x m = Some e. 
+    Lemma find_1 :  forall m (Hm:noredunA m) x e, MapsTo x e m -> find x m = Some e. 
     Proof.
       intros m Hm x e; generalize Hm; clear Hm; unfold MapsTo.
       functional induction find x m;simpl; subst; try clear H_eq_1.
@@ -328,7 +328,7 @@ Module Raw (X:DecidableType).
       inversion Hinlist;eauto.
     Qed.
 
-    Lemma add_unique : forall m (Hm:noredonA m) x e, noredonA (add x e m).
+    Lemma add_unique : forall m (Hm:noredunA m) x e, noredunA (add x e m).
     Proof.
     induction m.
     simpl; constructor; auto; red; inversion 1.
@@ -353,7 +353,7 @@ Module Raw (X:DecidableType).
 
    (** Specification of [remove] *)
 
-    Lemma remove_1 : forall m (Hm:noredonA m) x y, X.eq y x -> ~ In y (remove x m).
+    Lemma remove_1 : forall m (Hm:noredunA m) x y, X.eq y x -> ~ In y (remove x m).
     Proof.
       intros m Hm x y; generalize Hm; clear Hm.
       functional induction remove x m;simpl;intros;auto.
@@ -374,7 +374,7 @@ Module Raw (X:DecidableType).
       Qed.
       
       
-    Lemma remove_2 : forall m (Hm:noredonA m) x y e, 
+    Lemma remove_2 : forall m (Hm:noredunA m) x y e, 
       ~ X.eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
     Proof.
       intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
@@ -390,7 +390,7 @@ Module Raw (X:DecidableType).
       inversion_clear unique; auto.
     Qed.
 
-    Lemma remove_3 : forall m (Hm:noredonA m) x y e, 
+    Lemma remove_3 : forall m (Hm:noredunA m) x y e, 
       MapsTo y e (remove x m) -> MapsTo y e m.
     Proof.
       intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
@@ -400,7 +400,7 @@ Module Raw (X:DecidableType).
       elim (@In_inv3 (y, e) (k', x) (remove k l)); auto.
     Qed.
 
-    Lemma remove_unique : forall m (Hm:noredonA m) x, noredonA (remove x m).
+    Lemma remove_unique : forall m (Hm:noredunA m) x, noredunA (remove x m).
     Proof.
     induction m.
     simpl; intuition.
@@ -442,8 +442,8 @@ Module Raw (X:DecidableType).
     auto.
     Qed.
 
-    Lemma elements_3 : forall m (Hm:noredonA m),
-       noredonA (elements m). 
+    Lemma elements_3 : forall m (Hm:noredunA m),
+       noredunA (elements m). 
     Proof. 
     auto.
     Qed.
@@ -482,7 +482,7 @@ Module Raw (X:DecidableType).
          (forall k, In k m <-> In k m') /\ 
          (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
 
-     Lemma submap_1 : forall m (Hm:noredonA m) m' (Hm': noredonA m') cmp, 
+     Lemma submap_1 : forall m (Hm:noredunA m) m' (Hm': noredunA m') cmp, 
           Submap cmp m m' -> submap cmp m m' = true. 
      Proof.
      unfold Submap, submap.
@@ -503,7 +503,7 @@ Module Raw (X:DecidableType).
      eapply H0; eauto; auto.
      Qed.
        
-     Lemma submap_2 : forall m (Hm:noredonA m) m' (Hm': noredonA m') cmp, 
+     Lemma submap_2 : forall m (Hm:noredunA m) m' (Hm': noredunA m') cmp, 
           submap cmp m m' = true -> Submap cmp m m'. 
      Proof.
      unfold Submap, submap.
@@ -543,7 +543,7 @@ Module Raw (X:DecidableType).
 
 
      (** Specification of [equal] *)
-     Lemma equal_1 : forall m (Hm:noredonA m) m' (Hm': noredonA m') cmp, 
+     Lemma equal_1 : forall m (Hm:noredunA m) m' (Hm': noredunA m') cmp, 
            Equal cmp m m' -> equal cmp m m' = true. 
      Proof. 
      unfold Equal, equal.
@@ -552,7 +552,7 @@ Module Raw (X:DecidableType).
        apply submap_1; unfold Submap; firstorder.
      Qed.
 
-      Lemma equal_2 : forall m (Hm:noredonA m) m' (Hm':noredonA m') cmp, 
+      Lemma equal_2 : forall m (Hm:noredunA m) m' (Hm':noredunA m') cmp, 
          equal cmp m m' = true -> Equal cmp m m'.
       Proof.
       unfold Equal, equal.
@@ -624,8 +624,8 @@ Module Raw (X:DecidableType).
       Qed.
 
       Lemma map_unique : 
-         forall (m: t elt)(Hm : noredonA (@eqk elt) m)(f:elt -> elt'), 
-         noredonA (@eqk elt') (map f m).
+         forall (m: t elt)(Hm : noredunA (@eqk elt) m)(f:elt -> elt'), 
+         noredunA (@eqk elt') (map f m).
       Proof.   
       induction m; simpl; auto.
       intros.
@@ -689,8 +689,8 @@ Module Raw (X:DecidableType).
       Qed.
 
       Lemma mapi_unique : 
-         forall (m: t elt)(Hm : noredonA (@eqk elt) m)(f: key ->elt -> elt'), 
-         noredonA (@eqk elt') (mapi f m).
+         forall (m: t elt)(Hm : noredunA (@eqk elt) m)(f: key ->elt -> elt'), 
+         noredunA (@eqk elt') (mapi f m).
       Proof.
       induction m; simpl; auto.
       intros.
@@ -704,7 +704,7 @@ Module Raw (X:DecidableType).
       destruct a; inversion_clear H1; auto.
       Qed.
 
-    Lemma find_eq : forall (m: t elt)(Hm : noredonA (@eqk elt) m)(x x':key), 
+    Lemma find_eq : forall (m: t elt)(Hm : noredunA (@eqk elt) m)(x x':key), 
        X.eq x x' -> find x m = find x' m.
     Proof.
     intros.
@@ -719,7 +719,7 @@ Module Raw (X:DecidableType).
     apply find_2; auto.
     Qed.
 
-    Lemma add_eq : forall (m: t elt)(Hm : noredonA (@eqk elt) m)(x a:key)(e:elt), 
+    Lemma add_eq : forall (m: t elt)(Hm : noredunA (@eqk elt) m)(x a:key)(e:elt), 
        X.eq x a -> find x (add a e m) = Some e.
      Proof.
      intros.
@@ -728,7 +728,7 @@ Module Raw (X:DecidableType).
      apply add_1; eauto.
     Qed.
 
-    Lemma add_not_eq : forall (m: t elt)(Hm : noredonA (@eqk elt) m)(x a:key)(e:elt), 
+    Lemma add_not_eq : forall (m: t elt)(Hm : noredunA (@eqk elt) m)(x a:key)(e:elt), 
        ~X.eq x a -> find x (add a e m) = find x m.
      Proof.
      intros.
@@ -764,8 +764,8 @@ Module Raw (X:DecidableType).
          fold_right_pair (add (elt:=option elt * option elt')) l r.
 
     Lemma combine_unique : 
-      forall (m: t elt)(Hm : noredonA (@eqk elt) m)(m': t elt')(Hm' : noredonA (@eqk elt') m'), 
-      noredonA (@eqk (option elt * option elt')) (combine m m').
+      forall (m: t elt)(Hm : noredunA (@eqk elt) m)(m': t elt')(Hm' : noredunA (@eqk elt') m'), 
+      noredunA (@eqk (option elt * option elt')) (combine m m').
     Proof.
     unfold combine, combine_r, combine_l.
     intros.
@@ -797,7 +797,7 @@ Module Raw (X:DecidableType).
          end.
 
     Lemma combine_l_1 : 
-      forall (m: t elt)(Hm : noredonA (@eqk elt) m)(m': t elt')(Hm' : noredonA (@eqk elt') m') 
+      forall (m: t elt)(Hm : noredunA (@eqk elt) m)(m': t elt')(Hm' : noredunA (@eqk elt') m') 
       (x:key), 
       find x (combine_l m m') = at_least_left (find x m) (find x m'). 
     Proof.
@@ -817,7 +817,7 @@ Module Raw (X:DecidableType).
     Qed.
 
     Lemma combine_r_1 : 
-      forall (m: t elt)(Hm : noredonA (@eqk elt) m)(m': t elt')(Hm' : noredonA (@eqk elt') m') 
+      forall (m: t elt)(Hm : noredunA (@eqk elt) m)(m': t elt')(Hm' : noredunA (@eqk elt') m') 
       (x:key), 
       find x (combine_r m m') = at_least_right (find x m) (find x m'). 
     Proof.
@@ -843,7 +843,7 @@ Module Raw (X:DecidableType).
          end.
 
     Lemma combine_1 : 
-      forall (m: t elt)(Hm : noredonA (@eqk elt) m)(m': t elt')(Hm' : noredonA (@eqk elt') m') 
+      forall (m: t elt)(Hm : noredunA (@eqk elt) m)(m': t elt')(Hm' : noredunA (@eqk elt') m') 
       (x:key), 
       find x (combine m m') = at_least_one (find x m) (find x m'). 
     Proof.
@@ -851,10 +851,10 @@ Module Raw (X:DecidableType).
     intros.
     generalize (combine_r_1 Hm Hm' x).
     generalize (combine_l_1 Hm Hm' x).
-    assert (noredonA (eqk (elt:=option elt * option elt')) (combine_l m m')).
+    assert (noredunA (eqk (elt:=option elt * option elt')) (combine_l m m')).
       unfold combine_l.
       apply mapi_unique; auto.
-    assert (noredonA (eqk (elt:=option elt * option elt')) (combine_r m m')).
+    assert (noredunA (eqk (elt:=option elt * option elt')) (combine_r m m')).
       unfold combine_r.
       apply mapi_unique; auto.
     set (l := combine_l m m') in *; clearbody l.
@@ -904,8 +904,8 @@ Module Raw (X:DecidableType).
         fold_right_pair (option_cons (A:=elt'')) m1 nil.
     
     Lemma map2_unique : 
-      forall (m: t elt)(Hm : noredonA (@eqk elt) m)(m': t elt')(Hm' : noredonA (@eqk elt') m'), 
-      noredonA (@eqk elt'') (map2 m m').
+      forall (m: t elt)(Hm : noredunA (@eqk elt) m)(m': t elt')(Hm' : noredunA (@eqk elt') m'), 
+      noredunA (@eqk elt'') (map2 m m').
      Proof.
      intros.
      unfold map2.
@@ -936,7 +936,7 @@ Module Raw (X:DecidableType).
          end.
 
     Lemma map2_0 : 
-      forall (m: t elt)(Hm : noredonA (@eqk elt) m)(m': t elt')(Hm' : noredonA (@eqk elt') m') 
+      forall (m: t elt)(Hm : noredunA (@eqk elt) m)(m': t elt')(Hm' : noredunA (@eqk elt') m') 
       (x:key), 
       find x (map2 m m') = at_least_one_then_f (find x m) (find x m'). 
     Proof.
@@ -996,8 +996,8 @@ Module Raw (X:DecidableType).
     Qed.
 
      (** Specification of [map2] *)
-     Lemma map2_1 : forall (m: t elt)(Hm : noredonA (@eqk elt) m)
-        (m': t elt')(Hm' : noredonA (@eqk elt') m')(x:key),
+     Lemma map2_1 : forall (m: t elt)(Hm : noredunA (@eqk elt) m)
+        (m': t elt')(Hm' : noredunA (@eqk elt') m')(x:key),
 	In x m \/ In x m' -> 
         find x (map2 m m') = f (find x m) (find x m'). 
      Proof.
@@ -1010,8 +1010,8 @@ Module Raw (X:DecidableType).
      destruct (find x m); simpl; auto.
      Qed.
      
-     Lemma map2_2 : forall (m: t elt)(Hm : noredonA (@eqk elt) m)
-        (m': t elt')(Hm' : noredonA (@eqk elt') m')(x:key), 
+     Lemma map2_2 : forall (m: t elt)(Hm : noredunA (@eqk elt) m)
+        (m': t elt')(Hm' : noredunA (@eqk elt') m')(x:key), 
         In x (map2 m m') -> In x m \/ In x m'. 
      Proof.
      intros.
@@ -1039,7 +1039,7 @@ Module Make (X: DecidableType) <: S with Module E:=X.
   Module E := X.
   Definition key := X.t. 
 
-  Record slist (elt:Set) : Set :=  {this :> Raw.t elt; unique : noredonA (@Raw.eqk elt) this}.
+  Record slist (elt:Set) : Set :=  {this :> Raw.t elt; unique : noredunA (@Raw.eqk elt) this}.
   Definition t (elt:Set) := slist elt. 
 
  Section Elt. 

@@ -72,16 +72,16 @@ Module Properties (M: S).
   Module ME := OrderedTypeFacts E.  
    (** Results about lists without duplicates *)
 
-  Notation NoRedon := (noredonA E.eq).
+  Notation NoRedun := (noredunA E.eq).
 
-  Section noredonA_Remove.
+  Section noredunA_Remove.
 
   Definition remove_list x l := 
     remove_1st (fun y => if ME.eq_dec x y then true else false) l.
  
   Lemma remove_list_correct :
     forall s x,
-    NoRedon s -> NoRedon (remove_list x s) /\
+    NoRedun s -> NoRedun (remove_list x s) /\
     (forall y : elt, ME.In y (remove_list x s) <-> ME.In y s /\ ~ E.eq x y).
    Proof.
    simple induction s; simpl in |- *.
@@ -111,8 +111,8 @@ Module Properties (M: S).
 
    Lemma remove_list_equal :
     forall (s s' : list elt) (x : elt),
-    NoRedon (x :: s) ->
-    NoRedon s' -> ListEq (x :: s) s' -> ListEq s (remove_list x s').
+    NoRedun (x :: s) ->
+    NoRedun s' -> ListEq (x :: s) s' -> ListEq s (remove_list x s').
    Proof.  
    unfold ListEq in |- *; intros. 
    inversion_clear H.
@@ -131,8 +131,8 @@ Module Properties (M: S).
 
    Lemma remove_list_add :
     forall (s s' : list elt) (x x' : elt),
-    NoRedon s ->
-    NoRedon (x' :: s') ->
+    NoRedun s ->
+    NoRedun (x' :: s') ->
     ~ E.eq x x' ->
     ~ ME.In x s -> ListAdd x s (x' :: s') -> ListAdd x (remove_list x' s) s'.
    Proof.
@@ -162,7 +162,7 @@ Module Properties (M: S).
     compat_op E.eq eqA f ->
     transpose eqA f ->
     forall (s : list elt) (x : elt),
-    NoRedon s ->
+    NoRedun s ->
     ME.In x s ->
     eqA (fold_right f i s) (f x (fold_right f i (remove_list x s))).
    Proof.
@@ -187,8 +187,8 @@ Module Properties (M: S).
     compat_op E.eq eqA f ->
     transpose eqA f ->
     forall s s' : list elt,
-    NoRedon s ->
-    NoRedon s' ->
+    NoRedun s ->
+    NoRedun s' ->
     ListEq s s' -> eqA (fold_right f i s) (fold_right f i s').
    Proof.
    simple induction s.
@@ -216,8 +216,8 @@ Module Properties (M: S).
     compat_op E.eq eqA f ->
     transpose eqA f ->
     forall (s' s : list elt) (x : elt),
-    NoRedon s ->
-    NoRedon s' ->
+    NoRedun s ->
+    NoRedun s' ->
     ~ ME.In x s ->
     ListAdd x s s' -> eqA (fold_right f i s') (f x (fold_right f i s)).
    Proof.   
@@ -260,7 +260,7 @@ Module Properties (M: S).
    elim H1; auto; intros; elim n; auto.
    Qed.
 
-  End noredonA_Remove.
+  End noredunA_Remove.
 
 
   (** * Alternative (weaker) specification for [fold],
@@ -276,13 +276,13 @@ Module Properties (M: S).
   Lemma fold_0 : 
       forall (s:t) (A : Set) (i : A) (f : elt -> A -> A),
       exists l : list elt,
-        NoRedon l /\
+        NoRedun l /\
         (forall x : elt, In x s <-> InA E.eq x l) /\
         fold f s i = fold_right f i l.
   Proof.
   intros; exists (rev (elements s)).
   split.
-  apply noredonA_rev; eauto.
+  apply noredunA_rev; eauto.
   split.
   intros.
   destruct (InA_alt E.eq x (rev (elements s))).
@@ -301,12 +301,12 @@ Module Properties (M: S).
 
   Lemma cardinal_0 :
     forall s, exists l : list elt,
-        noredonA E.eq l /\
+        noredunA E.eq l /\
         (forall x : elt, In x s <-> InA E.eq x l) /\ cardinal s = length l.
   Proof. 
   intros; exists (rev (elements s)).
   split.
-  apply noredonA_rev; eauto.
+  apply noredunA_rev; eauto.
   split.
   intros.
   destruct (InA_alt E.eq x (rev (elements s))).

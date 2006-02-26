@@ -501,6 +501,29 @@ Module Raw (X:OrderedType).
        apply H9 with k; eauto.
       Qed. 
 
+      (* This lemma isn't part of the spec of [Equal], but is used in [FMapAVL] *)
+      Lemma equal_cons :
+       forall cmp l1 l2 x y, Sort (x::l1) -> Sort (y::l2) ->
+ 	eqk x y -> cmp (snd x) (snd y) = true -> 
+ 	(Equal cmp l1 l2 <-> Equal cmp (x :: l1) (y :: l2)).
+      Proof.
+      intros.
+      inversion H; subst.
+      inversion H0; subst.
+      destruct x; destruct y; compute in H1, H2.
+      split; intros.
+      apply equal_2; auto.
+      simpl.
+      MX.compare.
+      rewrite H2; simpl.
+      apply equal_1; auto.
+      apply equal_2; auto.
+      generalize (equal_1 H H0 H3).
+      simpl.
+      MX.compare.
+      rewrite H2; simpl; auto.
+      Qed.
+
       Variable elt':Set.
       
       Fixpoint map (f:elt -> elt') (m:t elt) {struct m} : t elt' :=
@@ -1039,12 +1062,9 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition Empty m := Raw.Empty m.(this).
  Definition Equal cmp m m' := @Raw.Equal elt cmp m.(this) m'.(this).
 
- Definition eq_key (p p':key*elt) := X.eq (fst p) (fst p').
-     
- Definition eq_key_elt (p p':key*elt) := 
-          X.eq (fst p) (fst p') /\ (snd p) = (snd p').
-
- Definition lt_key (p p':key*elt) := X.lt (fst p) (fst p').
+ Definition eq_key := Raw.PX.eqk.
+ Definition eq_key_elt := Raw.PX.eqke.
+ Definition lt_key := Raw.PX.ltk.
 
  Definition MapsTo_1 m := @Raw.PX.MapsTo_eq elt m.(this).
 
@@ -1090,27 +1110,27 @@ Module Make (X: OrderedType) <: S with Module E := X.
  End Elt.
 End Make.
 
-Module Make_ord (X: OrderedType)(Data : OrderedType) <: 
-    Sord with Module Data := Data 
+Module Make_ord (X: OrderedType)(D : OrderedType) <: 
+    Sord with Module Data := D 
             with Module MapS.E := X.
 
-  Module Data := Data.
+  Module Data := D.
   Module MapS := Make(X). 
   Import MapS.
 
-  Module MD := OrderedTypeFacts(Data).
+  Module MD := OrderedTypeFacts(D).
   Import MD.
 
-  Definition t := MapS.t Data.t. 
+  Definition t := MapS.t D.t. 
 
-  Definition cmp e e' := match Data.compare e e' with Eq _ => true | _ => false end.	
+  Definition cmp e e' := match D.compare e e' with Eq _ => true | _ => false end.	
 
-  Fixpoint eq_list (m m' : list (X.t * Data.t)) { struct m } : Prop := 
+  Fixpoint eq_list (m m' : list (X.t * D.t)) { struct m } : Prop := 
        match m, m' with 
         | [], [] => True
         | (x,e)::l, (x',e')::l' => 
             match X.compare x x' with 
-             | Eq _ => Data.eq e e' /\ eq_list l l'
+             | Eq _ => D.eq e e' /\ eq_list l l'
              | _       => False
             end 
         | _, _ => False
@@ -1118,7 +1138,7 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
 
   Definition eq m m' := eq_list m.(this) m'.(this).
 
-  Fixpoint lt_list (m m' : list (X.t * Data.t)) {struct m} : Prop := match m, m' with 
+  Fixpoint lt_list (m m' : list (X.t * D.t)) {struct m} : Prop := match m, m' with 
     | [], [] => False
     | [], _  => True
     | _, []  => False
@@ -1126,7 +1146,7 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
         match X.compare x x' with 
           | Lt _ => True
           | Gt _ => False
-          | Eq _ => Data.lt e e' \/ (Data.eq e e' /\ lt_list l l')
+          | Eq _ => D.lt e e' \/ (D.eq e e' /\ lt_list l l')
         end
     end.
 
@@ -1162,14 +1182,14 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
 
   Lemma eq_1 : forall m m', Equal cmp m m' -> eq m m'.
   intros.
-  generalize (@equal_1 Data.t m m' cmp).
+  generalize (@equal_1 D.t m m' cmp).
   generalize (@eq_equal m m').
   intuition.
   Qed.
 
   Lemma eq_2 : forall m m', eq m m' -> Equal cmp m m'.
   intros.
-  generalize (@equal_2 Data.t m m' cmp).
+  generalize (@equal_2 D.t m m' cmp).
   generalize (@eq_equal m m').
   intuition.
   Qed.
@@ -1181,7 +1201,7 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
      destruct (X.compare t0 t0); auto.
      apply (MapS.Raw.MX.lt_antirefl l); auto.
      split.
-     apply Data.eq_refl.
+     apply D.eq_refl.
      inversion_clear Hm.
      apply (IHm H).
      apply (MapS.Raw.MX.lt_antirefl l); auto.
@@ -1238,7 +1258,7 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
      try destruct p as (x',e'); try contradiction; auto.
      destruct (X.compare x x'); auto.
      intuition.
-     absurd (Data.lt e e'); eauto.
+     absurd (D.lt e e'); eauto.
      inversion_clear Hm1; inversion_clear Hm2.
      apply (IHm1 H0 (Build_slist H5)); intuition.
    Qed.
@@ -1253,12 +1273,12 @@ Module Make_ord (X: OrderedType)(Data : OrderedType) <:
     destruct (X.compare x x').
     apply Lt; unfold lt; simpl; 
      destruct (X.compare x x'); auto; absurd (X.lt x x'); eauto.
-    destruct (Data.compare e e').
+    destruct (D.compare e e').
     apply Lt; unfold lt; simpl;
      destruct (X.compare x x'); auto; absurd (X.eq x x'); eauto.
-    assert (Hm11 : sort (Raw.PX.ltk (elt:=Data.t)) m1).
+    assert (Hm11 : sort (Raw.PX.ltk (elt:=D.t)) m1).
      inversion_clear Hm1; auto.
-    assert (Hm22 : sort (Raw.PX.ltk (elt:=Data.t)) m2).
+    assert (Hm22 : sort (Raw.PX.ltk (elt:=D.t)) m2).
      inversion_clear Hm2; auto.
     destruct (IHm1 Hm11 (Build_slist Hm22)).
     apply Lt; unfold lt; simpl; MapS.Raw.MX.compare; right; auto.

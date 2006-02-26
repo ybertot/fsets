@@ -40,20 +40,20 @@ Proof.
  firstorder; subst; auto.
 Qed.
 
-(** A list without redondancy. *)
+(** A list without redundancy. *)
 
-Inductive noredon : list A -> Prop := 
- | noredon_nil : noredon nil 
- | noredon_cons : forall x l, ~ In x l -> noredon l -> noredon (x::l). 
+Inductive noredun : list A -> Prop := 
+ | noredun_nil : noredun nil 
+ | noredun_cons : forall x l, ~ In x l -> noredun l -> noredun (x::l). 
 
 
-(** Similarly, a list without redondancy modulo the equality over [A]. *)
+(** Similarly, a list without redundancy modulo the equality over [A]. *)
 
-Inductive noredonA : list A -> Prop :=
-  | noredonA_nil : noredonA nil
-  | noredonA_cons : forall x l, ~ InA x l -> noredonA l -> noredonA (x::l).
+Inductive noredunA : list A -> Prop :=
+  | noredunA_nil : noredunA nil
+  | noredunA_cons : forall x l, ~ InA x l -> noredunA l -> noredunA (x::l).
 
-Hint Constructors noredonA.
+Hint Constructors noredunA.
 
 
 (** Results concerning lists modulo [eqA] *)
@@ -143,7 +143,7 @@ intros; eapply SortA_InfA_InA; eauto.
 apply InA_InfA.
 Qed.
 
-Lemma SortA_noredonA : forall l, SortA l -> noredonA l.
+Lemma SortA_noredunA : forall l, SortA l -> noredunA l.
 Proof.
  simple induction l; auto.
  intros x l' H H0.
@@ -154,9 +154,9 @@ Proof.
  elim (ltA_not_eqA H3); auto.
 Qed.
 
-Lemma noredonA_app : forall l l', noredonA l -> noredonA l' -> 
+Lemma noredunA_app : forall l l', noredunA l -> noredunA l' -> 
   (forall x, InA x l -> InA x l' -> False) -> 
-  noredonA (l++l').
+  noredunA (l++l').
 Proof.
 induction l; simpl; auto; intros.
 inversion_clear H.
@@ -176,13 +176,13 @@ apply (H1 x); auto.
 Qed.
 
 
-Lemma noredonA_rev : forall l, noredonA l -> noredonA (rev l).
+Lemma noredunA_rev : forall l, noredunA l -> noredunA (rev l).
 Proof.
 induction l.
 simpl; auto.
 simpl; intros.
 inversion_clear H.
-apply noredonA_app; auto.
+apply noredunA_app; auto.
 constructor; auto.
 intro H2; inversion H2.
 intros x.
@@ -229,6 +229,6 @@ Qed.
 End Type_with_equality.
 
 Hint Constructors InA.
-Hint Constructors noredonA. 
+Hint Constructors noredunA. 
 Hint Constructors sort.
 Hint Constructors lelistA.
