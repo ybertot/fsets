@@ -2683,7 +2683,7 @@ Module Make (I:Int)(X: OrderedType) <: S with Module E := X.
  Definition is_empty_1 : Empty s -> is_empty s = true  := is_empty_1 s.
  Definition is_empty_2 : is_empty s = true -> Empty s  := is_empty_2 s.
  
- Lemma add_1 : X.eq y x -> In y (add x s).
+ Lemma add_1 : X.eq x y -> In y (add x s).
  Proof. 
  unfold add, In; simpl; rewrite add_in; auto.
  Qed.
@@ -2699,7 +2699,7 @@ Module Make (I:Int)(X: OrderedType) <: S with Module E := X.
  elim H; auto.
  Qed.
 
- Lemma remove_1 : E.eq y x -> ~ In y (remove x s).
+ Lemma remove_1 : E.eq x y -> ~ In y (remove x s).
  Proof. 
  unfold remove, In; simpl; rewrite remove_in; intuition.
  Qed.

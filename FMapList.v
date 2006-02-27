@@ -200,7 +200,7 @@ Module Raw (X:OrderedType).
 
     (** Specification of [add] *)
 
-    Lemma add_1 : forall m x y e, X.eq y x -> MapsTo y e (add x e m).
+    Lemma add_1 : forall m x y e, X.eq x y -> MapsTo y e (add x e m).
     Proof.
       intros m x y e; generalize y; clear y.
       unfold PX.MapsTo.
@@ -266,7 +266,7 @@ Module Raw (X:OrderedType).
 
    (** Specification of [remove] *)
 
-    Lemma remove_1 : forall m (Hm:Sort m) x y, X.eq y x -> ~ In y (remove x m).
+    Lemma remove_1 : forall m (Hm:Sort m) x y, X.eq x y -> ~ In y (remove x m).
       intros m Hm x y; generalize Hm; clear Hm.
     Proof.
       functional induction remove x m;simpl;intros;auto.
@@ -277,7 +277,7 @@ Module Raw (X:OrderedType).
       eapply Sort_Inf_NotIn with x.
       eauto.
       apply cons_leA;simpl.
-      red; eapply MX.lt_eq;eauto.
+      red; simpl; apply MX.eq_lt with k;eauto.
       
       inversion_clear Hm.
       eapply Sort_Inf_NotIn with x. eauto. 

@@ -329,7 +329,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
   Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
+    forall y : elt, In y s' <-> E.eq x y \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) (s : t) :=
     forall x : elt, In x s -> P x.
@@ -578,7 +578,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     {s : tree |
     bst s /\
     (forall n : nat, almost_rbtree n l /\ rbtree n r -> rbtree (S n) s) /\
-    (forall y : elt, In_tree y s <-> E.eq y x \/ In_tree y l \/ In_tree y r)}.
+    (forall y : elt, In_tree y s <-> E.eq x y \/ In_tree y l \/ In_tree y r)}.
   Proof.
     intros; case (conflict l).
     assumption.
@@ -621,7 +621,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     {s : tree |
     bst s /\
     (forall n : nat, almost_rbtree n r /\ rbtree n l -> rbtree (S n) s) /\
-    (forall y : elt, In_tree y s <-> E.eq y x \/ In_tree y l \/ In_tree y r)}.
+    (forall y : elt, In_tree y s <-> E.eq x y \/ In_tree y l \/ In_tree y r)}.
   Proof.
     intros; case (conflict r).
     assumption.
@@ -668,7 +668,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     bst s' /\
     (forall n : nat,
      rbtree n s -> almost_rbtree n s' /\ (is_not_red s -> rbtree n s')) /\
-    (forall y : elt, In_tree y s' <-> E.eq y x \/ In_tree y s)}.
+    (forall y : elt, In_tree y s' <-> E.eq x y \/ In_tree y s)}.
   Proof.
     intros x (s, Hs, Hrb).
     generalize Hs Hrb; clear Hs Hrb;
@@ -1503,7 +1503,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Definition remove :
     forall (x : elt) (s : t),
-    {s' : t | forall y : elt, In y s' <-> ~ E.eq y x /\ In y s}.
+    {s' : t | forall y : elt, In y s' <-> ~ E.eq x y /\ In y s}.
   Proof.
     intros x (s, Hs, Hrb); case (remove_aux x s).
     trivial.
@@ -1511,7 +1511,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (s'rbtree : exists n : nat, rbtree n s').
     elim Hrb; clear Hrb; intros n Hn; induction  b as [| ]; firstorder.
     exists (t_intro s' H s'rbtree); unfold In in |- *; simpl in |- *;
-     intuition.
+     firstorder.
   Qed.
 
   (** * From lists to red-black trees *)

@@ -298,7 +298,7 @@ Module Raw (X:DecidableType).
 
     (** Specification of [add] *)
 
-    Lemma add_1 : forall m x y e, X.eq y x -> MapsTo y e (add x e m).
+    Lemma add_1 : forall m x y e, X.eq x y -> MapsTo y e (add x e m).
     Proof.
       intros m x y e; generalize y; clear y.
       unfold MapsTo.
@@ -353,7 +353,7 @@ Module Raw (X:DecidableType).
 
    (** Specification of [remove] *)
 
-    Lemma remove_1 : forall m (Hm:noredunA m) x y, X.eq y x -> ~ In y (remove x m).
+    Lemma remove_1 : forall m (Hm:noredunA m) x y, X.eq x y -> ~ In y (remove x m).
     Proof.
       intros m Hm x y; generalize Hm; clear Hm.
       functional induction remove x m;simpl;intros;auto.

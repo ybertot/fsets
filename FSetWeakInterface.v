@@ -158,12 +158,12 @@ Module Type S.
   Parameter is_empty_2 : is_empty s = true -> Empty s.
  
   (** Specification of [add] *)
-  Parameter add_1 : E.eq y x -> In y (add x s).
+  Parameter add_1 : E.eq x y -> In y (add x s).
   Parameter add_2 : In y s -> In y (add x s).
   Parameter add_3 : ~ E.eq x y -> In y (add x s) -> In y s. 
 
   (** Specification of [remove] *)
-  Parameter remove_1 : E.eq y x -> ~ In y (remove x s).
+  Parameter remove_1 : E.eq x y -> ~ In y (remove x s).
   Parameter remove_2 : ~ E.eq x y -> In y s -> In y (remove x s).
   Parameter remove_3 : In y (remove x s) -> In y s.
 

@@ -47,7 +47,7 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
   Qed.
  
   Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
+    forall y : elt, In y s' <-> E.eq x y \/ In y s.
  
   Definition add : forall (x : elt) (s : t), {s' : t | Add x s s'}.
   Proof.
@@ -66,7 +66,7 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
  
   Definition remove :
     forall (x : elt) (s : t),
-    {s' : t | forall y : elt, In y s' <-> ~ E.eq y x /\ In y s}.
+    {s' : t | forall y : elt, In y s' <-> ~ E.eq x y /\ In y s}.
   Proof.
     intros; exists (remove x s); intuition.
     absurd (In x (remove x s)); auto.
@@ -470,7 +470,7 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
 
   Definition add (x : elt) (s : t) : t := let (s', _) := add x s in s'.
 
-  Lemma add_1 : forall (s : t) (x y : elt), E.eq y x -> In y (add x s).
+  Lemma add_1 : forall (s : t) (x y : elt), E.eq x y -> In y (add x s).
   Proof.
     intros; unfold add in |- *; case (M.add x s); unfold Add in |- *;
      firstorder.
@@ -487,12 +487,11 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
   Proof.
     intros s x y; unfold add in |- *; case (M.add x s); unfold Add in |- *;
      firstorder.
-    generalize (a y); intuition; absurd (E.eq x y); auto.
   Qed.
 
   Definition remove (x : elt) (s : t) : t := let (s', _) := remove x s in s'.
 
-  Lemma remove_1 : forall (s : t) (x y : elt), E.eq y x -> ~ In y (remove x s).
+  Lemma remove_1 : forall (s : t) (x y : elt), E.eq x y -> ~ In y (remove x s).
   Proof.
     intros; unfold remove in |- *; case (M.remove x s); firstorder.
   Qed.

@@ -961,8 +961,8 @@ Module Properties (M: S).
   Proof.
   unfold Equal in |- *; intuition.
   Remove_ a x s; intuition.
-  elim (ME.eq_dec x a); intuition.
-  Diff a s (singleton x); intuition.
+  elim (ME.eq_dec a x); intuition; 
+   Diff a s (singleton x); intuition.
   Qed.
 
   Lemma diff_inter_empty : forall s s' : t, Equal (inter (diff s s') (inter s s')) empty. 

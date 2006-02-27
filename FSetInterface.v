@@ -185,12 +185,12 @@ Module Type S.
   Parameter is_empty_2 : is_empty s = true -> Empty s.
  
   (** Specification of [add] *)
-  Parameter add_1 : E.eq y x -> In y (add x s).
+  Parameter add_1 : E.eq x y -> In y (add x s).
   Parameter add_2 : In y s -> In y (add x s).
   Parameter add_3 : ~ E.eq x y -> In y (add x s) -> In y s. 
 
   (** Specification of [remove] *)
-  Parameter remove_1 : E.eq y x -> ~ In y (remove x s).
+  Parameter remove_1 : E.eq x y -> ~ In y (remove x s).
   Parameter remove_2 : ~ E.eq x y -> In y s -> In y (remove x s).
   Parameter remove_3 : In y (remove x s) -> In y s.
 
@@ -312,7 +312,7 @@ Module Type Sdep.
   Parameter In : elt -> t -> Prop.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add x s s' := forall y, In y s' <-> E.eq y x \/ In y s.
+  Definition Add x s s' := forall y, In y s' <-> E.eq x y \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
   Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
@@ -333,7 +333,7 @@ Module Type Sdep.
   Parameter
     remove :
       forall (x : elt) (s : t),
-      {s' : t | forall y : elt, In y s' <-> ~ E.eq y x /\ In y s}.
+      {s' : t | forall y : elt, In y s' <-> ~ E.eq x y /\ In y s}.
 
   Parameter
     union :

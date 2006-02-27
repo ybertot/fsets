@@ -654,7 +654,7 @@ Proof.
  apply MX.lt_eq with x; auto.
 Qed.
 
-Lemma add_1 : forall m x y e, avl m -> X.eq y x -> MapsTo y e (add x e m).
+Lemma add_1 : forall m x y e, avl m -> X.eq x y -> MapsTo y e (add x e m).
 Proof. 
  intros m x y e; functional induction add x e m; 
    intros; inv bst; inv avl; try rewrite bal_mapsto; unfold create; eauto.
@@ -970,7 +970,7 @@ Proof.
  destruct H0; eauto.
 Qed.
 
-Lemma remove_1 : forall m x y, bst m -> avl m -> X.eq y x -> ~ In y (remove x m).
+Lemma remove_1 : forall m x y, bst m -> avl m -> X.eq x y -> ~ In y (remove x m).
 Proof. 
  intros; rewrite remove_in; intuition.
 Qed. 
@@ -1782,7 +1782,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition add_2 m x y e e':= add_2 elt m.(this) x y e e' m.(is_avl).
  Definition add_3 m x y e e' := add_3 elt m.(this) x y e e' m.(is_avl).
 
- Lemma remove_1 : forall m x y, E.eq y x -> ~ In y (remove x m).
+ Lemma remove_1 : forall m x y, E.eq x y -> ~ In y (remove x m).
  Proof.
  unfold In, remove; intros m x y; rewrite In_alt; simpl; apply remove_1; auto.
  apply m.(is_bst).

@@ -175,12 +175,12 @@ Module Type S.
       Parameter is_empty_2 : is_empty m = true -> Empty m.
       
     (** Specification of [add] *)
-      Parameter add_1 : y = x -> MapsTo y e (add x e m).
+      Parameter add_1 : x = y -> MapsTo y e (add x e m).
       Parameter add_2 : x <> y -> MapsTo y e m -> MapsTo y e (add x e' m).
       Parameter add_3 : x <> y -> MapsTo y e (add x e' m) -> MapsTo y e m.
 
     (** Specification of [remove] *)
-      Parameter remove_1 : y = x -> ~ In y (remove x m).
+      Parameter remove_1 : x = y -> ~ In y (remove x m).
       Parameter remove_2 : x <> y -> MapsTo y e m -> MapsTo y e (remove x m).
       Parameter remove_3 : MapsTo y e (remove x m) -> MapsTo y e m.
 

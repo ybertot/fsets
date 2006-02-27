@@ -255,7 +255,7 @@ Module Raw (X: OrderedType).
   Qed. 
 
   Lemma add_1 :
-   forall (s : t) (Hs : Sort s) (x y : elt), X.eq y x -> In y (add x s).
+   forall (s : t) (Hs : Sort s) (x y : elt), X.eq x y -> In y (add x s).
   Proof.
   simple induction s. 
   simpl; intuition.
@@ -306,7 +306,7 @@ Module Raw (X: OrderedType).
   Qed. 
 
   Lemma remove_1 :
-   forall (s : t) (Hs : Sort s) (x y : elt), X.eq y x -> ~ In y (remove x s).
+   forall (s : t) (Hs : Sort s) (x y : elt), X.eq x y -> ~ In y (remove x s).
   Proof.
   simple induction s. 
   simpl; red; intros; inversion H0.
@@ -314,7 +314,9 @@ Module Raw (X: OrderedType).
   inversion_clear H1.
   absurd (X.eq x a); eauto. 
   absurd (X.lt a x); auto; eapply Sort_Inf_In; eauto.
+  apply In_eq with y; auto.
   absurd (X.lt a x); auto; eapply Sort_Inf_In; eauto.
+  apply In_eq with y; auto.
   inversion_clear H1; firstorder. 
   absurd (X.eq x a); eauto.
   Qed.

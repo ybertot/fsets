@@ -351,7 +351,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
   Definition Add (x : elt) (s s' : t) :=
-    forall y : elt, In y s' <-> E.eq y x \/ In y s.
+    forall y : elt, In y s' <-> E.eq x y \/ In y s.
   Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) (s : t) :=
     forall x : elt, In x s -> P x.
@@ -475,7 +475,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     bst s /\
     avl s /\
     height_of_node l r (height s) /\
-    (forall y : elt, In_tree y s <-> X.eq y x \/ In_tree y l \/ In_tree y r)}.
+    (forall y : elt, In_tree y s <-> X.eq x y \/ In_tree y l \/ In_tree y r)}.
   Proof.
     unfold height_of_node in |- *; intros.
     exists (Node l x r (max (height l) (height r) + 1)).
@@ -507,7 +507,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      (-2 <= height l - height r <= 2 -> height_of_node l r (height s))) /\
     
     (* elements are those of (l,x,r) *)
-    (forall y : elt, In_tree y s <-> X.eq y x \/ In_tree y l \/ In_tree y r)}.
+    (forall y : elt, In_tree y s <-> X.eq x y \/ In_tree y l \/ In_tree y r)}.
   Proof.
     intros l x r bst_l avl_l bst_r avl_r; simpl in |- *.
     intros Hl Hr Hh.
@@ -740,7 +740,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     bst s' /\
     avl s' /\
     0 <= height s' - height s <= 1 /\
-    (forall y : elt, In_tree y s' <-> E.eq y x \/ In_tree y s)}.
+    (forall y : elt, In_tree y s' <-> E.eq x y \/ In_tree y s)}.
   Proof.
     simple induction s; simpl in |- *; intros.
     (* s = Leaf *)
@@ -833,7 +833,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     bst s /\
     avl s /\
     (height_of_node l r (height s) \/ height_of_node l r (height s + 1)) /\
-    (forall y : elt, In_tree y s <-> X.eq y x \/ In_tree y l \/ In_tree y r)}.
+    (forall y : elt, In_tree y s <-> X.eq x y \/ In_tree y l \/ In_tree y r)}.
   Proof.
     simple induction l; simpl in |- *.
     (* l = Leaf *)
@@ -1083,7 +1083,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     bst s' /\
     avl s' /\
     (height s' = height s \/ height s' = height s - 1) /\
-    (forall y : elt, In_tree y s' <-> ~ E.eq y x /\ In_tree y s)}.
+    (forall y : elt, In_tree y s' <-> ~ E.eq x y /\ In_tree y s)}.
   Proof.
     simple induction s; simpl in |- *; intuition.
     (* s = Leaf *)
@@ -1134,7 +1134,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; apply H11; auto.
     apply X.eq_trans with x; auto.
     inversion_clear H8; intuition.
-    absurd (X.eq y x); auto.
+    absurd (X.eq x y); auto.
     apply X.eq_trans with t1; auto.
     (* t1 < x *)
     clear H; case H0; clear H0.
@@ -1164,7 +1164,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Definition remove :
     forall (x : elt) (s : t),
-    {s' : t | forall y : elt, In y s' <-> ~ E.eq y x /\ In y s}.
+    {s' : t | forall y : elt, In y s' <-> ~ E.eq x y /\ In y s}.
   Proof.
     intros x (s, Hs, Hrb); case (remove_tree x s); trivial.
     intros s'; intuition; clear H0.
@@ -2111,7 +2111,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply H25; left; apply H22; left; apply H19; right; trivial.
     decompose [and] H20; clear H20.
     inversion_clear H27.
-    apply H25; left; apply H22; left; apply H19; left; trivial.
+    apply H25; left; apply H22; left; apply H19; left; auto.
     apply H25; left; apply H22; right; auto.
     apply H25; right; auto.
     elim (H14 H17); intros.

@@ -155,7 +155,7 @@ Module Raw (X: DecidableType).
   Qed.
 
   Lemma add_1 :
-   forall (s : t) (Hs : NoRedun s) (x y : elt), X.eq y x -> In y (add x s).
+   forall (s : t) (Hs : NoRedun s) (x y : elt), X.eq x y -> In y (add x s).
   Proof.
   induction s. 
   simpl; intuition.
@@ -203,13 +203,13 @@ Module Raw (X: DecidableType).
   Qed.
 
   Lemma remove_1 :
-   forall (s : t) (Hs : NoRedun s) (x y : elt), X.eq y x -> ~ In y (remove x s).
+   forall (s : t) (Hs : NoRedun s) (x y : elt), X.eq x y -> ~ In y (remove x s).
   Proof.
   simple induction s. 
   simpl; red; intros; inversion H0.
   simpl; intros; case (X.eq_dec x a); intuition; inversion_clear Hs. 
   elim H2.
-  eapply In_eq; eauto.
+  apply In_eq with y; eauto.
   inversion_clear H1; eauto.
   Qed.
 
@@ -470,7 +470,7 @@ Module Raw (X: DecidableType).
   eapply remove_3; eauto.
   red; intros.
   inversion_clear H4; auto.
-  destruct (remove_1 Hs H5 H2).
+  destruct (remove_1 Hs (X.eq_sym H5) H2).
   Qed.
 
   Lemma diff_1 :
