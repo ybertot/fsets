@@ -1009,7 +1009,7 @@ Fixpoint elements_aux (acc : list (key*elt)) (t : tree) {struct t} : list (key*e
 
 (** then [elements] is an instanciation with an empty [acc] *)
 
-Definition elements := elements_aux [].
+Definition elements := elements_aux nil.
 
 Lemma elements_aux_mapsto : forall s acc x e, 
  InA eqke (x,e) (elements_aux acc s) <-> MapsTo x e s \/ InA eqke (x,e) acc.
@@ -1026,7 +1026,7 @@ Qed.
 
 Lemma elements_mapsto : forall s x e, InA eqke (x,e) (elements s) <-> MapsTo x e s. 
 Proof. 
- intros; generalize (elements_aux_mapsto s [] x e); intuition.
+ intros; generalize (elements_aux_mapsto s nil x e); intuition.
  inversion_clear H0.
 Qed.
 
@@ -1133,7 +1133,7 @@ Inductive enumeration : Set :=
     of elements actually compared *)
  
 Fixpoint flatten_e (e : enumeration) : list (key*elt) := match e with
-  | End => []
+  | End => nil
   | More x e t r => (x,e) :: elements t ++ flatten_e r
  end.
 

@@ -1575,7 +1575,7 @@ Unset Implicit Arguments.
   assert (n = 1). rewrite two_p_S in Hn2; simpl in Hn2; auto with zarith.
   rewrite H.
   intro l; case l.
-   (* l = [], absurd case. *)
+   (* l = nil, absurd case. *)
    intros Hl1 Hl2; unfold Zlength, Zlt in Hl2; elim Hl2; trivial.
    (* l = x::l' *)
    intros x l' Hl1 Hl2; exists (Node red Leaf x Leaf, l'); intuition.
@@ -1598,7 +1598,7 @@ Unset Implicit Arguments.
   (* First recursive call : (of_list_aux (Zpred k) n1 l) gives (lft,l') *)
   elim (Hrec n1 Hn1 l Hl1). 
   intro p; case p; clear p; intros lft l'; case l'.
-   (* l' = [], absurd case. *)
+   (* l' = nil, absurd case. *)
    intros o; elimtype False.  
    generalize (olai_length o).
    unfold Zlength at 1 in |- *; simpl in |- *; intros X. 
@@ -1715,7 +1715,7 @@ Unset Implicit Arguments.
 
   (** then [elements_tree] is an instanciation with an empty [acc] *)
 
-  Definition elements_tree := elements_tree_aux [].
+  Definition elements_tree := elements_tree_aux nil.
 
   Lemma elements_tree_aux_acc_1 :
    forall (s : tree) (acc : list elt) (x : elt),

@@ -20,9 +20,6 @@ Require Import FSetWeakInterface.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(** Usual syntax for lists. *)
-Notation "[]" := nil (at level 0).
-
 (** * Functions over lists
 
    First, we provide sets as lists which are (morally) without redundancy.
@@ -36,7 +33,7 @@ Module Raw (X: DecidableType).
   Definition elt := X.t.
   Definition t := list elt.
 
-  Definition empty : t := [].
+  Definition empty : t := nil.
 
   Definition is_empty (l : t) : bool := if l then true else false.
 
@@ -44,30 +41,30 @@ Module Raw (X: DecidableType).
 
   Fixpoint mem (x : elt) (s : t) {struct s} : bool :=
     match s with
-    | [] => false
+    | nil => false
     | y :: l =>
            if X.eq_dec x y then true else mem x l
     end.
 
   Fixpoint add (x : elt) (s : t) {struct s} : t :=
     match s with
-    | [] => x :: []
+    | nil => x :: nil
     | y :: l =>
         if X.eq_dec x y then s else y :: add x l
     end.
 
-  Definition singleton (x : elt) : t := x :: []. 
+  Definition singleton (x : elt) : t := x :: nil. 
 
   Fixpoint remove (x : elt) (s : t) {struct s} : t :=
     match s with
-    | [] => []
+    | nil => nil
     | y :: l =>
         if X.eq_dec x y then l else y :: remove x l
     end.
 
   Fixpoint fold (B : Set) (f : elt -> B -> B) (s : t) {struct s} : 
    B -> B := fun i => match s with
-                      | [] => i
+                      | nil => i
                       | x :: l => fold f l (f x i)
                       end.  
 
@@ -84,26 +81,26 @@ Module Raw (X: DecidableType).
 
   Fixpoint filter (f : elt -> bool) (s : t) {struct s} : t :=
     match s with
-    | [] => []
+    | nil => nil
     | x :: l => if f x then x :: filter f l else filter f l
     end.  
 
   Fixpoint for_all (f : elt -> bool) (s : t) {struct s} : bool :=
     match s with
-    | [] => true
+    | nil => true
     | x :: l => if f x then for_all f l else false
     end.  
  
   Fixpoint exists_ (f : elt -> bool) (s : t) {struct s} : bool :=
     match s with
-    | [] => false
+    | nil => false
     | x :: l => if f x then true else exists_ f l
     end.
 
   Fixpoint partition (f : elt -> bool) (s : t) {struct s} : 
    t * t :=
     match s with
-    | [] => ([], [])
+    | nil => (nil, nil)
     | x :: l =>
         let (s1, s2) := partition f l in
         if f x then (x :: s1, s2) else (s1, x :: s2)
@@ -115,7 +112,7 @@ Module Raw (X: DecidableType).
 
   Definition choose (s : t) : option elt := 
      match s with 
-      | [] => None
+      | nil => None
       | x::_ => Some x
      end.
 

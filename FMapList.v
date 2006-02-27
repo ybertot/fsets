@@ -20,8 +20,6 @@ Require Import FMapInterface.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(** Usual syntax for lists. *)
-Notation "[]" := nil (at level 0).
 Arguments Scope list [type_scope].
 
 Module Raw (X:OrderedType).
@@ -54,7 +52,7 @@ Module Raw (X:OrderedType).
   Notation Sort := (sort ltk).
   Notation Inf := (lelistA (ltk)).
 
-    Definition empty : t elt := [].
+    Definition empty : t elt := nil.
 
     (** Specification of [empty] *)
 
@@ -98,7 +96,7 @@ Module Raw (X:OrderedType).
 
     Fixpoint mem (k : key) (s : t elt) {struct s} : bool :=
       match s with
-	| [] => false
+	| nil => false
 	| (k',_) :: l =>
           match X.compare k k' with
             | Lt _ => false
@@ -139,7 +137,7 @@ Module Raw (X:OrderedType).
 
     Fixpoint find (k:key) (s: t elt) {struct s} : option elt :=
       match s with
-	| [] => None
+	| nil => None
 	| (k',x)::s' => 
 	  match X.compare k k' with
 	    | Lt _ => None
@@ -188,7 +186,7 @@ Module Raw (X:OrderedType).
 
     Fixpoint add (k : key) (x : elt) (s : t elt) {struct s} : t elt :=
       match s with
-	| [] => (k,x) :: []
+	| nil => (k,x) :: nil
 	| (k',y) :: l =>
           match X.compare k k' with
             | Lt _ => (k,x)::s
@@ -254,7 +252,7 @@ Module Raw (X:OrderedType).
 
   Fixpoint remove (k : key) (s : t elt) {struct s} : t elt :=
       match s with
-	| [] => []
+	| nil => nil
 	| (k',x) :: l =>
           match X.compare k k' with
             | Lt _ => s
@@ -363,7 +361,7 @@ Module Raw (X:OrderedType).
     Fixpoint fold (A:Set) (f:key -> elt -> A -> A) (m:t elt) {struct m} : A -> A :=
       fun acc => 
       match m with
-	| [] => acc
+	| nil => acc
 	| (k,e)::m' => fold f m' (f k e acc)
       end.
 
@@ -376,7 +374,7 @@ Module Raw (X:OrderedType).
 
      Fixpoint equal (cmp: elt -> elt -> bool)(m m' : t elt) { struct m } : bool := 
        match m, m' with 
-        | [], [] => true
+        | nil, nil => true
         | (x,e)::l, (x',e')::l' => 
             match X.compare x x' with 
              | Eq _ => cmp e e' && equal cmp l l'
@@ -528,13 +526,13 @@ Module Raw (X:OrderedType).
       
       Fixpoint map (f:elt -> elt') (m:t elt) {struct m} : t elt' :=
 	match m with
-	  | [] => []
+	  | nil => nil
 	  | (k,e)::m' => (k,f e) :: map f m'
 	end.
 
       Fixpoint mapi (f: key -> elt -> elt') (m:t elt) {struct m} : t elt' :=
 	match m with
-	  | [] => []
+	  | nil => nil
 	  | (k,e)::m' => (k,f k e) :: mapi f m'
 	end.
 
@@ -690,23 +688,23 @@ Module Raw (X:OrderedType).
 
       Fixpoint map2_l (m : t elt) : t elt'' := 
         match m with 
-          | [] => [] 
+          | nil => nil 
           | (k,e)::l => option_cons k (f (Some e) None) (map2_l l)
         end. 
 
       Fixpoint map2_r (m' : t elt') : t elt'' := 
         match m' with 
-          | [] => [] 
+          | nil => nil 
           | (k,e')::l' => option_cons k (f None (Some e')) (map2_r l')
         end. 
 
       Fixpoint map2 (m : t elt) : t elt' -> t elt'' :=
         match m with
-          | [] => map2_r 
+          | nil => map2_r 
           | (k,e) :: l =>
             fix map2_aux (m' : t elt') : t elt'' :=
               match m' with
-                | [] => map2_l m
+                | nil => map2_l m
                 | (k',e') :: l' =>
                   match X.compare k k' with
                     | Lt _ => option_cons k (f (Some e) None) (map2 l m')
@@ -718,11 +716,11 @@ Module Raw (X:OrderedType).
 
      Fixpoint combine (m : t elt) : t elt' -> t (option elt * option elt') :=
         match m with
-          | [] => map (fun e' => (None,Some e'))
+          | nil => map (fun e' => (None,Some e'))
           | (k,e) :: l =>
             fix combine_aux (m' : t elt') : list (key * (option elt * option elt')) :=
               match m' with
-                | [] => map (fun e => (Some e,None)) m
+                | nil => map (fun e => (Some e,None)) m
                 | (k',e') :: l' =>
                   match X.compare k k' with
                     | Lt _ => (k,(Some e, None))::combine l m'
@@ -778,7 +776,7 @@ Module Raw (X:OrderedType).
     induction m'. 
     intros.
     destruct a.
-    replace (combine ((t0, e0) :: m) []) with 
+    replace (combine ((t0, e0) :: m) nil) with 
                  (map (fun e => (Some e,None (A:=elt'))) ((t0,e0)::m)); auto.
     eapply map_lelistA; eauto.
     intros.
@@ -802,7 +800,7 @@ Module Raw (X:OrderedType).
     induction m'. 
     intros; clear Hm'.
     destruct a.
-    replace (combine ((t0, e) :: m) []) with 
+    replace (combine ((t0, e) :: m) nil) with 
                  (map (fun e => (Some e,None (A:=elt'))) ((t0,e)::m)); auto.
     apply map_sorted; auto.
     intros.
@@ -875,7 +873,7 @@ Module Raw (X:OrderedType).
     simpl; destruct (X.compare x t0); simpl; auto.
     inversion_clear Hm'; auto.
     induction m'.
-    (* m' = [] *)
+    (* m' = nil *)
     intros; destruct a; simpl.
     destruct (X.compare x t0); simpl; auto.
     inversion_clear Hm; clear H0 l Hm' IHm t0.
@@ -883,7 +881,7 @@ Module Raw (X:OrderedType).
     inversion_clear H.
     destruct a.
     simpl; destruct (X.compare x t0); simpl; auto.
-    (* m' <> [] *)
+    (* m' <> nil *)
     intros.
     destruct a as (k,e); destruct a0 as (k',e'); simpl.
     inversion Hm; inversion Hm'; subst.
@@ -928,7 +926,7 @@ Module Raw (X:OrderedType).
     generalize H; clear H.
     match goal with |- ?g => 
        assert (g /\ (find x m0 = None -> 
-                           find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) []) 
+                           find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) nil) 
                            = None)); 
        [ | intuition ] end.
     induction m0; simpl in *; intuition.
@@ -1127,7 +1125,7 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
 
   Fixpoint eq_list (m m' : list (X.t * D.t)) { struct m } : Prop := 
        match m, m' with 
-        | [], [] => True
+        | nil, nil => True
         | (x,e)::l, (x',e')::l' => 
             match X.compare x x' with 
              | Eq _ => D.eq e e' /\ eq_list l l'
@@ -1139,9 +1137,9 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   Definition eq m m' := eq_list m.(this) m'.(this).
 
   Fixpoint lt_list (m m' : list (X.t * D.t)) {struct m} : Prop := match m, m' with 
-    | [], [] => False
-    | [], _  => True
-    | _, []  => False
+    | nil, nil => False
+    | nil, _  => True
+    | _, nil  => False
     | (x,e)::l, (x',e')::l' => 
         match X.compare x x' with 
           | Lt _ => True

@@ -1373,7 +1373,7 @@ Fixpoint elements_aux (acc : list X.t) (t : tree) {struct t} : list X.t :=
 
 (** then [elements] is an instanciation with an empty [acc] *)
 
-Definition elements := elements_aux [].
+Definition elements := elements_aux nil.
 
 Lemma elements_aux_in : forall s acc x, 
  InA X.eq x (elements_aux acc s) <-> In x s \/ InA X.eq x acc.
@@ -1389,7 +1389,7 @@ Qed.
 
 Lemma elements_in : forall s x, InA X.eq x (elements s) <-> In x s. 
 Proof. 
- intros; generalize (elements_aux_in s [] x); intuition.
+ intros; generalize (elements_aux_in s nil x); intuition.
  inversion_clear H0.
 Qed.
 
@@ -1777,7 +1777,7 @@ Qed.
 
 Lemma cardinal_elements_1 : forall s : tree, cardinal s = length (elements s).
 Proof.
- exact (fun s => cardinal_elements_aux_1 s []).
+ exact (fun s => cardinal_elements_aux_1 s nil).
 Qed.
 
 (** NB: the remaining functions (union, subset, compare) are still defined
@@ -1791,7 +1791,7 @@ Lemma sorted_subset_cardinal : forall l' l : list X.t,
 Proof.
  simple induction l'; simpl in |- *; intuition.
  destruct l; trivial; intros.
- absurd (MX.In t []); intuition.
+ absurd (MX.In t nil); intuition.
  inversion_clear H2.
  inversion_clear H1.
  destruct l0; simpl in |- *; intuition.
@@ -2173,7 +2173,7 @@ Inductive enumeration : Set :=
     of elements actually compared *)
  
 Fixpoint flatten_e (e : enumeration) : list elt := match e with
-  | End => []
+  | End => nil
   | More x t r => x :: elements t ++ flatten_e r
  end.
 

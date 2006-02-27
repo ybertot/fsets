@@ -60,10 +60,6 @@ Definition gen_st : forall A : Set, Setoid_Theory _ (eq (A:=A)).
 auto.
 Qed.
 
-(** Usual syntax for lists. *)
-Notation "[]" := nil (at level 0).
-
-
 Module Properties (M: S).
   Import M.
   Import Logic. (* to unmask [eq] *)  
@@ -196,7 +192,7 @@ Module Properties (M: S).
    intros; apply Seq_refl; auto.
    unfold ListEq in |- *; intros.
    elim (H3 e); intros. 
-   assert (X : ME.In e []); auto; inversion X.
+   assert (X : ME.In e nil); auto; inversion X.
    intros x l Hrec s' U U' E.
    simpl in |- *.   
    apply (Seq_trans _ _ st) with (f x (fold_right f i (remove_list x s'))).
@@ -224,7 +220,7 @@ Module Properties (M: S).
    simple induction s'.
    unfold ListAdd in |- *; intros.
    elim (H4 x); intros. 
-   assert (X : ME.In x []); auto; inversion X.
+   assert (X : ME.In x nil); auto; inversion X.
    intros x' l' Hrec s x U U' IN EQ; simpl in |- *.
    (* if x=x' *)
    case (ME.eq_dec x x'); intros.

@@ -1597,7 +1597,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   (** then [elements_tree] is an instanciation with an empty [acc] *)
 
-  Definition elements_tree := elements_tree_aux [].
+  Definition elements_tree := elements_tree_aux nil.
 
   Lemma elements_tree_aux_acc_1 :
    forall (s : tree) (acc : list elt) (x : elt),
@@ -1719,7 +1719,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Lemma cardinal_elements_2 :
    forall s : tree, cardinal_tree s = length (elements_tree s).
   Proof.
-    exact (fun s => cardinal_elements_1 s []).
+    exact (fun s => cardinal_elements_1 s nil).
   Qed.
 
   Definition cardinal :
@@ -1741,7 +1741,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     simple induction l'; simpl in |- *; intuition.
     destruct l; trivial; intros.
-    absurd (ME.In t0 []); intuition.
+    absurd (ME.In t0 nil); intuition.
     inversion_clear H2.
     inversion_clear H1.
     destruct l0; simpl in |- *; intuition.
@@ -2504,9 +2504,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 <<
     let rec compare_aux l1 l2 =
         match (l1, l2) with
-        ([], []) -> 0
-      | ([], _)  -> -1
-      | (_, []) -> 1
+        (nil, nil) -> 0
+      | (nil, _)  -> -1
+      | (_, nil) -> 1
       | (Empty :: t1, Empty :: t2) ->
           compare_aux t1 t2
       | (Node(Empty, v1, r1, _) :: t1, Node(Empty, v2, r2, _) :: t2) ->
@@ -2530,7 +2530,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   
   Fixpoint flatten (l : list tree) : list elt :=
     match l with
-    | [] => []
+    | nil => nil
     | t :: r => elements_tree t ++ flatten r
     end.
 
@@ -2548,7 +2548,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Hint Constructors In_tree_l.
 
   Inductive sorted_l : list tree -> Prop :=
-    | SortedLNil : sorted_l []
+    | SortedLNil : sorted_l nil
     | SortedLCons :
         forall (s : tree) (l : list tree),
         bst s ->
@@ -2604,7 +2604,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   (** ** Termination of [compare_aux]
 
      The measure is given by
-     [m([]) = 0], [m(s :: l) = m(s) + m(l)],
+     [m(nil) = 0], [m(s :: l) = m(s) + m(l)],
      [m(Leaf) = 1], and [m(Node(l,_,r,_) = 1 + 3m(l) + m(r)] *)
 
   Fixpoint measure_t (s : tree) : Z :=
@@ -2615,7 +2615,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Fixpoint measure_l (l : list tree) : Z :=
     match l with
-    | [] => 0
+    | nil => 0
     | s :: l => measure_t s + measure_l l
     end.
 
@@ -2694,10 +2694,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma lt_nil_elements_tree_Node :
    forall (l r : tree) (x : elt) (z : Z),
-   L.lt [] (elements_tree (Node l x r z)).
+   L.lt nil (elements_tree (Node l x r z)).
   Proof.
     unfold elements_tree in |- *; simpl in |- *; intros l r x z; clear z.
-    generalize (elements_tree_aux [] r) x.
+    generalize (elements_tree_aux nil r) x.
     induction l; simpl in |- *; intuition.
   Qed.
 
@@ -2796,29 +2796,29 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Fixpoint no_leaf (l : list tree) : Prop :=
     match l with
-    | [] => True
+    | nil => True
     | Leaf :: _ => False
     | _ :: r => no_leaf r
     end.
 
   Inductive leaf_invariant : list tree -> list tree -> Prop :=
-    | LI_nil_l : forall l : list tree, no_leaf l -> leaf_invariant [] l
-    | LI_l_nil : forall l : list tree, no_leaf l -> leaf_invariant l []
+    | LI_nil_l : forall l : list tree, no_leaf l -> leaf_invariant nil l
+    | LI_l_nil : forall l : list tree, no_leaf l -> leaf_invariant l nil
     | LI_leaf_leaf :
         forall l1 l2 : list tree,
         no_leaf l1 -> no_leaf l2 -> leaf_invariant (Leaf :: l1) (Leaf :: l2)
     | LI_leaf_l :
         forall l1 l2 : list tree,
         no_leaf l1 ->
-        no_leaf l2 -> l2 <> [] -> leaf_invariant (Leaf :: l1) l2
+        no_leaf l2 -> l2 <> nil -> leaf_invariant (Leaf :: l1) l2
     | LI_l_leaf :
         forall l1 l2 : list tree,
         no_leaf l1 ->
-        no_leaf l2 -> l1 <> [] -> leaf_invariant l1 (Leaf :: l2)
+        no_leaf l2 -> l1 <> nil -> leaf_invariant l1 (Leaf :: l2)
     | LI_l_l :
         forall l1 l2 : list tree,
         no_leaf l1 ->
-        no_leaf l2 -> l1 <> [] -> l2 <> [] -> leaf_invariant l1 l2.
+        no_leaf l2 -> l1 <> nil -> l2 <> nil -> leaf_invariant l1 l2.
 
   Hint Constructors leaf_invariant.
 
@@ -3033,7 +3033,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma flatten_elements :
-   forall s : tree, flatten (s :: []) = elements_tree s.
+   forall s : tree, flatten (s :: nil) = elements_tree s.
   Proof.
     simpl in |- *; intros; rewrite <- app_nil_end; auto.
   Qed.
@@ -3042,7 +3042,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     intros (s1, s1_bst, s1_avl) (s2, s2_bst, s2_avl); unfold lt, eq in |- *;
      simpl in |- *.
-    case (compare_aux (s1 :: []) (s2 :: [])); intros.
+    case (compare_aux (s1 :: nil) (s2 :: nil)); intros.
     constructor; intuition; inversion_clear H0.
     constructor; intuition; inversion_clear H0.
     destruct s1 as [| t0 t1 t2 z];
@@ -3096,7 +3096,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
  
    Fixpoint flatten_e (e : enumeration) : list elt :=
     match e with
-    | End => []
+    | End => nil
     | More x t r => x :: elements_tree t ++ flatten_e r
     end.
 

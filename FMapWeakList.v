@@ -23,8 +23,6 @@ Require Import FMapWeakInterface.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(** Usual syntax for lists. *)
-Notation "[]" := nil (at level 0).
 Arguments Scope list [type_scope].
 
 Module Raw (X:DecidableType).
@@ -127,7 +125,7 @@ Module Raw (X:DecidableType).
    intros (x,H); eauto.
   Qed.
 
-    Lemma notin_empty : forall k, ~ In k [].
+    Lemma notin_empty : forall k, ~ In k nil.
       intros k abs.
       inversion abs.
       inversion H.
@@ -179,7 +177,7 @@ Module Raw (X:DecidableType).
 
    (** end of auxiliary results *)
 
-    Definition empty : t elt := [].
+    Definition empty : t elt := nil.
 
     (** Specification of [empty] *)
 
@@ -222,7 +220,7 @@ Module Raw (X:DecidableType).
 
     Fixpoint mem (k : key) (s : t elt) {struct s} : bool :=
       match s with
-	| [] => false
+	| nil => false
 	| (k',_) :: l => if X.eq_dec k k' then true else mem k l
       end.
 
@@ -254,7 +252,7 @@ Module Raw (X:DecidableType).
 
     Fixpoint find (k:key) (s: t elt) {struct s} : option elt :=
       match s with
-	| [] => None
+	| nil => None
 	| (k',x)::s' => if X.eq_dec k k' then Some x else find k s'
       end.
 
@@ -291,7 +289,7 @@ Module Raw (X:DecidableType).
 
     Fixpoint add (k : key) (x : elt) (s : t elt) {struct s} : t elt :=
       match s with
-	| [] => (k,x) :: []
+	| nil => (k,x) :: nil
 	| (k',y) :: l => if X.eq_dec k k' then (k,x)::l else (k',y)::add k x l
       end.
 
@@ -347,7 +345,7 @@ Module Raw (X:DecidableType).
 
     Fixpoint remove (k : key) (s : t elt) {struct s} : t elt :=
       match s with
-	| [] => []
+	| nil => nil
 	| (k',x) :: l => if X.eq_dec k k' then l else (k',x) :: remove k l
       end.  
 
@@ -451,7 +449,7 @@ Module Raw (X:DecidableType).
     Fixpoint fold (A:Set) (f:key -> elt -> A -> A) (m:t elt) {struct m} : A -> A :=
       fun acc => 
       match m with
-	| [] => acc
+	| nil => acc
 	| (k,e)::m' => fold f m' (f k e acc)
       end.
 
@@ -567,13 +565,13 @@ Module Raw (X:DecidableType).
       
       Fixpoint map (f:elt -> elt') (m:t elt) {struct m} : t elt' :=
 	match m with
-	  | [] => []
+	  | nil => nil
 	  | (k,e)::m' => (k,f e) :: map f m'
 	end.
 
       Fixpoint mapi (f: key -> elt -> elt') (m:t elt) {struct m} : t elt' :=
 	match m with
-	  | [] => []
+	  | nil => nil
 	  | (k,e)::m' => (k,f k e) :: mapi f m'
 	end.
 
@@ -952,7 +950,7 @@ Module Raw (X:DecidableType).
     generalize H; clear H.
     match goal with |- ?g => 
        assert (g /\ (find x m0 = None -> 
-                           find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) []) = None)); 
+                           find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) nil) = None)); 
        [ | intuition ] end.
     induction m0; simpl in *; intuition.
     destruct o; destruct o'; simpl in *; try discriminate; auto.

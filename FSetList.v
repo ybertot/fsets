@@ -20,9 +20,6 @@ Require Export FSetInterface.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(** Usual syntax for lists. *)
-Notation "[]" := nil (at level 0).
-
 (** * Functions over lists
 
    First, we provide sets as lists which are not necessarily sorted.
@@ -38,7 +35,7 @@ Module Raw (X: OrderedType).
   Definition elt := X.t.
   Definition t := list elt.
 
-  Definition empty : t := [].
+  Definition empty : t := nil.
 
   Definition is_empty (l : t) : bool := if l then true else false.
 
@@ -46,7 +43,7 @@ Module Raw (X: OrderedType).
 
   Fixpoint mem (x : elt) (s : t) {struct s} : bool :=
     match s with
-    | [] => false
+    | nil => false
     | y :: l =>
         match X.compare x y with
         | Lt _ => false
@@ -57,7 +54,7 @@ Module Raw (X: OrderedType).
 
   Fixpoint add (x : elt) (s : t) {struct s} : t :=
     match s with
-    | [] => x :: []
+    | nil => x :: nil
     | y :: l =>
         match X.compare x y with
         | Lt _ => x :: s
@@ -66,11 +63,11 @@ Module Raw (X: OrderedType).
         end
     end.
 
-  Definition singleton (x : elt) : t := x :: []. 
+  Definition singleton (x : elt) : t := x :: nil. 
 
   Fixpoint remove (x : elt) (s : t) {struct s} : t :=
     match s with
-    | [] => []
+    | nil => nil
     | y :: l =>
         match X.compare x y with
         | Lt _ => s
@@ -81,11 +78,11 @@ Module Raw (X: OrderedType).
   
   Fixpoint union (s : t) : t -> t :=
     match s with
-    | [] => fun s' => s'
+    | nil => fun s' => s'
     | x :: l =>
         (fix union_aux (s' : t) : t :=
            match s' with
-           | [] => s
+           | nil => s
            | x' :: l' =>
                match X.compare x x' with
                | Lt _ => x :: union l s'
@@ -97,11 +94,11 @@ Module Raw (X: OrderedType).
 
   Fixpoint inter (s : t) : t -> t :=
     match s with
-    | [] => fun _ => []
+    | nil => fun _ => nil
     | x :: l =>
         (fix inter_aux (s' : t) : t :=
            match s' with
-           | [] => []
+           | nil => nil
            | x' :: l' =>
                match X.compare x x' with
                | Lt _ => inter l s'
@@ -113,11 +110,11 @@ Module Raw (X: OrderedType).
   
   Fixpoint diff (s : t) : t -> t :=
     match s with
-    | [] => fun _ => []
+    | nil => fun _ => nil
     | x :: l =>
         (fix diff_aux (s' : t) : t :=
            match s' with
-           | [] => s
+           | nil => s
            | x' :: l' =>
                match X.compare x x' with
                | Lt _ => x :: diff l s'
@@ -130,7 +127,7 @@ Module Raw (X: OrderedType).
   Fixpoint equal (s : t) : t -> bool :=
     fun s' : t =>
     match s, s' with
-    | [], [] => true
+    | nil, nil => true
     | x :: l, x' :: l' =>
         match X.compare x x' with
         | Eq _ => equal l l'
@@ -141,7 +138,7 @@ Module Raw (X: OrderedType).
 
   Fixpoint subset (s s' : t) {struct s'} : bool :=
     match s, s' with
-    | [], _ => true
+    | nil, _ => true
     | x :: l, x' :: l' =>
         match X.compare x x' with
         | Lt _ => false
@@ -153,32 +150,32 @@ Module Raw (X: OrderedType).
 
   Fixpoint fold (B : Set) (f : elt -> B -> B) (s : t) {struct s} : 
    B -> B := fun i => match s with
-                      | [] => i
+                      | nil => i
                       | x :: l => fold f l (f x i)
                       end.  
 
   Fixpoint filter (f : elt -> bool) (s : t) {struct s} : t :=
     match s with
-    | [] => []
+    | nil => nil
     | x :: l => if f x then x :: filter f l else filter f l
     end.  
 
   Fixpoint for_all (f : elt -> bool) (s : t) {struct s} : bool :=
     match s with
-    | [] => true
+    | nil => true
     | x :: l => if f x then for_all f l else false
     end.  
  
   Fixpoint exists_ (f : elt -> bool) (s : t) {struct s} : bool :=
     match s with
-    | [] => false
+    | nil => false
     | x :: l => if f x then true else exists_ f l
     end.
 
   Fixpoint partition (f : elt -> bool) (s : t) {struct s} : 
    t * t :=
     match s with
-    | [] => ([], [])
+    | nil => (nil, nil)
     | x :: l =>
         let (s1, s2) := partition f l in
         if f x then (x :: s1, s2) else (s1, x :: s2)
@@ -190,14 +187,14 @@ Module Raw (X: OrderedType).
 
   Definition min_elt (s : t) : option elt :=
     match s with
-    | [] => None
+    | nil => None
     | x :: _ => Some x
     end.
 
   Fixpoint max_elt (s : t) : option elt :=
     match s with
-    | [] => None
-    | x :: [] => Some x
+    | nil => None
+    | x :: nil => Some x
     | _ :: l => max_elt l
     end.
 
@@ -224,7 +221,7 @@ Module Raw (X: OrderedType).
   inversion_clear H0.
   simpl; MX.compare; trivial.
   simpl; compare_gt x a; auto.
-  eapply Sort_Inf_In; eauto.
+  apply Sort_Inf_In with l; trivial.
   Qed.
 
   Lemma mem_2 : forall (s : t) (x : elt), mem x s = true -> In x s.
@@ -233,7 +230,7 @@ Module Raw (X: OrderedType).
   intros; inversion H.
   intros a l Hrec x.
   simpl.
-  destruct (X.compare x a); firstorder; discriminate.
+  case (X.compare x a); intros; try discriminate; auto.
   Qed.
 
   Lemma add_Inf :
@@ -259,8 +256,7 @@ Module Raw (X: OrderedType).
   Proof.
   simple induction s. 
   simpl; intuition.
-  simpl; intros; case (X.compare x a); intuition; inversion_clear Hs;
-   firstorder.
+  simpl; intros; case (X.compare x a); inversion_clear Hs; auto.
   eauto.
   Qed.
 
@@ -538,10 +534,10 @@ Module Raw (X: OrderedType).
   simple induction s; unfold Equal.
   intro s'; case s'; auto.
   simpl; intuition.
-  elim (H e); intros; assert (A : In e []); auto; inversion A.
+  elim (H e); intros; assert (A : In e nil); auto; inversion A.
   intros x l Hrec s'.
   case s'.
-  intros; elim (H x); intros; assert (A : In x []); auto; inversion A.
+  intros; elim (H x); intros; assert (A : In x nil); auto; inversion A.
   intros x' l' Hs Hs'; inversion Hs; inversion Hs'; subst.
   simpl; case (X.compare x); intros; auto.
 
@@ -590,7 +586,7 @@ Module Raw (X: OrderedType).
   intros s s'; generalize s' s; clear s s'.
   simple induction s'; unfold Subset.
   intro s; case s; auto.
-  intros; elim (H e); intros; assert (A : In e []); auto; inversion A. 
+  intros; elim (H e); intros; assert (A : In e nil); auto; inversion A. 
   intros x' l' Hrec s; case s.
   simpl; auto.
   intros x l Hs Hs'; inversion Hs; inversion Hs'; subst.
@@ -956,7 +952,7 @@ Module Raw (X: OrderedType).
   Qed.
 
   Inductive lt : t -> t -> Prop :=
-    | lt_nil : forall (x : elt) (s : t), lt [] (x :: s)
+    | lt_nil : forall (x : elt) (s : t), lt nil (x :: s)
     | lt_cons_lt :
         forall (x y : elt) (s s' : t), X.lt x y -> lt (x :: s) (y :: s')
     | lt_cons_eq :
@@ -984,7 +980,7 @@ Module Raw (X: OrderedType).
   intros s s' Hs Hs' H; generalize Hs Hs'; clear Hs Hs'; elim H; intros;
    intro.
   elim (H0 x); intros.
-  assert (X : In x []); auto; inversion X.
+  assert (X : In x nil); auto; inversion X.
   inversion_clear Hs; inversion_clear Hs'.
   elim (H1 x); intros. 
   assert (X : In x (y :: s'0)); auto; inversion_clear X.
