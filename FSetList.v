@@ -276,7 +276,9 @@ Module Raw (X: OrderedType).
   simple induction s. 
   simpl; inversion_clear 3; auto; order.
   simpl; intros a l Hrec Hs x y; case (X.compare x a); intros;
-   inversion_clear H0; inversion_clear Hs; firstorder; order.
+   inversion_clear H0; inversion_clear Hs; auto.
+  order.
+  constructor 2; apply Hrec with x; auto.
   Qed.
 
   Lemma remove_Inf :
@@ -372,7 +374,7 @@ Module Raw (X: OrderedType).
   Proof.
   DoubleInd; case (X.compare x x'); intuition; constructor; auto.
   apply Inf_eq with x'; trivial; apply union_Inf; trivial; apply Inf_eq with x; auto.
-  change (Inf x' (union (x :: l) l')); firstorder.
+  change (Inf x' (union (x :: l) l')); auto.
   Qed.  
   
   Lemma union_1 :
@@ -741,8 +743,11 @@ Module Raw (X: OrderedType).
   Proof.
   simple induction s; simpl.
   intuition.  
-  intros x l Hrec Hs a f Ha; inversion_clear Hs; inversion Ha.
-  case (f x); [ constructor; auto | eauto ]. 
+  intros x l Hrec Hs a f Ha; inversion_clear Hs; inversion_clear Ha.
+  case (f x). 
+  constructor; auto.
+  apply Hrec; auto.
+  apply Inf_lt with x; auto.
   Qed.
 
   Lemma filter_sort :
@@ -763,8 +768,11 @@ Module Raw (X: OrderedType).
   simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  case (f x); simpl; firstorder.
-  inversion H; firstorder.
+  case (f x); simpl.
+  inversion_clear 1.
+  constructor; auto.
+  constructor 2; apply (Hrec a f Hf); trivial.
+  constructor 2; apply (Hrec a f Hf); trivial.
   Qed.
 
    Lemma filter_2 :
@@ -774,9 +782,9 @@ Module Raw (X: OrderedType).
   simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  generalize (Hf x); case (f x); simpl; firstorder.
-  inversion H0; firstorder.
-  symmetry ; firstorder.
+  generalize (Hf x); case (f x); simpl; auto.
+  inversion_clear 2; auto.
+  symmetry; auto.
   Qed.
  
   Lemma filter_3 :
@@ -786,9 +794,10 @@ Module Raw (X: OrderedType).
   simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  generalize (Hf x); case (f x); simpl; firstorder; inversion H0;
-   firstorder.
-  rewrite <- (H a) in H1; auto; discriminate H1.
+  generalize (Hf x); case (f x); simpl.
+  inversion_clear 2; auto.
+  inversion_clear 2; auto.
+  rewrite <- (H a (X.eq_sym H1)); intros; discriminate.
   Qed.
 
   Lemma for_all_1 :
@@ -798,8 +807,9 @@ Module Raw (X: OrderedType).
   Proof. 
   simple induction s; simpl; auto; unfold For_all.
   intros x l Hrec f Hf. 
-  generalize (Hf x); case (f x); simpl; firstorder. 
-  rewrite (H x); auto.
+  generalize (Hf x); case (f x); simpl.
+  auto.
+  intros; rewrite (H x); auto.
   Qed.
 
   Lemma for_all_2 :
@@ -814,7 +824,7 @@ Module Raw (X: OrderedType).
   assert (f x = true).
    generalize A; case (f x); auto.
   rewrite H0 in A; simpl in A.
-  inversion H; firstorder.
+  inversion_clear H; auto.
   rewrite (Hf a x); auto.
   Qed.
 
@@ -827,13 +837,13 @@ Module Raw (X: OrderedType).
   elim H0; intuition. 
   inversion H2.
   intros x l Hrec f Hf. 
-  generalize (Hf x); case (f x); simpl; firstorder. 
-  inversion_clear H0.
-  absurd (false = true); auto with bool.
-  rewrite (H x); auto.
-  rewrite <- H1.
-  firstorder.
-  firstorder.
+  generalize (Hf x); case (f x); simpl.
+  auto.
+  destruct 2 as [a (A1,A2)].
+  inversion_clear A1.
+  rewrite <- (H a (X.eq_sym H0)) in A2; discriminate.
+  apply Hrec; auto.
+  exists a; auto.
   Qed.
 
   Lemma exists_2 :
@@ -843,9 +853,10 @@ Module Raw (X: OrderedType).
   simple induction s; simpl; auto; unfold Exists.
   intros; discriminate.
   intros x l Hrec f Hf.
-  generalize (refl_equal (f x)); pattern (f x) at -1; case (f x). 
-  intros; exists x; auto.
-  intros; elim (Hrec f); auto; firstorder.
+  case_eq (f x); intros.
+  exists x; auto.
+  destruct (Hrec f Hf H0) as [a (A1,A2)].
+  exists a; auto.
   Qed.
 
   Lemma partition_Inf_1 :
@@ -854,11 +865,11 @@ Module Raw (X: OrderedType).
   Proof.
   simple induction s; simpl.
   intuition.  
-  intros x l Hrec Hs f a Ha; inversion_clear Hs; inversion Ha.
+  intros x l Hrec Hs f a Ha; inversion_clear Hs; inversion_clear Ha.
   generalize (Hrec H f a).
   case (f x); case (partition f l); simpl.
-  intros; constructor; auto.
-  eauto.
+  auto.
+  intros; apply H2; apply Inf_lt with x; auto.
   Qed.
 
   Lemma partition_Inf_2 :
@@ -867,11 +878,11 @@ Module Raw (X: OrderedType).
   Proof.
   simple induction s; simpl.
   intuition.  
-  intros x l Hrec Hs f a Ha; inversion_clear Hs; inversion Ha.
+  intros x l Hrec Hs f a Ha; inversion_clear Hs; inversion_clear Ha.
   generalize (Hrec H f a).
   case (f x); case (partition f l); simpl.
-  eauto.
-  intros; constructor; auto.
+  intros; apply H2; apply Inf_lt with x; auto.
+  auto.
   Qed.
 
   Lemma partition_sort_1 :
@@ -899,11 +910,14 @@ Module Raw (X: OrderedType).
    compat_bool X.eq f -> Equal (fst (partition f s)) (filter f s).
   Proof.
   simple induction s; simpl; auto; unfold Equal.
-  firstorder.
+  split; auto.
   intros x l Hrec f Hf.
   generalize (Hrec f Hf); clear Hrec.
-  case (partition f l); intros s1 s2; simpl; intros.
-  case (f x); simpl; firstorder; inversion H0; intros; firstorder. 
+  destruct (partition f l) as [s1 s2]; simpl; intros.
+  case (f x); simpl; auto.
+  split; inversion_clear 1; auto.
+  constructor 2; rewrite <- H; auto.
+  constructor 2; rewrite H; auto.
   Qed.
    
   Lemma partition_2 :
@@ -912,11 +926,14 @@ Module Raw (X: OrderedType).
    Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
   Proof.
   simple induction s; simpl; auto; unfold Equal.
-  firstorder.
+  split; auto.
   intros x l Hrec f Hf. 
   generalize (Hrec f Hf); clear Hrec.
-  case (partition f l); intros s1 s2; simpl; intros.
-  case (f x); simpl; firstorder; inversion H0; intros; firstorder. 
+  destruct (partition f l) as [s1 s2]; simpl; intros.
+  case (f x); simpl; auto.
+  split; inversion_clear 1; auto.
+  constructor 2; rewrite <- H; auto.
+  constructor 2; rewrite H; auto.
   Qed.
  
   Definition eq : t -> t -> Prop := Equal.
@@ -928,12 +945,12 @@ Module Raw (X: OrderedType).
 
   Lemma eq_sym : forall s s' : t, eq s s' -> eq s' s.
   Proof. 
-  unfold eq, Equal; firstorder.
+  unfold eq, Equal; intros; destruct (H a); intuition.
   Qed.
 
   Lemma eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
   Proof. 
-  unfold eq, Equal; firstorder.
+  unfold eq, Equal; intros; destruct (H a); destruct (H0 a); intuition.
   Qed.
 
   Inductive lt : t -> t -> Prop :=
@@ -950,38 +967,36 @@ Module Raw (X: OrderedType).
   intros s s' s'' H; generalize s''; clear s''; elim H.
   intros x l s'' H'; inversion_clear H'; auto.
   intros x x' l l' E s'' H'; inversion_clear H'; auto. 
-  eauto.
-  constructor 2; apply lt_eq with x'; auto.
+  constructor; apply X.lt_trans with x'; auto.
+  constructor; apply lt_eq with x'; auto.
   intros.
   inversion_clear H3.
-  constructor 2; apply eq_lt with y; auto.
-  constructor 3; eauto.  
+  constructor; apply eq_lt with y; auto.
+  constructor 3; auto; apply X.eq_trans with y; auto.  
   Qed. 
 
   Lemma lt_not_eq :
    forall (s s' : t) (Hs : Sort s) (Hs' : Sort s'), lt s s' -> ~ eq s s'.
   Proof. 
   unfold eq, Equal. 
-  intros s s' Hs Hs' H; generalize Hs Hs'; clear Hs Hs'; elim H; intros;
-   intro.
+  intros s s' Hs Hs' H; generalize Hs Hs'; clear Hs Hs'; elim H; intros; intro.
   elim (H0 x); intros.
   assert (X : In x nil); auto; inversion X.
   inversion_clear Hs; inversion_clear Hs'.
   elim (H1 x); intros. 
   assert (X : In x (y :: s'0)); auto; inversion_clear X.
-  absurd (X.eq x y); eauto.
-  absurd (X.lt y x); auto.
-  eapply Sort_Inf_In; eauto.
+  order.
+  generalize (Sort_Inf_In H4 H5 H8); order.
   inversion_clear Hs; inversion_clear Hs'.
-  elim H2; auto; intuition.
+  elim H2; auto; split; intros.
+  generalize (Sort_Inf_In H4 H5 H8); intros.
   elim (H3 a); intros.
   assert (X : In a (y :: s'0)); auto; inversion_clear X; auto.
-  absurd (X.lt x a); eauto.
-  eapply Sort_Inf_In with s0; eauto.
+  order.
+  generalize (Sort_Inf_In H6 H7 H8); intros.
   elim (H3 a); intros.
   assert (X : In a (x :: s0)); auto; inversion_clear X; auto.
-  absurd (X.lt y a); eauto.
-  eapply Sort_Inf_In with s'0; eauto.
+  order.
   Qed.
 
   Definition compare :
@@ -1001,8 +1016,11 @@ Module Raw (X: OrderedType).
    | constructor 3
    | inversion Hs
    | inversion Hs' ]; auto.
-  generalize e; unfold eq, Equal; intuition; inversion_clear H; eauto;
-   elim (e1 a0); auto.
+  generalize e; unfold eq, Equal; intuition; inversion_clear H.
+  constructor; apply X.eq_trans with a; auto.
+  destruct (e1 a0); auto.
+  constructor; apply X.eq_trans with a'; auto.
+  destruct (e1 a0); auto.
   Defined.
 
 End Raw.
