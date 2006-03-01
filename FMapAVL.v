@@ -950,7 +950,7 @@ Proof.
  intros s x.
  functional induction mem x s; inversion_clear 1; auto.
  intuition_in.
- intuition_in; firstorder; absurd (X.lt x y); eauto. (* bug order ?! *)
+ intuition_in; firstorder; absurd (X.lt x y); eauto.
  intuition_in; firstorder; absurd (X.lt y x); eauto.
 Qed.
 
@@ -1264,7 +1264,7 @@ Proof.
  simple induction s.
  simpl in |- *; omega.
  intros.
- Measure_e_t; omega. (* BUG Simpl! *)
+ Measure_e_t; omega.
 Qed.
 
 Ltac Measure_e_t_0 s := generalize (@measure_e_t_0 s); intro.

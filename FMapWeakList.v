@@ -13,9 +13,6 @@
 (** This file proposes an implementation of the non-dependant interface
  [FMapInterface.S] using lists of pairs,  unordered but without redundancy. *)
 
-(** NB: There is no FMapWeakInterface file, since the interface [S] in FMapInterface 
-      is precisely crafted to suit keys in both OrderedType and DecidableType. *)
-
 Require Import FSetInterface. 
 Require Import FSetWeakInterface.
 Require Import FMapWeakInterface.
@@ -27,63 +24,76 @@ Arguments Scope list [type_scope].
 
 Module Raw (X:DecidableType).
 
-  Definition key := X.t.
-  Definition t (elt:Set) := list (X.t * elt).
+Module PX := PairDecidableType X.
+Import PX.
 
-  Section Elt.
+Definition key := X.t.
+Definition t (elt:Set) := list (X.t * elt).
 
-  Variable elt : Set.
+Section Elt.
 
-  Definition eqk (p p':key*elt) := X.eq (fst p) (fst p').
-  Definition eqke (p p':key*elt) := 
+Variable elt : Set.
+
+(* now in PairDecidableType:
+Definition eqk (p p':key*elt) := X.eq (fst p) (fst p').
+Definition eqke (p p':key*elt) := 
           X.eq (fst p) (fst p') /\ (snd p) = (snd p').
+*)
 
-  Hint Unfold eqk eqke.
-  Hint Extern 2 (eqke ?a ?b) => split.
+Notation eqk := (eqk (elt:=elt)).   
+Notation eqke := (eqke (elt:=elt)).
+Notation MapsTo := (MapsTo (elt:=elt)).
+Notation In := (In (elt:=elt)).
+Notation noredunA := (noredunA eqk).
 
-  Ltac simpl_eqke :=
-    match goal with
+(*
+Hint Unfold eqk eqke.
+Hint Extern 2 (eqke ?a ?b) => split.
+
+Ltac simpl_eqke :=
+  match goal with
     	H:(eqke _ _) |- _ => 
           let x:= fresh "eqk" in 
 	  let y := fresh "eqe" in (destruct H as (x,y); simpl in y; simpl in x)
-    end.
+   end.
 
-  Ltac sintuition := try simpl_eqke; intuition.
+Ltac sintuition := try simpl_eqke; intuition.
 
-  (* eqk, eqke are equalities, ltk is a strict order *)
+(* eqk, eqke are equalities, ltk is a strict order *)
  
-  Lemma eqk_refl : forall e, eqk e e.
-    auto.
-  Qed.
+Lemma eqk_refl : forall e, eqk e e.
+Proof. auto. Qed.
 
-  Lemma eqke_refl : forall e, eqke e e.
-    auto.
-  Qed.
+Lemma eqke_refl : forall e, eqke e e.
+Proof. auto. Qed.
 
-  Lemma eqk_sym : forall e e', eqk e e' -> eqk e' e.
-    auto.
-  Qed.
+Lemma eqk_sym : forall e e', eqk e e' -> eqk e' e.
+Proof. auto. Qed.
 
-  Lemma eqke_sym : forall e e', eqke e e' -> eqke e' e.
-    intros; sintuition.
-  Qed.
+Lemma eqke_sym : forall e e', eqke e e' -> eqke e' e.
+Proof.
+ intros; sintuition.
+Qed.
 
-  Lemma eqk_trans : forall e e' e'', eqk e e' -> eqk e' e'' -> eqk e e''.
-    eauto. 
-  Qed.
+Lemma eqk_trans : forall e e' e'', eqk e e' -> eqk e' e'' -> eqk e e''.
+Proof.
+ eauto. 
+Qed.
 
-  Lemma eqke_trans : forall e e' e'', eqke e e' -> eqke e' e'' -> eqke e e''.
-    unfold eqke; intuition eauto; congruence.
-  Qed.
+Lemma eqke_trans : forall e e' e'', eqke e e' -> eqke e' e'' -> eqke e e''.
+Proof. 
+ unfold eqke; intuition eauto; congruence.
+Qed.
 
-  Hint Resolve eqk_trans eqke_trans eqk_sym eqke_sym eqk_refl eqke_refl.
+Hint Resolve eqk_trans eqke_trans eqk_sym eqke_sym eqk_refl eqke_refl.
 
-   (* eqke is a stricter equality than eqk *)
- 
-   Lemma eqke_eqk : forall x x', eqke x x' -> eqk x x'.
-     unfold eqk, eqke; intuition.
-   Qed.
-   Hint Resolve eqke_eqk.
+(* eqke is a stricter equality than eqk *)
+
+Lemma eqke_eqk : forall x x', eqke x x' -> eqk x x'.
+Proof.
+ unfold eqk, eqke; intuition.
+Qed.
+Hint Resolve eqke_eqk.
 
   Definition MapsTo (k:key)(e:elt):= InA eqke (k,e).
   Definition In k m := exists e:elt, MapsTo k e m.
@@ -176,6 +186,7 @@ Module Raw (X:DecidableType).
     Hint Resolve In_inv4 In_inv5.
 
    (** end of auxiliary results *)
+*)
 
     Definition empty : t elt := nil.
 
@@ -184,7 +195,7 @@ Module Raw (X:DecidableType).
     Definition Empty m := forall (a : key)(e:elt) , ~ MapsTo a e m.
 
     Lemma empty_1 : Empty empty.
-      unfold Empty,empty,MapsTo.
+      unfold Empty,empty.
       intros a e.
       intro abs.
       inversion abs.
@@ -202,12 +213,12 @@ Module Raw (X:DecidableType).
     (** Specification of [is_empty] *)
 
     Lemma is_empty_1 :forall m, Empty m -> is_empty m = true. 
-      unfold Empty,MapsTo.
+      unfold Empty, PX.MapsTo.
       intros m.
       case m;auto.
       intros p l inlist.
       destruct p.
-      absurd (InA eqke (k, e) ((k, e) :: l));auto.
+      absurd (InA eqke (t0, e) ((t0, e) :: l));auto.
     Qed.
 
 
@@ -242,7 +253,7 @@ Module Raw (X:DecidableType).
 
     Lemma mem_2 : forall m (Hm:noredunA m) x, mem x m = true -> In x m. 
     Proof.
-      intros m Hm x; generalize Hm; clear Hm; unfold In,MapsTo.
+      intros m Hm x; generalize Hm; clear Hm; unfold PX.In,PX.MapsTo.
       functional induction mem x m; intros unique hyp;try ((inversion hyp);fail).
       exists e;eauto. 
       inversion_clear unique.
@@ -260,13 +271,13 @@ Module Raw (X:DecidableType).
 
     Lemma find_2 :  forall m x e, find x m = Some e -> MapsTo x e m.
     Proof.
-      intros m x. unfold MapsTo.
+      intros m x. unfold PX.MapsTo.
       functional induction find x m;simpl;intros e' eqfind; inversion eqfind; auto.
     Qed.
 
     Lemma find_1 :  forall m (Hm:noredunA m) x e, MapsTo x e m -> find x m = Some e. 
     Proof.
-      intros m Hm x e; generalize Hm; clear Hm; unfold MapsTo.
+      intros m Hm x e; generalize Hm; clear Hm; unfold PX.MapsTo.
       functional induction find x m;simpl; subst; try clear H_eq_1.
 
       inversion 2.
@@ -277,7 +288,8 @@ Module Raw (X:DecidableType).
      congruence.
      inversion_clear Hm.
      elim H0.
-     apply InA_eqk with (k,e); auto.
+     apply InA_eqA with (k,e); auto.
+     apply PX.eqk_trans.
 
      intros.
      inversion_clear H1.
@@ -299,28 +311,27 @@ Module Raw (X:DecidableType).
     Lemma add_1 : forall m x y e, X.eq x y -> MapsTo y e (add x e m).
     Proof.
       intros m x y e; generalize y; clear y.
-      unfold MapsTo.
+      unfold PX.MapsTo.
       functional induction add x e m;simpl;auto.
     Qed.
 
-    Lemma add_2 : forall m x y e e', 
-      ~ X.eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
-    Proof.
-      intros m x  y e e'. 
-      generalize y e; clear y e; unfold MapsTo.
-      functional induction add x e' m;simpl;auto.
-      intros y' e' eqky' mapsto1.
-      
-      assert (InA eqke (y', e') l); intuition; eauto.
-
-      intros y' e' eqky' mapsto1.
-      elim (@In_inv3 (y',e') (k',y) l);auto.
-    Qed.
+Lemma add_2 : forall m x y e e', 
+  ~ X.eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
+Proof.
+ intros m x  y e e'. 
+ generalize y e; clear y e; unfold PX.MapsTo.
+ functional induction add x e' m;simpl;auto.
+ intros y' e' eqky';  inversion_clear 1.
+ destruct H1; simpl in *.
+ elim eqky'; apply X.eq_trans with k'; auto.
+ auto.
+ intros y' e' eqky'; inversion_clear 1; intuition.
+Qed.
       
     Lemma add_3 : forall m x y e e',
       ~ X.eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
     Proof.
-      intros m x y e e'. generalize y e; clear y e; unfold MapsTo.
+      intros m x y e e'. generalize y e; clear y e; unfold PX.MapsTo.
       functional induction add x e' m;simpl;eauto.
       intros e' y' eqky' Hinlist.
       inversion Hinlist;eauto.
@@ -334,7 +345,8 @@ Module Raw (X:DecidableType).
     destruct a as (x',e').
     simpl; case (X.eq_dec x x'); inversion_clear Hm; auto.
     constructor; auto.
-    intro H1; apply H; eapply InA_eqk; eauto.
+    swap H.
+    apply InA_eqA with (x,e); auto; apply eqk_trans.
     constructor; auto.
     swap H.
     (* we need add_3, but with eqk instead of eqke *)
@@ -356,11 +368,14 @@ Module Raw (X:DecidableType).
       intros m Hm x y; generalize Hm; clear Hm.
       functional induction remove x m;simpl;intros;auto.
 
+      red; inversion 1; inversion H1.
+
       inversion_clear Hm.
       subst.
       swap H1.
-      destruct H3 as (e,H3); unfold MapsTo in H3.
-      apply InA_eqk with (y,e); auto.
+      destruct H3 as (e,H3); unfold PX.MapsTo in H3.
+      apply InA_eqA with (y,e); auto.
+      apply eqk_trans.
       red; eauto.
       
       intro H2.
@@ -375,27 +390,21 @@ Module Raw (X:DecidableType).
     Lemma remove_2 : forall m (Hm:noredunA m) x y e, 
       ~ X.eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
     Proof.
-      intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
+      intros m Hm x y e; generalize Hm; clear Hm; unfold PX.MapsTo.
       functional induction remove x m;auto.
-      intros unique noteqky inlist.
-      elim (@In_inv3 (y, e) (k', x) l);auto;simpl;intuition;eauto.
-      intros unique noteqky inlist.
-      elim (@In_inv3 (y, e) (k', x) l); auto. 
-      intro inlist2.
-
-      assert (InA eqke (y, e) (remove k l));auto.
-      apply H0;auto.
-      inversion_clear unique; auto.
+      inversion_clear 3; auto.
+      compute in H2; destruct H2.
+      elim H0; apply X.eq_trans with k'; auto.
+      
+      inversion_clear 1; inversion_clear 2; auto.
     Qed.
 
     Lemma remove_3 : forall m (Hm:noredunA m) x y e, 
       MapsTo y e (remove x m) -> MapsTo y e m.
     Proof.
-      intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
+      intros m Hm x y e; generalize Hm; clear Hm; unfold PX.MapsTo.
       functional induction remove x m;auto.
-      intros unique inlist.
-      inversion_clear unique.
-      elim (@In_inv3 (y, e) (k', x) (remove k l)); auto.
+      inversion_clear 1; inversion_clear 1; auto.
     Qed.
 
     Lemma remove_unique : forall m (Hm:noredunA m) x, noredunA (remove x m).
@@ -418,7 +427,7 @@ Module Raw (X:DecidableType).
     (** Specification of [MapsTo] *)
 
     Lemma MapsTo_1 : forall m x y e, X.eq x y -> MapsTo x e m -> MapsTo y e m.
-      unfold MapsTo.
+      unfold PX.MapsTo.
       intros m x y e eqxy inlist.
       induction inlist;eauto.
 
@@ -489,11 +498,11 @@ Module Raw (X:DecidableType).
      destruct a; simpl; intros.
      destruct H.
      inversion_clear Hm.
-     assert (H3 : In k m').
+     assert (H3 : In t0 m').
      apply H; exists e; auto.
      destruct H3 as (e', H3).
      unfold check at 2; rewrite (find_1 Hm' H3).
-     rewrite (H0 k); simpl; auto.
+     rewrite (H0 t0); simpl; auto.
      eapply IHm; auto.
      split; intuition.
      apply H.
@@ -514,9 +523,9 @@ Module Raw (X:DecidableType).
      destruct a; simpl; intros.
      inversion_clear Hm.
      rewrite andb_b_true in H.
-     assert (check cmp k e m' = true).
+     assert (check cmp t0 e m' = true).
        clear H1 H0 Hm' IHm.
-       set (b:=check cmp k e m') in *.
+       set (b:=check cmp t0 e m') in *.
        generalize H; clear H; generalize b; clear b.
        induction m; simpl; auto; intros.
        destruct a; simpl in *.
@@ -524,12 +533,12 @@ Module Raw (X:DecidableType).
      rewrite H2 in H.
      destruct (IHm H1 m' Hm' cmp H); auto.
      unfold check in H2.
-     case_eq (find k m'); [intros e' H5 | intros H5]; rewrite H5 in H2; try discriminate.
+     case_eq (find t0 m'); [intros e' H5 | intros H5]; rewrite H5 in H2; try discriminate.
      split; intros.
      destruct H6 as (e0,H6); inversion_clear H6.
      compute in H7; destruct H7; subst.
      exists e'.
-     apply MapsTo_1 with k; auto.
+     apply MapsTo_1 with t0; auto.
      apply find_2; auto.
      apply H3.
      exists e0; auto.
@@ -660,8 +669,6 @@ Module Raw (X:DecidableType).
         unfold eqke in *; simpl in *; intuition congruence.
         destruct IHm as (y, hyp); auto.
         exists y; intuition.
-        constructor 2.
-        unfold MapsTo in *; auto.
       Qed.  
 
 
@@ -967,10 +974,10 @@ Module Raw (X:DecidableType).
     destruct (IHm0 H1) as (_,H4); apply H4; auto.
     case_eq (find x m0); intros; auto.
     elim H0.
-    apply InA_eqk with (x,p).
+    apply InA_eqA with (x,p); auto.
+    apply eqk_trans.
     apply InA_eqke_eqk.
     exact (find_2 H3). 
-    red; auto.
     (* k < x *)
     unfold f'; simpl.
     destruct (f oo oo'); simpl.
@@ -1037,7 +1044,7 @@ Module Make (X: DecidableType) <: S with Module E:=X.
   Module E := X.
   Definition key := X.t. 
 
-  Record slist (elt:Set) : Set :=  {this :> Raw.t elt; unique : noredunA (@Raw.eqk elt) this}.
+  Record slist (elt:Set) : Set :=  {this :> Raw.t elt; unique : noredunA (@Raw.PX.eqk elt) this}.
   Definition t (elt:Set) := slist elt. 
 
  Section Elt. 
@@ -1059,8 +1066,8 @@ Module Make (X: DecidableType) <: S with Module E:=X.
  Definition fold A f m i := @Raw.fold elt A f m.(this) i.
  Definition equal cmp m m' := @Raw.equal elt cmp m.(this) m'.(this).
 
- Definition MapsTo x e m := Raw.MapsTo x e m.(this).
- Definition In x m := Raw.In x m.(this).
+ Definition MapsTo x e m := Raw.PX.MapsTo x e m.(this).
+ Definition In x m := Raw.PX.In x m.(this).
  Definition Empty m := Raw.Empty m.(this).
  Definition Equal cmp m m' := @Raw.Equal elt cmp m.(this) m'.(this).
 
