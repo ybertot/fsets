@@ -22,6 +22,8 @@ Require Import ZArith.
 Open Scope Z_scope.
 
 Set Firstorder Depth 3.
+Set Implicit Arguments.
+Unset Strict Implicit.
 
 (** First, we need a max-aware omega tactic. *)
 
@@ -151,16 +153,6 @@ End Elt.
 (** Some helpful hints and tactics. *)
 
 Notation t := tree.
-Implicit Arguments Leaf.
-Implicit Arguments Node. 
-Implicit Arguments MapsTo. 
-Implicit Arguments gt_tree. 
-Implicit Arguments lt_tree. 
-Implicit Arguments In. 
-Implicit Arguments In0.
-Implicit Arguments avl. 
-Implicit Arguments bst.
-Implicit Arguments height.
 Hint Constructors tree.
 Hint Constructors MapsTo.
 Hint Constructors In.
@@ -212,7 +204,6 @@ Proof.
  induction s; simpl; intros; auto with zarith.
  inv avl; intuition; omega_max.
 Qed.
-Implicit Arguments height_non_negative. 
 
 Ltac avl_nn_hyp H := 
      let nz := fresh "nz" in assert (nz := height_non_negative H).
@@ -251,7 +242,7 @@ Lemma In_alt : forall elt k (m:t elt), In0 k m <-> In k m.
 Proof. 
  split.
  intros (e,H); eauto.
- exact (In_MapsTo _ k m).
+ unfold In0; apply In_MapsTo; auto.
 Qed.
 
 Lemma MapsTo_1 :
@@ -365,7 +356,6 @@ Hint Resolve avl_node.
 
 Definition create elt (l:t elt) x e r := 
    Node l x e r (max (height l) (height r) + 1).
-Implicit Arguments create.
 
 Lemma create_bst : 
  forall elt (l:t elt) x e r, bst l -> bst r -> lt_tree x l -> gt_tree x r -> 
@@ -434,7 +424,6 @@ Definition bal elt (l: tree elt) x e r :=
       end
     else 
       create l x e r. 
-Implicit Arguments bal.
 
 Ltac bal_tac := 
  intros elt l x e r;
@@ -498,7 +487,7 @@ Qed.
 
 Ltac omega_bal := match goal with 
   | H:avl ?l, H':avl ?r |- context id [ bal ?l ?x ?e ?r ] => 
-     generalize (bal_height_1 _ l x e r H H') (bal_height_2 _ l x e r H H'); 
+     generalize (bal_height_1 x e H H') (bal_height_2 x e H H'); 
      omega_max
   end. 
 
@@ -508,13 +497,11 @@ Fixpoint add (elt:Set)(x:key)(e:elt)(s:t elt) { struct s } : t elt := match s wi
    | Leaf => Node (Leaf _) x e (Leaf _) 1
    | Node l y e' r h => 
       match X.compare x y with
-         | Lt _ => bal (add _ x e l) y e' r
+         | Lt _ => bal (add x e l) y e' r
          | Eq _ => Node l y e r h
-         | Gt _ => bal l y e' (add _ x e r)
+         | Gt _ => bal l y e' (add x e r)
       end
   end.
-
-Implicit Arguments add.
 
 Lemma add_avl_1 :  forall elt (m:t elt) x e, avl m -> 
  avl (add x e m) /\ 0 <= height (add x e m) - height m <= 1.
@@ -535,7 +522,7 @@ Qed.
 
 Lemma add_avl : forall elt (m:t elt) x e, avl m -> avl (add x e m).
 Proof.
- intros; generalize (add_avl_1 _ m x e H); intuition.
+ intros; generalize (add_avl_1 x e H); intuition.
 Qed.
 Hint Resolve add_avl.
 
@@ -565,13 +552,13 @@ Proof.
  (* lt_tree -> lt_tree (add ...) *)
  red; red in H4.
  intros.
- rewrite (add_in _ l x y0 e H0) in H1.
+ rewrite (add_in x y0 e H0) in H1.
  intuition.
  eauto.
  (* gt_tree -> gt_tree (add ...) *)
  red; red in H4.
  intros.
- rewrite (add_in _ r x y0 e H6) in H1.
+ rewrite (add_in x y0 e H6) in H1.
  intuition.
  apply MX.lt_eq with x; auto.
 Qed.
@@ -612,10 +599,8 @@ Qed.
 Fixpoint remove_min (elt:Set)(l:t elt)(x:key)(e:elt)(r:t elt) { struct l } : t elt*(key*elt) := 
   match l with 
     | Leaf => (r,(x,e))
-    | Node ll lx le lr lh => let (l',m) := remove_min _ ll lx le lr in (bal l' x e r, m)
+    | Node ll lx le lr lh => let (l',m) := remove_min ll lx le lr in (bal l' x e r, m)
   end.
-
-Implicit Arguments remove_min.
 
 Lemma remove_min_avl_1 : forall elt (l:t elt) x e r h, avl (Node l x e r h) -> 
  avl (fst (remove_min l x e r)) /\ 
@@ -635,7 +620,7 @@ Qed.
 Lemma remove_min_avl : forall elt (l:t elt) x e r h, avl (Node l x e r h) -> 
     avl (fst (remove_min l x e r)). 
 Proof.
- intros; generalize (remove_min_avl_1 _ l x e r h H); intuition.
+ intros; generalize (remove_min_avl_1 H); intuition.
 Qed.
 
 Lemma remove_min_in : forall elt (l:t elt) x e r h y, avl (Node l x e r h) -> 
@@ -646,7 +631,7 @@ Proof.
  intuition_in.
  (* l = Node *)
  inversion_clear H0.
- generalize (remove_min_avl _ ll lx le lr lh H1).
+ generalize (remove_min_avl H1).
  rewrite H_eq_0; simpl; intros.
  rewrite bal_in; auto.
  generalize (H lh y H1).
@@ -663,7 +648,7 @@ Proof.
  intuition_in; subst; auto.
  (* l = Node *)
  inversion_clear H0.
- generalize (remove_min_avl _ ll lx le lr lh H1).
+ generalize (remove_min_avl H1).
  rewrite H_eq_0; simpl; intros.
  rewrite bal_mapsto; auto; unfold create.
  destruct (H lh y e').
@@ -682,7 +667,7 @@ Proof.
  apply bal_bst; auto.
  firstorder.
  intro; intros.
- generalize (remove_min_in _ ll lx le lr lh y H0).
+ generalize (remove_min_in y H0).
  rewrite H_eq_0; simpl.
  destruct 1.
  apply H4; intuition.
@@ -697,10 +682,10 @@ Proof.
  inversion_clear H0; inversion_clear H1.
  intro; intro.
  generalize (H lh H2 H0); clear H8 H7 H.
- generalize (remove_min_avl _ ll lx le lr lh H0).
- generalize (remove_min_in _ ll lx le lr lh (fst m) H0).
+ generalize (remove_min_avl H0).
+ generalize (remove_min_in (fst m) H0).
  rewrite H_eq_0; simpl; intros.
- rewrite (bal_in _ l' x e r y H7 H6) in H1.
+ rewrite (bal_in x e y H7 H6) in H1.
  destruct H.
  firstorder.
  apply MX.lt_eq with x; auto.
@@ -723,8 +708,6 @@ Definition merge elt (s1 s2 : t elt) :=  match s1,s2 with
         bal s1 x e s2'
 end.
 
-Implicit Arguments merge.
-
 Lemma merge_avl_1 : forall elt (s1 s2:t elt), avl s1 -> avl s2 -> 
  -2 <= height s1 - height s2 <= 2 -> 
  avl (merge s1 s2) /\ 
@@ -733,7 +716,7 @@ Proof.
  intros elt s1 s2; functional induction merge elt s1 s2; simpl in *; intros.
  split; auto; avl_nns; omega_max.
  split; auto; avl_nns; simpl in *; omega_max.
- generalize (remove_min_avl_1 _ l2 x2 e2 r2 h2 H0).
+ generalize (remove_min_avl_1 H0).
  rewrite H_eq_1; simpl; destruct 1.
  rewrite H_eq_2; simpl.
  split.
@@ -746,7 +729,7 @@ Qed.
 Lemma merge_avl : forall elt (s1 s2:t elt), avl s1 -> avl s2 -> 
   -2 <= height s1 - height s2 <= 2 -> avl (merge s1 s2).
 Proof. 
- intros; generalize (merge_avl_1 _ s1 s2 H H0 H1); intuition.
+ intros; generalize (merge_avl_1 H H0 H1); intuition.
 Qed.
 
 Lemma merge_in : forall elt (s1 s2:t elt) y, bst s1 -> avl s1 -> bst s2 -> avl s2 -> 
@@ -758,8 +741,8 @@ Proof.
  rewrite H_eq_2; rewrite H_eq_2 in H_eq_1; clear H_eq_2.
  replace s2' with (fst (remove_min l2 x2 e2 r2)); [|rewrite H_eq_1; auto].
  rewrite bal_in; auto.
- generalize (remove_min_avl _ l2 x2 e2 r2 h2); rewrite H_eq_1; simpl; auto.
- generalize (remove_min_in _ l2 x2 e2 r2 h2 y0); rewrite H_eq_1; simpl; intro.
+ generalize (remove_min_avl H2); rewrite H_eq_1; simpl; auto.
+ generalize (remove_min_in y0 H2); rewrite H_eq_1; simpl; intro.
  rewrite H3; intuition.
 Qed.
 
@@ -772,10 +755,10 @@ Proof.
  rewrite H_eq_2; rewrite H_eq_2 in H_eq_1; clear H_eq_2.
  replace s2' with (fst (remove_min l2 x2 e2 r2)); [|rewrite H_eq_1; auto].
  rewrite bal_mapsto; auto; unfold create.
- generalize (remove_min_avl _ l2 x2 e2 r2 h2); rewrite H_eq_1; simpl; auto.
- generalize (remove_min_mapsto _ l2 x2 e2 r2 h2 y0 e0); rewrite H_eq_1; simpl; intro.
+ generalize (remove_min_avl H2); rewrite H_eq_1; simpl; auto.
+ generalize (remove_min_mapsto y0 e0 H2); rewrite H_eq_1; simpl; intro.
  rewrite H3; intuition (try subst; auto).
- inversion_clear H4; intuition.
+ inversion_clear H3; intuition.
 Qed.
 
 Lemma merge_bst : forall elt (s1 s2:t elt), bst s1 -> avl s1 -> bst s2 -> avl s2 -> 
@@ -785,11 +768,11 @@ Proof.
  intros elt s1 s2; functional induction merge elt s1 s2; simpl in *; intros; auto.
  rewrite H_eq_2; rewrite H_eq_2 in H_eq_1; clear H_eq_2.
  apply bal_bst; auto.
- generalize (remove_min_bst _ l2 x2 e2 r2 h2); rewrite H_eq_1; simpl in *; auto.
+ generalize (remove_min_bst H1); rewrite H_eq_1; simpl in *; auto.
  intro; intro.
  apply H3; auto.
- generalize (remove_min_in _ l2 x2 e2 r2 h2 x); rewrite H_eq_1; simpl; intuition.
- generalize (remove_min_gt_tree _ l2 x2 e2 r2 h2); rewrite H_eq_1; simpl; auto.
+ generalize (remove_min_in x H2); rewrite H_eq_1; simpl; intuition.
+ generalize (remove_min_gt_tree H1); rewrite H_eq_1; simpl; auto.
 Qed. 
 
 (** * Deletion *)
@@ -798,13 +781,11 @@ Fixpoint remove (elt:Set)(x:key)(s:t elt) { struct s } : t elt := match s with
   | Leaf => Leaf _
   | Node l y e r h =>
       match X.compare x y with
-         | Lt _ => bal (remove _ x l) y e r
+         | Lt _ => bal (remove x l) y e r
          | Eq _ => merge l r
-         | Gt _ => bal l y e (remove _ x r)
+         | Gt _ => bal l y e (remove x r)
       end
    end.
-
-Implicit Arguments remove.
 
 Lemma remove_avl_1 : forall elt (s:t elt) x, avl s -> 
  avl (remove x s) /\ 0 <= height s - height (remove x s) <= 1.
@@ -820,7 +801,7 @@ Proof.
  omega_bal.
  (* Eq *)
  inv avl. 
- generalize (merge_avl_1 _ l r H0 H1 H2).
+ generalize (merge_avl_1 H0 H1 H2).
  intuition omega_max.
  (* Gt *)
  inv avl.
@@ -833,7 +814,7 @@ Qed.
 
 Lemma remove_avl : forall elt (s:t elt) x, avl s -> avl (remove x s).
 Proof. 
- intros; generalize (remove_avl_1 _ s x H); intuition.
+ intros; generalize (remove_avl_1 x H); intuition.
 Qed.
 Hint Resolve remove_avl.
 
@@ -864,7 +845,7 @@ Proof.
  inv avl; inv bst.
  apply bal_bst; auto.
  intro; intro.
- rewrite (remove_in _ l x y0) in H0; auto.
+ rewrite (remove_in x y0 H1) in H0; auto.
  destruct H0; eauto.
  (* Eq *)
  inv avl; inv bst.
@@ -873,7 +854,7 @@ Proof.
  inv avl; inv bst.
  apply bal_bst; auto.
  intro; intro.
- rewrite (remove_in _ r x y0) in H0; auto.
+ rewrite (remove_in x y0 H6) in H0; auto.
  destruct H0; eauto.
 Qed.
 
@@ -988,7 +969,6 @@ Fixpoint find (x:key)(m:t elt) { struct m } : option elt :=
              | Gt _ => find x r
          end
    end.
-Implicit Arguments find. 
 
 Lemma find_1 : forall m x e, bst m -> MapsTo x e m -> find x m = Some e.
 Proof. 
@@ -1111,13 +1091,11 @@ Hint Resolve elements_sort.
 Fixpoint fold (A : Set) (f : key -> elt -> A -> A)(s : t elt) {struct s} : A -> A := 
  fun a => match s with
   | Leaf => a
-  | Node l x e r _ => fold A f r (f x e (fold A f l a))
+  | Node l x e r _ => fold f r (f x e (fold f l a))
  end.
-Implicit Arguments fold [A].
 
 Definition fold' (A : Set) (f : key -> elt -> A -> A)(s : t elt) := 
   L.fold f (elements s).
-Implicit Arguments fold' [A].
 
 Lemma fold_equiv_aux :
  forall (A : Set) (s : t elt) (f : key -> elt -> A -> A) (a : A) acc,
@@ -1289,7 +1267,7 @@ Proof.
  Measure_e_t; omega. (* BUG Simpl! *)
 Qed.
 
-Ltac Measure_e_t_0 s := generalize (measure_e_t_0 s); intro.
+Ltac Measure_e_t_0 s := generalize (@measure_e_t_0 s); intro.
 
 Lemma measure_e_0 : forall e : enumeration, measure_e e >= 0.
 Proof.
@@ -1299,7 +1277,7 @@ Proof.
  Measure_e; Measure_e_t_0 t; omega.
 Qed.
 
-Ltac Measure_e_0 e := generalize (measure_e_0 e); intro.
+Ltac Measure_e_0 e := generalize (@measure_e_0 e); intro.
 
 (** Induction principle over the sum of the measures for two lists *)
 
@@ -1394,25 +1372,25 @@ Proof.
   destruct (H2 k).
   apply H; simpl; exists e; auto.
  destruct H. 
- generalize (Sort_In_cons_2 (sorted_flatten_e _ H1) (InA_eqke_eqk H)).
+ generalize (Sort_In_cons_2 (sorted_flatten_e H1) (InA_eqke_eqk H)).
  compute.
  intuition order. 
  (* k = k0 *)
  case_eq (cmp e e3).
  intros Eq.
- destruct (cons t e0) as [c1 (H2,(H3,H4))]; try inversion_clear H0; auto.
- destruct (cons t0 e4) as [c2 (H5,(H6,H7))]; try inversion_clear H1; auto.
+ destruct (@cons t e0) as [c1 (H2,(H3,H4))]; try inversion_clear H0; auto.
+ destruct (@cons t0 e4) as [c2 (H5,(H6,H7))]; try inversion_clear H1; auto.
  destruct (H c1 c2); clear H; intuition.
  Measure_e; omega.
  left.
  rewrite H4 in e6; rewrite H7 in e6.
  simpl; rewrite <- L.equal_cons; auto.
- apply (sorted_flatten_e _ H0).
- apply (sorted_flatten_e _ H1).
+ apply (sorted_flatten_e H0).
+ apply (sorted_flatten_e H1).
  right.
  simpl; rewrite <- L.equal_cons; auto.
- apply (sorted_flatten_e _ H0).
- apply (sorted_flatten_e _ H1).
+ apply (sorted_flatten_e H0).
+ apply (sorted_flatten_e H1).
  swap f.
  rewrite H4; rewrite H7; auto.
  right.
@@ -1426,7 +1404,7 @@ Proof.
   destruct (H2 k0).
   apply H3; simpl; exists e3; auto.
  destruct H. 
- generalize (Sort_In_cons_2 (sorted_flatten_e _ H0) (InA_eqke_eqk H)).
+ generalize (Sort_In_cons_2 (sorted_flatten_e H0) (InA_eqke_eqk H)).
  compute.
  intuition order. 
 Qed.
@@ -1447,13 +1425,13 @@ Definition equal : forall cmp s s', bst s -> bst s' ->
   {Equal cmp s s'} + {~ Equal cmp s s'}.
 Proof.
  intros cmp s1 s2 s1_bst s2_bst; simpl.
- destruct (cons s1 End); auto.
+ destruct (@cons s1 End); auto.
  inversion_clear 2.
- destruct (cons s2 End); auto.
+ destruct (@cons s2 End); auto.
  inversion_clear 2.
  simpl in a; rewrite <- app_nil_end in a.
  simpl in a0; rewrite <- app_nil_end in a0.
- destruct (equal_aux cmp x x0); intuition.
+ destruct (@equal_aux cmp x x0); intuition.
  left.
  rewrite H4 in e; rewrite H5 in e.
  rewrite Equal_elements; auto.
@@ -1464,8 +1442,6 @@ Proof.
 Qed.
 
 End Elt2.
-
-Implicit Arguments find. 
 
 Section Elts. 
 
@@ -1569,7 +1545,7 @@ Variable f : option elt -> option elt' -> option elt''.
 Definition anti_elements (l:list (key*elt'')) := L.fold (@add _) l (empty _).
 
 Definition map2 (m:t elt)(m':t elt') : t elt'' := 
-  anti_elements (L.map2 f (elements _ m) (elements _ m')).
+  anti_elements (L.map2 f (elements m) (elements m')).
 
 Lemma anti_elements_avl_aux : forall (l:list (key*elt''))(m:t elt''), 
   avl m -> avl (L.fold (@add _) l m).
@@ -1666,7 +1642,7 @@ unfold map2; intros; apply anti_elements_bst; auto.
 Qed.
 
 Lemma find_elements : forall (elt:Set)(m: t elt) x, bst m -> 
-  L.find x (elements _ m) = find x m.
+  L.find x (elements m) = find x m.
 Proof. 
 intros.
 case_eq (find x m); intros.
@@ -1674,7 +1650,7 @@ apply L.find_1.
 apply elements_sort; auto.
 red; rewrite elements_mapsto.
 apply find_2; auto.
-case_eq (L.find x (elements elt0 m)); auto; intros.
+case_eq (L.find x (elements m)); auto; intros.
 rewrite <- H0; symmetry.
 apply find_1; auto.
 rewrite <- elements_mapsto.
@@ -1750,9 +1726,6 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Import Raw.
 
  Record bbst (elt:Set) : Set := Bbst {this :> tree elt; is_bst : bst this; is_avl: avl this}.
- Implicit Arguments this. 
- Implicit Arguments is_avl. 
- Implicit Arguments is_bst.
  
  Definition t := bbst. 
  Definition key := X.t.
@@ -1762,34 +1735,34 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  Implicit Types m : t elt.
 
- Definition empty := Bbst _ _ (empty_bst elt) (empty_avl elt).
- Definition is_empty m := is_empty _ m.(this).
+ Definition empty := Bbst (empty_bst elt) (empty_avl elt).
+ Definition is_empty m := is_empty m.(this).
  Definition add x e m := 
-  Bbst _ _ (add_bst _ _ x e m.(is_bst) m.(is_avl)) (add_avl _ _ x e m.(is_avl)).
- Definition find x m := find x m.(this).
+  Bbst (add_bst x e m.(is_bst) m.(is_avl)) (add_avl x e m.(is_avl)).
  Definition remove x m := 
-  Bbst _ _ (remove_bst _ _ x m.(is_bst) m.(is_avl)) (remove_avl _ _ x m.(is_avl)).  
- Definition mem x m := mem _ x m.(this).
+  Bbst (remove_bst x m.(is_bst) m.(is_avl)) (remove_avl x m.(is_avl)).  
+ Definition mem x m := mem x m.(this).
+ Definition find x m := find x m.(this).
  Definition map f m : t elt' := 
-  Bbst _ _ (map_bst _ _ f _ m.(is_bst)) (map_avl _ _ f _ m.(is_avl)).
+  Bbst (map_bst f m.(is_bst)) (map_avl f m.(is_avl)).
  Definition mapi f m : t elt' := 
-  Bbst _ _ (mapi_bst _ _ f _ m.(is_bst)) (mapi_avl _ _ f _ m.(is_avl)).
+  Bbst (mapi_bst f m.(is_bst)) (mapi_avl f m.(is_avl)).
  Definition map2 f m (m':t elt') : t elt'' := 
-  Bbst _ _ (map2_bst _ _ _ f m m') (map2_avl _ _ _ f m m').
- Definition elements m := elements elt m.(this).
- Definition fold A f m i := fold elt A f m.(this) i.
+  Bbst (map2_bst f m m') (map2_avl f m m').
+ Definition elements m := elements m.(this).
+ Definition fold (A:Set) f m i := fold (A:=A) f m.(this) i.
  Definition equal cmp m m' := 
-   if (equal elt cmp m.(this) m'.(this) m.(is_bst) m'.(is_bst)) then true else false.
+   if (equal cmp m.(is_bst) m'.(is_bst)) then true else false.
 
  Definition MapsTo x e m := MapsTo x e m.(this).
  Definition In x m := In0 x m.(this).
- Definition Empty m := Empty _ m.(this).
+ Definition Empty m := Empty m.(this).
 
  Definition eq_key := @Raw.PX.eqk elt.
  Definition eq_key_elt := @Raw.PX.eqke elt.
  Definition lt_key := @Raw.PX.ltk elt.
 
- Definition MapsTo_1 m := MapsTo_1 elt m.(this).
+ Definition MapsTo_1 m := @MapsTo_1 _ m.(this).
  
  Lemma mem_1 : forall m x, In x m -> mem x m = true.
  Proof.
@@ -1804,12 +1777,12 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  Definition empty_1 := empty_1.
 
- Definition is_empty_1 m := is_empty_1 elt m.(this).
- Definition is_empty_2 m := is_empty_2 elt m.(this).
+ Definition is_empty_1 m := @is_empty_1 _ m.(this).
+ Definition is_empty_2 m := @is_empty_2 _ m.(this).
 
- Definition add_1 m x y e := add_1 elt m.(this) x y e m.(is_avl).
- Definition add_2 m x y e e':= add_2 elt m.(this) x y e e' m.(is_avl).
- Definition add_3 m x y e e' := add_3 elt m.(this) x y e e' m.(is_avl).
+ Definition add_1 m x y e := @add_1 elt m.(this) x y e m.(is_avl).
+ Definition add_2 m x y e e':= @add_2 elt m.(this) x y e e' m.(is_avl).
+ Definition add_3 m x y e e' := @add_3 elt m.(this) x y e e' m.(is_avl).
 
  Lemma remove_1 : forall m x y, E.eq x y -> ~ In y (remove x m).
  Proof.
@@ -1818,21 +1791,21 @@ Module Make (X: OrderedType) <: S with Module E := X.
  apply m.(is_avl).
  Qed.
 
- Definition remove_2 m x y e := remove_2 elt m.(this) x y e m.(is_bst) m.(is_avl).
- Definition remove_3 m x y e := remove_3 elt m.(this) x y e m.(is_bst) m.(is_avl).
+ Definition remove_2 m x y e := @remove_2 elt m.(this) x y e m.(is_bst) m.(is_avl).
+ Definition remove_3 m x y e := @remove_3 elt m.(this) x y e m.(is_bst) m.(is_avl).
 
- Definition find_1 m x e := find_1 elt m.(this) x e m.(is_bst).
- Definition find_2 m x e := find_2 elt m.(this) x e.
+ Definition find_1 m x e := @find_1 elt m.(this) x e m.(is_bst).
+ Definition find_2 m x e := @find_2 elt m.(this) x e.
 
- Definition fold_1 m := fold_1 elt m.(this) m.(is_bst).
+ Definition fold_1 m := @fold_1 elt m.(this) m.(is_bst).
 
- Definition map_1 m x e f := map_1 elt elt' f m.(this) x e.
+ Definition map_1 m x e f := @map_1 elt elt' f m.(this) x e.
  Lemma map_2 : forall m x f, In0 x (map f m) -> In0 x m.
  Proof.
  intros m x f; do 2 rewrite In_alt; simpl; apply map_2; auto.
  Qed. 
 
- Definition mapi_1 m x e f := mapi_1 elt elt' f m.(this) x e.
+ Definition mapi_1 m x e f := @mapi_1 elt elt' f m.(this) x e.
  Lemma mapi_2 : forall m x f, In0 x (mapi f m) -> In0 x m.
  Proof.
  intros m x f; do 2 rewrite In_alt; simpl; apply mapi_2; auto.
@@ -1850,13 +1823,13 @@ Module Make (X: OrderedType) <: S with Module E := X.
  intros; unfold elements, MapsTo, eq_key_elt; rewrite <- elements_mapsto; auto.
  Qed.
  
- Definition elements_3 m := elements_sort elt m.(this) m.(is_bst).
+ Definition elements_3 m := @elements_sort elt m.(this) m.(is_bst).
 
  Definition Equal cmp m m' := 
    (forall k, In k m <-> In k m') /\ 
    (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
 
- Lemma Equal_Equal : forall cmp m m', Equal cmp m m' <-> Raw.Equal _ cmp m m'.
+ Lemma Equal_Equal : forall cmp m m', Equal cmp m m' <-> Raw.Equal cmp m m'.
  Proof. 
  intros; unfold Equal, Raw.Equal, In; intuition.
  generalize (H0 k); do 2 rewrite In_alt; intuition.
@@ -1869,22 +1842,22 @@ Module Make (X: OrderedType) <: S with Module E := X.
    Equal cmp m m' -> equal cmp m m' = true. 
  Proof. 
  unfold equal; intros m m' cmp; rewrite Equal_Equal.
- destruct (Raw.equal _ cmp m m'); auto.
+ destruct (@Raw.equal _ cmp m m'); auto.
  Qed. 
 
  Lemma equal_2 : forall m m' cmp, 
    equal cmp m m' = true -> Equal cmp m m'.
  Proof. 
  unfold equal; intros; rewrite Equal_Equal.
- destruct (Raw.equal _ cmp m m'); auto; try discriminate.
+ destruct (@Raw.equal _ cmp m m'); auto; try discriminate.
  Qed.  
 
  End Elt.
 
  Lemma map2_1 : forall (elt elt' elt'':Set)(m: t elt)(m': t elt')
     (x:key)(f:option elt->option elt'->option elt''), 
-    In _ x m \/ In _ x m' -> 
-    find _ x (map2 _ _ _ f m m') = f (find _ x m) (find _ x m'). 
+    In x m \/ In x m' -> 
+    find x (map2 f m m') = f (find x m) (find x m'). 
  Proof. 
  unfold find, map2, In; intros elt elt' elt'' m m' x f.
  do 2 rewrite In_alt; intros; simpl; apply map2_1; auto.
@@ -1894,7 +1867,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
 
  Lemma map2_2 : forall (elt elt' elt'':Set)(m: t elt)(m': t elt')
      (x:key)(f:option elt->option elt'->option elt''), 
-     In _ x (map2 _ _ _ f m m') -> In _ x m \/ In _ x m'.
+     In x (map2 f m m') -> In x m \/ In x m'.
  Proof. 
  unfold In, map2; intros elt elt' elt'' m m' x f.
  do 3 rewrite In_alt; intros; simpl in *; eapply map2_2; eauto.
@@ -1923,7 +1896,7 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   Definition cmp e e' := match D.compare e e' with Eq _ => true | _ => false end.	
 
   Definition elements (m:t) := 
-    LO.MapS.Build_slist (Raw.elements_sort _ m.(this) m.(is_bst)).
+    LO.MapS.Build_slist (Raw.elements_sort m.(is_bst)).
 
   Definition eq : t -> t -> Prop := 
     fun m1 m2 => LO.eq (elements m1) (elements m2).
@@ -1931,7 +1904,7 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   Definition lt : t -> t -> Prop := 
     fun m1 m2 => LO.lt (elements m1) (elements m2).
 
-  Lemma eq_1 : forall m m', Equal _ cmp m m' -> eq m m'.
+  Lemma eq_1 : forall m m', Equal cmp m m' -> eq m m'.
   Proof.
   intros m m'.
   unfold eq.
@@ -1942,7 +1915,7 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   auto.
   Qed.
 
-  Lemma eq_2 : forall m m', eq m m' -> Equal _ cmp m m'.
+  Lemma eq_2 : forall m m', eq m m' -> Equal cmp m m'.
   Proof.
   intros m m'.
   unfold eq.
@@ -1980,12 +1953,12 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
 
   Import Raw.
 
-  Definition flatten_slist (e:enumeration D.t)(He:sorted_e _ e) := 
-   LO.MapS.Build_slist (sorted_flatten_e _ e He). 
+  Definition flatten_slist (e:enumeration D.t)(He:sorted_e e) := 
+   LO.MapS.Build_slist (sorted_flatten_e He). 
 
   Definition compare_aux : 
-   forall (e1 e2:enumeration D.t)(He1:sorted_e _ e1)(He2: sorted_e _ e2), 
-   Compare LO.lt LO.eq (flatten_slist e1 He1) (flatten_slist e2 He2).
+   forall (e1 e2:enumeration D.t)(He1:sorted_e e1)(He2: sorted_e e2), 
+   Compare LO.lt LO.eq (flatten_slist He1) (flatten_slist He2).
   Proof.
   intros e1 e2; pattern e1, e2 in |- *; apply compare_rec2.
   simple destruct x; simple destruct x'; intuition.
@@ -2007,11 +1980,11 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   destruct (D.compare t t1).
   constructor 1.
   compute; MX.compare; auto.
-  destruct (cons _ t0 e) as [c1 (H2,(H3,H4))]; try inversion_clear He1; auto.
-  destruct (cons _ t2 e0) as [c2 (H5,(H6,H7))]; try inversion_clear He2; auto.
-  assert (measure_e _ c1 + measure_e _ c2 <
-              measure_e _ (More D.t k t t0 e) + 
-              measure_e _ (More D.t k0 t1 t2 e0)).
+  destruct (@cons _ t0 e) as [c1 (H2,(H3,H4))]; try inversion_clear He1; auto.
+  destruct (@cons _ t2 e0) as [c2 (H5,(H6,H7))]; try inversion_clear He2; auto.
+  assert (measure_e c1 + measure_e c2 <
+              measure_e (More k t t0 e) + 
+              measure_e (More k0 t1 t2 e0)).
   unfold measure_e in *; fold measure_e in *; omega.           
   destruct (H c1 c2 H0 H2 H5); clear H.
   constructor 1.
@@ -2039,15 +2012,15 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   Definition compare : forall m1 m2, Compare lt eq m1 m2.
   Proof.
   intros (m1,m1_bst,m1_avl) (m2,m2_bst,m2_avl); simpl.
-  destruct (cons _ m1 (End _)) as [x1 (H1,H11)]; auto.
+  destruct (@cons _ m1 (End _)) as [x1 (H1,H11)]; auto.
   apply SortedEEnd.
   inversion_clear 2.
-  destruct (cons _ m2 (End _)) as [x2 (H2,H22)]; auto.
+  destruct (@cons _ m2 (End _)) as [x2 (H2,H22)]; auto.
   apply SortedEEnd.
   inversion_clear 2.
   simpl in H11; rewrite <- app_nil_end in H11.
   simpl in H22; rewrite <- app_nil_end in H22.
-  destruct (compare_aux x1 x2 H1 H2); intuition.
+  destruct (compare_aux H1 H2); intuition.
   constructor 1.
   unfold lt, LO.lt, Make_ord.elements, flatten_slist in *; simpl in *.
   rewrite <- H0; rewrite <- H4; auto.
