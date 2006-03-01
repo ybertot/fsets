@@ -562,9 +562,12 @@ Module Raw (X: DecidableType).
   Proof.
   simple induction s; simpl.
   intros; inversion H.
-  intros x l Hrec a f Hf.
-  destruct (f x); simpl; firstorder.
-  inversion Hf; firstorder.
+  intros x l Hrec a f.
+  case (f x); simpl.
+  inversion_clear 1.
+  constructor; auto.
+  constructor 2; apply (Hrec a f); trivial.
+  constructor 2; apply (Hrec a f); trivial.
   Qed.
 
    Lemma filter_2 :
@@ -574,9 +577,9 @@ Module Raw (X: DecidableType).
   simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  generalize (Hf x); case (f x); simpl; firstorder.
-  inversion H0; firstorder.
-  symmetry ; firstorder.
+  generalize (Hf x); case (f x); simpl; auto.
+  inversion_clear 2; auto.
+  symmetry; auto.
   Qed.
  
   Lemma filter_3 :
@@ -586,9 +589,10 @@ Module Raw (X: DecidableType).
   simple induction s; simpl.
   intros; inversion H0.
   intros x l Hrec a f Hf.
-  generalize (Hf x); case (f x); simpl; firstorder; inversion H0;
-   firstorder.
-  rewrite <- (H a) in H1; auto; discriminate H1.
+  generalize (Hf x); case (f x); simpl.
+  inversion_clear 2; auto.
+  inversion_clear 2; auto.
+  rewrite <- (H a (X.eq_sym H1)); intros; discriminate.
   Qed.
 
   Lemma filter_unique :
@@ -611,8 +615,9 @@ Module Raw (X: DecidableType).
   Proof. 
   simple induction s; simpl; auto; unfold For_all.
   intros x l Hrec f Hf. 
-  generalize (Hf x); case (f x); simpl; firstorder. 
-  rewrite (H x); auto.
+  generalize (Hf x); case (f x); simpl.
+  auto.
+  intros; rewrite (H x); auto.
   Qed.
 
   Lemma for_all_2 :
@@ -627,7 +632,7 @@ Module Raw (X: DecidableType).
   assert (f x = true).
    generalize A; case (f x); auto.
   rewrite H0 in A; simpl in A.
-  inversion H; firstorder.
+  inversion_clear H; auto.
   rewrite (Hf a x); auto.
   Qed.
 
@@ -640,13 +645,13 @@ Module Raw (X: DecidableType).
   elim H0; intuition. 
   inversion H2.
   intros x l Hrec f Hf. 
-  generalize (Hf x); case (f x); simpl; firstorder. 
-  inversion_clear H0.
-  absurd (false = true); auto with bool.
-  rewrite (H x); auto.
-  rewrite <- H1.
-  firstorder.
-  firstorder.
+  generalize (Hf x); case (f x); simpl.
+  auto.
+  destruct 2 as [a (A1,A2)].
+  inversion_clear A1.
+  rewrite <- (H a (X.eq_sym H0)) in A2; discriminate.
+  apply Hrec; auto.
+  exists a; auto.
   Qed.
 
   Lemma exists_2 :
@@ -656,9 +661,10 @@ Module Raw (X: DecidableType).
   simple induction s; simpl; auto; unfold Exists.
   intros; discriminate.
   intros x l Hrec f Hf.
-  generalize (refl_equal (f x)); pattern (f x) at -1; case (f x). 
-  intros; exists x; auto.
-  intros; elim (Hrec f); auto; firstorder.
+  case_eq (f x); intros.
+  exists x; auto.
+  destruct (Hrec f Hf H0) as [a (A1,A2)].
+  exists a; auto.
   Qed.
 
   Lemma partition_1 :
