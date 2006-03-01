@@ -14,7 +14,7 @@
 (* $Id$ *)
 
 (** This functor derives additional properties from [FSetInterface.S].
-    Contrary to the functor in [FSetProperties] it uses 
+    Contrary to the functor in [FSetEqProperties] it uses 
     predicates over sets instead of sets operations, i.e.
     [In x s] instead of [mem x s=true], 
     [Equal s s'] instead of [equal s s'=true], etc. *)
@@ -85,7 +85,7 @@ Module Properties (M: S).
      match s with
      | [] => []
      | y :: l =>
-         if ME.eq_dec x y then fun _ => l else fun _ => y :: remove_list x l
+         if ME.eq_dec x y then l else y :: remove_list x l
      end. 
 
    Lemma remove_list_correct :

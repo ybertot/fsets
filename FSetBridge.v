@@ -127,7 +127,7 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
   Qed.    
 
   Definition fdec (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x})
-    (x : elt) := if Pdec x then fun _ => true else fun _ => false. 
+    (x : elt) := if Pdec x then true else false. 
 
   Lemma compat_P_aux :
    forall (P : elt -> Prop) (Pdec : forall x : elt, {P x} + {~ P x}),
@@ -324,7 +324,7 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
   Qed.
 
   Definition is_empty (s : t) : bool :=
-    if is_empty s then fun _ => true else fun _ => false.
+    if is_empty s then true else false.
 
   Lemma is_empty_1 : forall s : t, Empty s -> is_empty s = true.
   Proof.
@@ -338,7 +338,7 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
   Qed.
 
   Definition mem (x : elt) (s : t) : bool :=
-    if mem x s then fun _ => true else fun _ => false.
+    if mem x s then true else false.
 
   Lemma mem_1 : forall (s : t) (x : elt), x ∈ s -> mem x s = true.
   Proof.
@@ -352,7 +352,7 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
   Qed.
 
   Definition equal (s s' : t) : bool :=
-    if equal s s' then fun _ => true else fun _ => false.
+    if equal s s' then true else false.
 
   Lemma equal_1 : forall s s' : t, s ≡ s' -> equal s s' = true.
   Proof. 
@@ -366,7 +366,7 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
   Qed.
   
   Definition subset (s s' : t) : bool :=
-    if subset s s' then fun _ => true else fun _ => false.
+    if subset s s' then true else false.
 
   Lemma subset_1 : forall s s' : t, s ⊆ s' -> subset s s' = true.
   Proof. 
@@ -644,8 +644,8 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
 
   Definition for_all (f : elt -> bool) (s : t) : bool :=
     if for_all (P:=fun x => f x = true) (f_dec f) s
-    then fun _ => true
-    else fun _ => false. 
+    then true
+    else false. 
 
   Lemma for_all_1 :
    forall (s : t) (f : elt -> bool),
@@ -667,8 +667,8 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
   
   Definition exists_ (f : elt -> bool) (s : t) : bool :=
     if exists_ (P:=fun x => f x = true) (f_dec f) s
-    then fun _ => true
-    else fun _ => false. 
+    then true
+    else false. 
 
   Lemma exists_1 :
    forall (s : t) (f : elt -> bool),
