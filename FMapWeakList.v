@@ -107,17 +107,18 @@ Proof.
  inversion_clear H3.
  compute in H4; destruct H4.
  elim H; auto.
- apply H0; firstorder.
+ apply H0; auto.
+ exists x; auto.
 Qed. 
 
 Lemma mem_2 : forall m (Hm:noredunA m) x, mem x m = true -> In x m. 
 Proof.
  intros m Hm x; generalize Hm; clear Hm; unfold PX.In,PX.MapsTo.
- functional induction mem x m; intros noredun hyp;try ((inversion hyp);fail).
- exists e;eauto. 
+ functional induction mem x m; intros noredun hyp; try discriminate.
+ exists e; auto. 
  inversion_clear noredun.
  destruct H0; auto.
- exists x; eauto.
+ exists x; auto.
 Qed.
 
 (** * [find] *)
@@ -142,20 +143,25 @@ Proof.
 
  inversion 2.
 
- intros.
- inversion_clear H0.
- compute in H1; destruct H1.
- congruence.
- inversion_clear Hm.
- elim H0.
- apply InA_eqA with (k,e); auto.
- apply PX.eqk_trans.
+ do 2 inversion_clear 1.
+ compute in H3; destruct H3; subst; trivial.
+ elim H0; apply InA_eqk with (k,e); auto.
 
- intros.
- inversion_clear H1.
- compute in H2; destruct H2.
- absurd (X.eq k k'); auto.
- inversion_clear Hm; auto.
+ do 2 inversion_clear 1; auto.
+ compute in H4; destruct H4; elim H; auto.
+Qed.
+
+(* Not part of the exported specifications, used later for [combine]. *)
+
+Lemma find_eq : forall m (Hm:noredunA m) x x', 
+   X.eq x x' -> find x m = find x' m.
+Proof.
+ induction m; simpl; auto; destruct a; intros.
+ inversion_clear Hm.
+ rewrite (IHm H1 x x'); auto.
+ destruct (X.eq_dec x t0); destruct (X.eq_dec x' t0); trivial.
+ elim n; apply X.eq_trans with x; auto.
+ elim n; apply X.eq_trans with x'; auto.
 Qed.
 
 (** * [add] *)
@@ -168,16 +174,14 @@ Fixpoint add (k : key) (x : elt) (s : t elt) {struct s} : t elt :=
 
 Lemma add_1 : forall m x y e, X.eq x y -> MapsTo y e (add x e m).
 Proof.
- intros m x y e; generalize y; clear y.
- unfold PX.MapsTo.
+ intros m x y e; generalize y; clear y; unfold PX.MapsTo.
  functional induction add x e m;simpl;auto.
 Qed.
 
 Lemma add_2 : forall m x y e e', 
   ~ X.eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
 Proof.
- intros m x  y e e'. 
- generalize y e; clear y e; unfold PX.MapsTo.
+ intros m x  y e e'; generalize y e; clear y e; unfold PX.MapsTo.
  functional induction add x e' m;simpl;auto.
  intros y' e' eqky';  inversion_clear 1.
  destruct H1; simpl in *.
@@ -190,9 +194,23 @@ Lemma add_3 : forall m x y e e',
   ~ X.eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
 Proof.
  intros m x y e e'. generalize y e; clear y e; unfold PX.MapsTo.
- functional induction add x e' m;simpl;eauto.
- intros e' y' eqky' Hinlist.
- inversion Hinlist;eauto.
+ functional induction add x e' m;simpl;auto.
+ intros; apply (In_inv_3 H0); auto.
+ constructor 2; apply (In_inv_3 H1); auto.
+ inversion_clear 2; auto.
+Qed.
+
+Lemma add_3' : forall m x y e e', 
+  ~ X.eq x y -> InA eqk (y,e) (add x e' m) -> InA eqk (y,e) m. 
+Proof.
+ intros m x y e e'. generalize y e; clear y e.
+ functional induction add x e' m;simpl;auto.
+ inversion_clear 2.
+ compute in H1; elim H; auto.
+ inversion H1. 
+ constructor 2; inversion_clear H1; auto.
+ compute in H2; elim H0; auto.
+ inversion_clear 2; auto.
 Qed.
 
 Lemma add_noredun : forall m (Hm:noredunA m) x e, noredunA (add x e m).
@@ -204,14 +222,38 @@ Proof.
  simpl; case (X.eq_dec x x'); inversion_clear Hm; auto.
  constructor; auto.
  swap H.
- apply InA_eqA with (x,e); auto; apply eqk_trans.
+ apply InA_eqk with (x,e); auto.
  constructor; auto.
- swap H.
- (* we need add_3, but with eqk instead of eqke *)
- generalize H1 n; clear IHm H0 H1 n.
- functional induction add x e m; simpl; eauto; intros.
- inversion_clear H1; auto. 
+ swap H; apply add_3' with x e; auto.
 Qed.
+
+(* Not part of the exported specifications, used later for [combine]. *)
+
+Lemma add_eq : forall m (Hm:noredunA m) x a e, 
+   X.eq x a -> find x (add a e m) = Some e.
+Proof.
+ intros.
+ apply find_1; auto.
+ apply add_noredun; auto.
+ apply add_1; auto.
+Qed.
+
+Lemma add_not_eq : forall m (Hm:noredunA m) x a e, 
+  ~X.eq x a -> find x (add a e m) = find x m.
+Proof.
+ intros.
+ case_eq (find x m); intros.
+ apply find_1; auto.
+ apply add_noredun; auto.
+ apply add_2; auto.
+ apply find_2; auto.
+ case_eq (find x (add a e m)); intros; auto.
+ rewrite <- H0; symmetry.
+ apply find_1; auto.
+ apply add_3 with a e; auto.
+ apply find_2; auto.
+Qed.
+
 
 (** * [remove] *)
 
@@ -232,16 +274,16 @@ Proof.
  subst.
  swap H1.
  destruct H3 as (e,H3); unfold PX.MapsTo in H3.
- apply InA_eqA with (y,e); auto.
- apply eqk_trans.
- red; eauto.
+ apply InA_eqk with (y,e); auto.
+ compute; apply X.eq_trans with k; auto.
   
  intro H2.
  destruct H2 as (e,H2); inversion_clear H2.
  compute in H3; destruct H3.
- elim H; eauto.
+ elim H; apply X.eq_trans with y; auto.
  inversion_clear Hm.
- firstorder.
+ elim (H0 H4 H1).
+ exists e; auto.
 Qed.
   
 Lemma remove_2 : forall m (Hm:noredunA m) x y e, 
@@ -261,7 +303,15 @@ Lemma remove_3 : forall m (Hm:noredunA m) x y e,
 Proof.
  intros m Hm x y e; generalize Hm; clear Hm; unfold PX.MapsTo.
  functional induction remove x m;auto.
- inversion_clear 1; inversion_clear 1; auto.
+ do 2 inversion_clear 1; auto.
+Qed.
+
+Lemma remove_3' : forall m (Hm:noredunA m) x y e, 
+  InA eqk (y,e) (remove x m) -> InA eqk (y,e) m.
+Proof.
+ intros m Hm x y e; generalize Hm; clear Hm; unfold PX.MapsTo.
+ functional induction remove x m;auto.
+ do 2 inversion_clear 1; auto.
 Qed.
 
 Lemma remove_noredun : forall m (Hm:noredunA m) x, noredunA (remove x m).
@@ -272,12 +322,8 @@ Proof.
  inversion_clear Hm.
  destruct a as (x',e').
  simpl; case (X.eq_dec x x'); auto.
- constructor; eauto.
- swap H.
- generalize H0 H1 n; clear H0 H1 n IHm.
- functional induction remove x m; simpl; eauto; intros.
- inversion_clear H1.
- inversion_clear H2; auto.
+ constructor; auto.
+ swap H; apply remove_3' with x; auto.
 Qed.  
 
 (** * [elements] *)
@@ -346,7 +392,7 @@ Proof.
  destruct H.
  inversion_clear Hm.
  assert (H3 : In t0 m').
- apply H; exists e; auto.
+  apply H; exists e; auto.
  destruct H3 as (e', H3).
  unfold check at 2; rewrite (find_1 Hm' H3).
  rewrite (H0 t0); simpl; auto.
@@ -555,46 +601,6 @@ Proof.
  destruct a; inversion_clear H1; auto.
 Qed.
 
-Lemma find_eq : forall (m: t elt)(Hm : noredunA (@eqk elt) m)(x x':key), 
-   X.eq x x' -> find x m = find x' m.
-Proof.
- intros.
- case_eq (find x' m); intros.
- apply find_1; auto.
- apply PX.MapsTo_eq with x'; eauto.
- apply find_2; auto.
- case_eq (find x m); intros; auto.
- rewrite <- H0; symmetry.
- apply find_1; auto.
- apply PX.MapsTo_eq with x; eauto.
- apply find_2; auto.
-Qed.
-
-Lemma add_eq : forall (m: t elt)(Hm : noredunA (@eqk elt) m)(x a:key)(e:elt), 
-   X.eq x a -> find x (add a e m) = Some e.
-Proof.
- intros.
- apply find_1; auto.
- apply add_noredun; auto.
- apply add_1; eauto.
-Qed.
-
-Lemma add_not_eq : forall m (Hm : noredunA (@eqk elt) m)(x a:key)(e:elt), 
-  ~X.eq x a -> find x (add a e m) = find x m.
-Proof.
- intros.
- case_eq (find x m); intros.
- apply find_1; auto.
- apply add_noredun; auto.
- apply add_2; eauto.
- apply find_2; auto.
- case_eq (find x (add a e m)); intros; auto.
- rewrite <- H0; symmetry.
- apply find_1; auto.
- eapply add_3; eauto.
- eapply find_2; eauto.
-Qed.
-
 End Elt2. 
 Section Elt3.
 
@@ -797,10 +803,8 @@ Proof.
  set (o':=find x m') in *; clearbody o'.
  clear Hm Hm' m m'.
  generalize H; clear H.
- match goal with |- ?g => 
-   assert (g /\ (find x m0 = None -> 
-    find x (fold_right_pair (option_cons (A:=elt'')) (map f' m0) nil) = None));
-   [ | intuition ] end.
+ match goal with |- ?m=?n -> ?p=?q =>
+   assert ((m=n->p=q)/\(m=None -> p=None)); [|intuition] end.
  induction m0; simpl in *; intuition.
  destruct o; destruct o'; simpl in *; try discriminate; auto.
  destruct a as (k,(oo,oo')); simpl in *.
@@ -816,8 +820,7 @@ Proof.
  destruct (IHm0 H1) as (_,H4); apply H4; auto.
  case_eq (find x m0); intros; auto.
  elim H0.
- apply InA_eqA with (x,p); auto.
- apply eqk_trans.
+ apply InA_eqk with (x,p); auto.
  apply InA_eqke_eqk.
  exact (find_2 H3). 
  (* k < x *)

@@ -90,6 +90,11 @@ Module PairDecidableType(D:DecidableType).
   Qed.
   Hint Resolve InA_eqke_eqk.
 
+  Lemma InA_eqk : forall p q m, eqk p q -> InA eqk p m -> InA eqk q m.
+  Proof.
+   intros; apply InA_eqA with p; auto; apply eqk_trans; auto.
+  Qed.
+
   Definition MapsTo (k:key)(e:elt):= InA eqke (k,e).
   Definition In k m := exists e:elt, MapsTo k e m.
 
