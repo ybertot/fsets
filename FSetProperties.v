@@ -73,7 +73,7 @@ Module Properties (M: S).
   Section noredunA_Remove.
 
   Definition remove_list x l := 
-    remove_1st (fun y => if ME.eq_dec x y then true else false) l.
+    remove_such (fun y => if ME.eq_dec x y then true else false) l.
  
   Lemma remove_list_correct :
     forall s x,

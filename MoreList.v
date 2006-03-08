@@ -180,44 +180,6 @@ Qed.
 
 End Rev_acc.
 
-Section ConsN.
-
-(* [consn n a l] adds [n] times the element [a] in head position of [l]. *)
-
-Fixpoint consn (n:nat)(a:A)(l:list A) {struct n} : list A := 
- match n with 
-  | 0 => l  
-  | S n => a::(consn n a l)
- end. 
-
-Lemma consn_length : forall n a l, length (consn n a l) = n + length l.
-Proof.
-induction n; simpl; auto.
-Qed.
-
-Lemma consn_nth1 : 
-forall n a l k d,  k < n -> nth k (consn n a l) d = a.
-Proof. 
-induction n; intros.
-inversion H.
-destruct k; auto.
-simpl; rewrite IHn; auto with arith.
-Qed.
-
-Lemma consn_nth2 : 
-forall n a l k d,  n <= k -> nth k (consn n a l) d = nth (k-n) l d.
-Proof. 
-induction n; intros.
-rewrite <- minus_n_O;simpl; auto.
-simpl.
-destruct k.
-inversion H.
-simpl.
-auto with arith.
-Qed.
-
-End ConsN.
-
 Section Seq. 
 
 (* [seq] computes the sequence of [len] contiguous integers 
@@ -442,22 +404,22 @@ Qed.
 
 (* Returns the first element that satisfies a boolean function (or None) *)
 
-Fixpoint find_1st  (l : list A) {struct l} : option A :=
+Fixpoint find_such  (l : list A) {struct l} : option A :=
  match l with 
   | nil => None
-  | x :: l => if f x then Some x else find_1st l
+  | x :: l => if f x then Some x else find_such l
  end.
 
 (* Remove of the list the first element that satisfies a boolean function. *)
 
-Fixpoint remove_1st (l : list A) {struct l} : list A :=
+Fixpoint remove_such (l : list A) {struct l} : list A :=
  match l with
    | nil => nil
-   | x :: l => if f x then l else (x :: remove_1st l)
+   | x :: l => if f x then l else (x :: remove_such l)
  end.
 
-Lemma find_remove_1st : forall l, existsb l = true -> 
-  forall x, In x l <-> find_1st l = Some x \/ In x (remove_1st l).
+Lemma find_remove_such : forall l, existsb l = true -> 
+  forall x, In x l <-> find_such l = Some x \/ In x (remove_such l).
 Proof.
 induction l.
 simpl.
@@ -475,8 +437,6 @@ End Bool.
 
 End MoreLists.
 
-Implicit Arguments consn [A].
-
 Hint Rewrite 
  rev_involutive (* rev (rev l) = l *)
  rev_unit (* rev (l ++ a :: nil) = a :: rev l *)
@@ -485,7 +445,6 @@ Hint Rewrite
  seq_length (* length (seq start len) = len *)
  app_length (* length (l ++ l') = length l + length l' *)
  rev_length (* length (rev l) = length l *)
- consn_length (* length (consn n a l) = n + length l *)
  : list.
 
 Hint Rewrite <- 
