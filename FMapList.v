@@ -691,11 +691,13 @@ Fixpoint map2 (m : t elt) : t elt' -> t elt'' :=
         end
   end.      
 
-Fixpoint combine (m : t elt) : t elt' -> t (option elt * option elt') :=
+Notation oee' := (option elt * option elt')%type.
+
+Fixpoint combine (m : t elt) : t elt' -> t oee' :=
   match m with
    | nil => map (fun e' => (None,Some e'))
    | (k,e) :: l =>
-      fix combine_aux (m':t elt') : list (key * (option elt * option elt')) :=
+      fix combine_aux (m':t elt') : list (key * oee') :=
         match m' with
          | nil => map (fun e => (Some e,None)) m
          | (k',e') :: l' =>
@@ -711,7 +713,7 @@ Definition fold_right_pair (A B C:Set)(f: A->B->C->C)(l:list (A*B))(i:C) :=
   List.fold_right (fun p => f (fst p) (snd p)) i l.
 
 Definition map2_alt m m' := 
-  let m0 : t (option elt * option elt') := combine m m' in 
+  let m0 : t oee' := combine m m' in 
   let m1 : t (option elt'') := map (fun p => f (fst p) (snd p)) m0 in 
   fold_right_pair (option_cons (A:=elt'')) m1 nil.
 
@@ -740,10 +742,10 @@ Proof.
 Qed.
 
 Lemma combine_lelistA : 
-  forall m m' (x:key)(e:elt)(e':elt')(e'':option elt * option elt'), 
+  forall m m' (x:key)(e:elt)(e':elt')(e'':oee'), 
   lelistA (@ltk elt) (x,e) m -> 
   lelistA (@ltk elt') (x,e') m' -> 
-  lelistA (@ltk (option elt * option elt')) (x,e'') (combine m m').
+  lelistA (@ltk oee') (x,e'') (combine m m').
 Proof.
  induction m. 
  intros.
@@ -767,7 +769,7 @@ Hint Resolve combine_lelistA.
 
 Lemma combine_sorted : 
   forall m (Hm : sort (@ltk elt) m) m' (Hm' : sort (@ltk elt') m'), 
-  sort (@ltk (option elt * option elt')) (combine m m').
+  sort (@ltk oee') (combine m m').
 Proof.
  induction m. 
  intros; clear Hm.
@@ -793,7 +795,7 @@ Proof.
  exact (combine_lelistA _ H0 H3). 
  inversion_clear Hm; inversion_clear Hm'.
  constructor; auto.
- change (lelistA (ltk (elt:=option elt * option elt')) (k', (None, Some e'))
+ change (lelistA (ltk (elt:=oee')) (k', (None, Some e'))
                  (combine ((k,e)::m) m')).
  assert (lelistA (ltk (elt:=elt)) (k', e) ((k,e)::m)) by auto.
  exact (combine_lelistA _  H3 H2).
@@ -808,7 +810,7 @@ Proof.
  unfold map2_alt.
  assert (H0:=combine_sorted Hm Hm').
  set (l0:=combine m m') in *; clearbody l0.
- set (f':= fun p : option elt * option elt' => f (fst p) (snd p)).
+ set (f':= fun p : oee' => f (fst p) (snd p)).
  assert (H1:=map_sorted (elt' := option elt'') H0 f').
  set (l1:=map f' l0) in *; clearbody l1. 
  clear f' f H0 l0 Hm Hm' m m'.
@@ -894,7 +896,7 @@ Proof.
  unfold map2_alt.
  assert (H:=combine_1 Hm Hm' x).
  assert (H2:=combine_sorted Hm Hm').
- set (f':= fun p : option elt * option elt' => f (fst p) (snd p)).
+ set (f':= fun p : oee' => f (fst p) (snd p)).
  set (m0 := combine m m') in *; clearbody m0.
  set (o:=find x m) in *; clearbody o. 
  set (o':=find x m') in *; clearbody o'.
@@ -914,7 +916,7 @@ Proof.
  destruct (IHm0 H0) as (H2,_); apply H2; auto.
  rewrite <- H.
  case_eq (find x m0); intros; auto.
- assert (ltk (elt:=option elt * option elt') (x,(oo,oo')) (k,(oo,oo'))).
+ assert (ltk (elt:=oee') (x,(oo,oo')) (k,(oo,oo'))).
   red; auto.
  destruct (Sort_Inf_NotIn H0 (Inf_lt H4 H1)).
  exists p; apply find_2; auto.
@@ -927,7 +929,7 @@ Proof.
  MX.compare; auto.
  destruct (IHm0 H0) as (_,H4); apply H4; auto.
  case_eq (find x m0); intros; auto.
- assert (eqk (elt:=option elt * option elt') (k,(oo,oo')) (x,(oo,oo'))).
+ assert (eqk (elt:=oee') (k,(oo,oo')) (x,(oo,oo'))).
   red; auto.
  destruct (Sort_Inf_NotIn H0 (Inf_eq (eqk_sym H5) H1)).
  exists p; apply find_2; auto.
@@ -949,7 +951,7 @@ Proof.
  MX.compare; auto.
  destruct (IHm0 H0) as (_,H4); apply H4; auto.
  case_eq (find x m0); intros; auto.
- assert (ltk (elt:=option elt * option elt') (x,(oo,oo')) (k,(oo,oo'))).
+ assert (ltk (elt:=oee') (x,(oo,oo')) (k,(oo,oo'))).
   red; auto.
  destruct (Sort_Inf_NotIn H0 (Inf_lt H3 H1)).
  exists p; apply find_2; auto.

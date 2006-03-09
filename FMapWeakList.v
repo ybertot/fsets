@@ -400,7 +400,7 @@ Proof.
  split; intuition.
  apply H.
  destruct H5 as (e'',H5); exists e''; auto.
- eapply H0; eauto; auto.
+ apply H0 with k; auto.
 Qed.
    
 Lemma submap_2 : forall m (Hm:noredunA m) m' (Hm': noredunA m') cmp, 
@@ -439,7 +439,7 @@ Proof.
  inversion_clear H6.
  compute in H8; destruct H8; subst.
  rewrite (find_1 Hm' (PX.MapsTo_eq H6 H7)) in H5; congruence.
- eapply H4; eauto.
+ apply H4 with k; auto.
 Qed.
 
 (** Specification of [equal] *)
@@ -605,24 +605,38 @@ End Elt2.
 Section Elt3.
 
 Variable elt elt' elt'' : Set.
+
+Notation oee' := (option elt * option elt')%type.
 	
-Definition combine_l (m:t elt)(m':t elt') : t (option elt * option elt') :=
+Definition combine_l (m:t elt)(m':t elt') : t oee' :=
   mapi (fun k e => (Some e, find k m')) m.	
 
-Definition combine_r (m:t elt)(m':t elt') : t (option elt * option elt') :=
+Definition combine_r (m:t elt)(m':t elt') : t oee' :=
   mapi (fun k e' => (find k m, Some e')) m'.	
 
 Definition fold_right_pair (A B C:Set)(f:A->B->C->C)(l:list (A*B))(i:C) := 
   List.fold_right (fun p => f (fst p) (snd p)) i l.
 
-Definition combine (m:t elt)(m':t elt') : t (option elt * option elt') := 
+Definition combine (m:t elt)(m':t elt') : t oee' := 
   let l := combine_l m m' in 
   let r := combine_r m m' in 
-  fold_right_pair (add (elt:=option elt * option elt')) l r.
+  fold_right_pair (add (elt:=oee')) l r.
+
+Lemma fold_right_pair_noredun : 
+  forall l r (Hl: noredunA (eqk (elt:=oee')) l) 
+    (Hl: noredunA (eqk (elt:=oee')) r), 
+    noredunA (eqk (elt:=oee')) (fold_right_pair (add (elt:=oee')) l r).
+Proof.
+ induction l; simpl; auto.
+ destruct a; simpl; auto.
+ inversion_clear 1.
+ intros; apply add_noredun; auto.
+Qed.
+Hint Resolve fold_right_pair_noredun.
 
 Lemma combine_noredun : 
   forall m (Hm:noredunA (@eqk elt) m) m' (Hm':noredunA (@eqk elt') m'), 
-  noredunA (@eqk (option elt * option elt')) (combine m m').
+  noredunA (@eqk oee') (combine m m').
 Proof.
  unfold combine, combine_r, combine_l.
  intros.
@@ -632,13 +646,7 @@ Proof.
  generalize (mapi_noredun Hm' f2).
  set (l := mapi f1 m); clearbody l.
  set (r := mapi f2 m'); clearbody r.
- clear f1 f2 Hm Hm' m m'.
- induction l.
- simpl; auto.
- intros.
- inversion_clear H0.
- destruct a; simpl; auto.
- apply add_noredun; auto.
+ auto.
 Qed.
 
 Definition at_least_left (o:option elt)(o':option elt') := 
@@ -705,12 +713,10 @@ Proof.
  intros.
  generalize (combine_r_1 Hm Hm' x).
  generalize (combine_l_1 Hm Hm' x).
- assert (noredunA (eqk (elt:=option elt * option elt')) (combine_l m m')).
-  unfold combine_l.
-  apply mapi_noredun; auto.
- assert (noredunA (eqk (elt:=option elt * option elt')) (combine_r m m')).
-  unfold combine_r.
-  apply mapi_noredun; auto.
+ assert (noredunA (eqk (elt:=oee')) (combine_l m m')).
+  unfold combine_l; apply mapi_noredun; auto.
+ assert (noredunA (eqk (elt:=oee')) (combine_r m m')).
+  unfold combine_r; apply mapi_noredun; auto.
  set (l := combine_l m m') in *; clearbody l.
  set (r := combine_r m m') in *; clearbody r.
  set (o := find x m); clearbody o.
@@ -724,24 +730,10 @@ Proof.
  destruct o; simpl in *; try discriminate.
  inversion H1; subst.
  apply add_eq; auto.
- inversion_clear H.
- (* begin *)
- clear H2 H1 H3 e IHl o' e0 t0 x.
- induction l; simpl; auto.
- destruct a; simpl; auto.
- inversion_clear H4.
- apply add_noredun; eauto.
- (* end *)
+ inversion_clear H; auto.
  inversion_clear H.
  rewrite <- IHl; auto.
  apply add_not_eq; auto.
- (* begin *)
- clear H2 H1 H3 n IHl o o' t0 x p.
- induction l; simpl; auto.
- destruct a; simpl; auto.
- inversion_clear H4.
- apply add_noredun; eauto.
- (* end *)
 Qed.
 
 Variable f : option elt -> option elt' -> option elt''.
@@ -753,7 +745,7 @@ Definition option_cons (A:Set)(k:key)(o:option A)(l:list (key*A)) :=
   end.
 
 Definition map2 m m' := 
-  let m0 : t (option elt * option elt') := combine m m' in 
+  let m0 : t oee' := combine m m' in 
   let m1 : t (option elt'') := map (fun p => f (fst p) (snd p)) m0 in 
   fold_right_pair (option_cons (A:=elt'')) m1 nil.
 
@@ -765,7 +757,7 @@ Proof.
  unfold map2.
  assert (H0:=combine_noredun Hm Hm').
  set (l0:=combine m m') in *; clearbody l0.
- set (f':= fun p : option elt * option elt' => f (fst p) (snd p)).
+ set (f':= fun p : oee' => f (fst p) (snd p)).
  assert (H1:=map_noredun (elt' := option elt'') H0 f').
  set (l1:=map f' l0) in *; clearbody l1. 
  clear f' f H0 l0 Hm Hm' m m'.
@@ -797,7 +789,7 @@ Proof.
  unfold map2.
  assert (H:=combine_1 Hm Hm' x).
  assert (H2:=combine_noredun Hm Hm').
- set (f':= fun p : option elt * option elt' => f (fst p) (snd p)).
+ set (f':= fun p : oee' => f (fst p) (snd p)).
  set (m0 := combine m m') in *; clearbody m0.
  set (o:=find x m) in *; clearbody o. 
  set (o':=find x m') in *; clearbody o'.
@@ -816,7 +808,7 @@ Proof.
  rewrite H2.
  unfold f'; simpl.
  destruct (f oo oo'); simpl. 
- destruct (X.eq_dec x k); [ auto | absurd_hyp n; eauto ].
+ destruct (X.eq_dec x k); try absurd_hyp n; auto.
  destruct (IHm0 H1) as (_,H4); apply H4; auto.
  case_eq (find x m0); intros; auto.
  elim H0.
@@ -826,7 +818,7 @@ Proof.
  (* k < x *)
  unfold f'; simpl.
  destruct (f oo oo'); simpl.
- destruct (X.eq_dec x k); [ absurd_hyp n; eauto | auto].
+ destruct (X.eq_dec x k); [ absurd_hyp n; auto | auto].
  destruct (IHm0 H1) as (H3,_); apply H3; auto.
  destruct (IHm0 H1) as (H3,_); apply H3; auto.
 
@@ -840,7 +832,7 @@ Proof.
  (* k < x *)
  unfold f'; simpl.
  destruct (f oo oo'); simpl.
- destruct (X.eq_dec x k); [ absurd_hyp n; eauto | auto].
+ destruct (X.eq_dec x k); [ absurd_hyp n; auto | auto].
  destruct (IHm0 H1) as (_,H4); apply H4; auto.
  destruct (IHm0 H1) as (_,H4); apply H4; auto.
 Qed.
