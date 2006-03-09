@@ -24,6 +24,7 @@ Require Import Omega.
 Open Scope nat_scope.
 
 Require Export FSetInterface. 
+Require Import FSetFacts.
 Require Export Bool.
 Require Export Sumbool.
 Require Export Zerob. 
@@ -59,6 +60,9 @@ Module Properties (M: S).
   
   Module ME := OrderedTypeFacts E.  
    (** Results about lists without duplicates *)
+
+  Module FM := Facts M.
+  Import FM.
 
   Notation NoRedun := (noredunA E.eq).
 

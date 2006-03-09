@@ -25,10 +25,12 @@ FSetInterface.vo: FSetInterface.v Lib.vo OrderedType.vo
 FSetInterface.vi: FSetInterface.v Lib.vo OrderedType.vo
 FSetList.vo: FSetList.v FSetInterface.vo
 FSetList.vi: FSetList.v FSetInterface.vo
+FSetFacts.vo: FSetFacts.v FSetInterface.vo
+FSetFacts.vi: FSetFacts.v FSetInterface.vo
 FSetEqProperties.vo: FSetEqProperties.v FSetProperties.vo
 FSetEqProperties.vi: FSetEqProperties.v FSetProperties.vo
-FSetProperties.vo: FSetProperties.v FSetInterface.vo
-FSetProperties.vi: FSetProperties.v FSetInterface.vo
+FSetProperties.vo: FSetProperties.v FSetInterface.vo FSetFacts.vo
+FSetProperties.vi: FSetProperties.v FSetInterface.vo FSetFacts.vo
 FSetWeakInterface.vo: FSetWeakInterface.v Lib.vo DecidableType.vo
 FSetWeakInterface.vi: FSetWeakInterface.v Lib.vo DecidableType.vo
 FSetWeakList.vo: FSetWeakList.v FSetWeakInterface.vo
@@ -63,8 +65,9 @@ Int.html: Int.v
 FSetBridge.html: FSetBridge.v FSetInterface.html
 FSetInterface.html: FSetInterface.v Lib.html OrderedType.html
 FSetList.html: FSetList.v FSetInterface.html
+FSetFacts.html: FSetFacts.v FSetInterface.html
 FSetEqProperties.html: FSetEqProperties.v FSetProperties.html
-FSetProperties.html: FSetProperties.v FSetInterface.html
+FSetProperties.html: FSetProperties.v FSetInterface.html FSetFacts.html
 FSetWeakInterface.html: FSetWeakInterface.v Lib.html DecidableType.html
 FSetWeakList.html: FSetWeakList.v FSetWeakInterface.html
 FMapInterface.html: FMapInterface.v FSetInterface.html

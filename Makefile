@@ -79,6 +79,7 @@ VFILES=MoreList.v\
   FSetBridge.v\
   FSetInterface.v\
   FSetList.v\
+  FSetFacts.v\
   FSetEqProperties.v\
   FSetProperties.v\
   FSetWeakInterface.v\
@@ -108,6 +109,7 @@ all: MoreList.vo\
   FSetBridge.vo\
   FSetInterface.vo\
   FSetList.vo\
+  FSetFacts.vo\
   FSetEqProperties.vo\
   FSetProperties.vo\
   FSetWeakInterface.vo\

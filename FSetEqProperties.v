@@ -665,7 +665,7 @@ Qed.
 Lemma fold_plus: 
  forall s p, (fold (fun _ =>S) s p)=(fold (fun _ => S) s O)+p.
 Proof.
-assert (st := gen_st nat).
+assert (st : Setoid_Theory nat (eq (A:=nat))) by auto.
 assert (fe : compat_op E.eq (@eq _) (fun _ =>S)). unfold compat_op; auto. 
 assert (fp : transpose (@eq _) (fun _:E.t =>S)). unfold transpose;auto.
 intros s p;pattern s;apply set_ind.
@@ -909,7 +909,7 @@ Lemma fold_union_inter:
   = (fold f s (fold f s' i)).
 Proof.
 intro A.
-set (st := gen_st A).
+assert (st : Setoid_Theory A (eq (A:=A))) by auto.
 intros;pattern s;apply set_ind.
 intros; rewrite <- (fold_equal _ _ _ _ st i _ H H0 (inter_equal_1 _ _ s' H1)).
 rewrite <- (fold_equal _ _ _ _ st (fold f s' i) _ H H0 H1).
@@ -958,7 +958,7 @@ Lemma fold_union:
  (fold f (union s s') i)=(fold f s (fold f s' i)).
 Proof.
 intros.
-assert (st:= gen_st A).
+assert (st : Setoid_Theory A (eq (A:=A))) by auto.
 rewrite <- (fold_union_inter _ _ i H H0 s s').
 cut (equal (inter s s') empty = true);intros.
 rewrite (fold_equal _ _ _ _ st i _ H H0 H2). 
@@ -1034,7 +1034,7 @@ Lemma fold_diff_inter:
  forall s s',(fold f (diff s s') (fold f (inter s s') i))=(fold f s i).
 Proof.
 intros.
-assert (st := gen_st A).
+assert (st : Setoid_Theory A (eq (A:=A))) by auto. 
 rewrite <- (fold_union_inter _ _ i H H0 (diff s s') (inter s s')).
 rewrite (fold_equal _ _ _ _ st i _ H H0 (diff_inter_empty s s')).
 rewrite (fold_empty _ _ st).
@@ -1215,7 +1215,7 @@ assert (gc : compat_op E.eq (@eq _) (fun x:elt => plus (g x))). auto.
 assert (gt : transpose (@eq _) (fun x:elt =>plus (g x))). red; intros; omega.
 assert (fgc : compat_op E.eq (@eq _) (fun x:elt =>plus ((f x)+(g x)))). auto.
 assert (fgt : transpose (@eq _) (fun x:elt=>plus ((f x)+(g x)))). red; intros; omega.
-assert (st := gen_st nat).
+assert (st : Setoid_Theory nat (eq (A:=nat))) by auto.
 intros s;pattern s; apply set_ind.
 intros.
 rewrite <- (fold_equal _ _ _ _ st O _ fc ft H).
@@ -1270,7 +1270,7 @@ Lemma sum_filter : forall f, (compat_bool E.eq f) ->
   forall s, (sum (fun x => if f x then 1 else 0) s) = (cardinal (filter f s)).
 Proof.
 unfold sum; intros f Hf.
-assert (st := gen_st nat).
+assert (st : Setoid_Theory nat (eq (A:=nat))) by auto.
 assert (fold_add' := fun s t => fold_add s t _ _ st).
 assert (cc : compat_op E.eq (@eq _) (fun x => plus (if f x then 1 else 0))). 
  unfold compat_op; intros.
