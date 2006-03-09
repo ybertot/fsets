@@ -42,7 +42,17 @@ Module Type S.
   Definition elt := E.t.
 
   Parameter t : Set. (** the abstract type of sets *)
- 
+
+  (** Logical predicates *)
+  Parameter In : elt -> t -> Prop.
+  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
+  Definition Subset s s' := forall a : elt, In a s -> In a s'.
+  Definition Empty s := forall a : elt, ~ In a s.
+  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
+  
+  Notation "s [=] t" := (Equal s t) (at level 70, no associativity).
+
   Parameter empty : t.
   (** The empty set. *)
 
@@ -72,7 +82,7 @@ Module Type S.
   Parameter diff : t -> t -> t.
   (** Set difference. *)
 
-  Parameter eq : t -> t -> Prop.
+  Definition eq : t -> t -> Prop := Equal.
   Parameter lt : t -> t -> Prop.
   Parameter compare : forall s s' : t, Compare lt eq s s'.
   (** Total ordering between sets. Can be used as the ordering function
@@ -146,16 +156,9 @@ Module Type S.
   Variable s s' s'' : t.
   Variable x y z : elt.
 
-  Parameter In : elt -> t -> Prop.
-  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
-  Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
-  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
-
   (** Specification of [In] *)
   Parameter In_1 : E.eq x y -> In x s -> In y s.
-
+ 
   (** Specification of [eq] *)
   Parameter eq_refl : eq s s. 
   Parameter eq_sym : eq s s' -> eq s' s.
@@ -170,8 +173,8 @@ Module Type S.
   Parameter mem_2 : mem x s = true -> In x s. 
  
   (** Specification of [equal] *) 
-  Parameter equal_1 : Equal s s' -> equal s s' = true.
-  Parameter equal_2 : equal s s' = true -> Equal s s'.
+  Parameter equal_1 : s[=]s' -> equal s s' = true.
+  Parameter equal_2 : equal s s' = true ->s[=]s'.
 
   (** Specification of [subset] *)
   Parameter subset_1 : Subset s s' -> subset s s' = true.
@@ -247,11 +250,10 @@ Module Type S.
       exists_ f s = true -> Exists (fun x => f x = true) s.
 
   (** Specification of [partition] *)
-  Parameter partition_1 :
-      compat_bool E.eq f -> Equal (fst (partition f s)) (filter f s).
-  Parameter partition_2 :
-      compat_bool E.eq f ->
-      Equal (snd (partition f s)) (filter (fun x => negb (f x)) s).
+  Parameter partition_1 : compat_bool E.eq f -> 
+      fst (partition f s) [=] filter f s.
+  Parameter partition_2 : compat_bool E.eq f -> 
+      snd (partition f s) [=] filter (fun x => negb (f x)) s.
 
   (** Specification of [elements] *)
   Parameter elements_1 : In x s -> InA E.eq x (elements s).
@@ -299,7 +301,17 @@ Module Type Sdep.
 
   Parameter t : Set.
 
-  Parameter eq : t -> t -> Prop.
+  Parameter In : elt -> t -> Prop.
+  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
+  Definition Subset s s' := forall a : elt, In a s -> In a s'.
+  Definition Add x s s' := forall y, In y s' <-> E.eq x y \/ In y s.
+  Definition Empty s := forall a : elt, ~ In a s.
+  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
+  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
+
+  Notation "s [=] t" := (Equal s t) (at level 70, no associativity).
+
+  Definition eq : t -> t -> Prop := Equal.
   Parameter lt : t -> t -> Prop.
   Parameter compare : forall s s' : t, Compare lt eq s s'.
 
@@ -308,14 +320,6 @@ Module Type Sdep.
   Parameter eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
   Parameter lt_trans : forall s s' s'' : t, lt s s' -> lt s' s'' -> lt s s''.
   Parameter lt_not_eq : forall s s' : t, lt s s' -> ~ eq s s'.
-
-  Parameter In : elt -> t -> Prop.
-  Definition Equal s s' := forall a : elt, In a s <-> In a s'.
-  Definition Subset s s' := forall a : elt, In a s -> In a s'.
-  Definition Add x s s' := forall y, In y s' <-> E.eq x y \/ In y s.
-  Definition Empty s := forall a : elt, ~ In a s.
-  Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
-  Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 
   Parameter eq_In : forall (s : t) (x y : elt), E.eq x y -> In x s -> In y s.
 
@@ -350,7 +354,7 @@ Module Type Sdep.
       forall s s' : t,
       {s'' : t | forall x : elt, In x s'' <-> In x s /\ ~ In x s'}.
 
-  Parameter equal : forall s s' : t, {Equal s s'} + {~ Equal s s'}.
+  Parameter equal : forall s s' : t, {s[=]s'} + {~ s[=]s'}.
  
   Parameter subset : forall s s' : t, {Subset s s'} + {~ Subset s s'}.
 

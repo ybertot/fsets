@@ -294,7 +294,7 @@ Module DepOfNodep (M: S) <: Sdep with Module E := M.E.
   
   Definition eq_In := In_1.
 
-  Definition eq := eq.
+  Definition eq := Equal.
   Definition lt := lt.
   Definition eq_refl := eq_refl.
   Definition eq_sym := eq_sym.
@@ -741,7 +741,7 @@ Module NodepOfDep (M: Sdep) <: S with Module E := M.E.
 
   Definition In_1 := eq_In.
 
-  Definition eq := eq.
+  Definition eq := Equal.
   Definition lt := lt.
   Definition eq_refl := eq_refl.
   Definition eq_sym := eq_sym.

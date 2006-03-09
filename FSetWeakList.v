@@ -123,7 +123,7 @@ Module Raw (X: DecidableType).
 
   Definition Equal s s' := forall a : elt, In a s <-> In a s'.
   Definition Subset s s' := forall a : elt, In a s -> In a s'.
- Definition Empty s := forall a : elt, ~ In a s.
+  Definition Empty s := forall a : elt, ~ In a s.
   Definition For_all (P : elt -> Prop) s := forall x, In x s -> P x.
   Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
 

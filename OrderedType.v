@@ -19,7 +19,7 @@ Unset Strict Implicit.
 
 
 (* TODO : 
-  - declaration comme setoid ? 
+  - declaration comme setoid ? ---> dans FSetProperties.
   - concernant la tactique order: 
    * propagate_lt n'est sans doute pas complet
    * un propagate_le
@@ -279,7 +279,7 @@ Ltac false_order := elimtype False; order.
    exists H'; auto.   
   Qed.
 
-  Ltac compare := 
+  Ltac compare_gen := 
     match goal with 
       | |- ?e => match e with 
            | context ctx [ compare ?a ?b ] =>
@@ -288,6 +288,8 @@ Ltac false_order := elimtype False; order.
                  try solve [ intros; false_order])
          end
     end.
+
+  Ltac compare:=compare_gen.
 
   Ltac compare_eq x y :=
     elim (elim_compare_eq (x:=x) (y:=y));
@@ -309,6 +311,18 @@ Ltac false_order := elimtype False; order.
   Lemma lt_dec : forall x y : t, {lt x y} + {~ lt x y}.
   Proof.
    intros; elim (compare x y); [ left | right | right ]; auto.
+  Qed.
+
+  Definition eqb x y : bool := 
+    match compare x y with 
+      | Eq _ => true 
+      | _ => false
+    end.
+
+  Lemma eqb_alt : forall x y, eqb x y = if eq_dec x y then true else false.
+  Proof.
+  unfold eqb.
+  intros; destruct (eq_dec x y); compare_gen; auto.
   Qed.
 
 (* Specialization of resuts about lists modulo. *)

@@ -50,15 +50,7 @@ Definition compat_nat (f : A -> nat) :=
 End Misc.
 Hint Unfold transpose compat_op compat_nat.
 
-(** To prove [(Setoid_Theory ? (eq ?))] *)
-Ltac ST :=
-  constructor; intros;
-   [ trivial | symmetry  in |- *; trivial | eapply trans_eq; eauto ].
-Hint Extern 1 (Setoid_Theory _ (eq (A:=_))) => ST: core.
-
-Definition gen_st : forall A : Set, Setoid_Theory _ (eq (A:=A)).
-auto.
-Qed.
+Hint Extern 1 (Setoid_Theory _ (eq (A:=_))) => constructor; congruence: core.
 
 Module Properties (M: S).
   Import M.
@@ -300,23 +292,11 @@ Module Properties (M: S).
         noredunA E.eq l /\
         (forall x : elt, In x s <-> InA E.eq x l) /\ cardinal s = length l.
   Proof. 
-  intros; exists (rev (elements s)).
-  split.
-  apply noredunA_rev; eauto.
-  split.
-  intros.
-  destruct (InA_alt E.eq x (rev (elements s))).
-  destruct (InA_alt E.eq x (elements s)).
+  intros; exists (elements s).
+  split; auto.
   split; intros.
-  destruct (H1 (elements_1 H3)) as (y, (H4,H5)).
-  apply H0; exists y; split; auto.
-  rewrite <- In_rev; auto.
-  destruct (H H3) as (y,(H4,H5)).
-  apply elements_2.
-  apply H2; exists y; split; auto.
-  rewrite In_rev; auto.
-  rewrite cardinal_1.
-  symmetry; apply rev_length.
+  split; auto.
+  apply cardinal_1.
   Qed.
 
   (** An alternate (and previous) specification for [fold] was based on 
@@ -364,13 +344,11 @@ Module Properties (M: S).
 
   Lemma cardinal_fold : forall s : t, cardinal s = fold (fun _ => S) s 0.
   Proof.
-  intros; elim (cardinal_0 s); intros l (Hl, (Hl1, Hl2)).
-  elim (fold_0 s 0 (fun _ => S)); intros l' (Hl', (Hl'1, Hl'2)).
-  rewrite Hl2; rewrite Hl'2; clear Hl2 Hl'2.
-  assert (forall l : list elt, length l = fold_right (fun _ => S) 0 l).
-   simple induction l0; simpl in |- *; auto.
-  rewrite H.
-  apply fold_right_equal with (eqA := eq (A:=nat)); auto; firstorder.
+  intros.
+  rewrite cardinal_1.
+  rewrite M.fold_1.
+  symmetry.
+  apply fold_left_length; auto.
   Qed.
 
   Lemma cardinal_1 : forall s : t, Empty s -> cardinal s = 0.
@@ -428,21 +406,22 @@ Module Properties (M: S).
 
   Lemma cardinal_inv_1 : forall s : t, cardinal s = 0 -> Empty s. 
   Proof. 
-    intros; generalize (choose_1 (s:=s)) (choose_2 (s:=s)).
-    elim (choose s); intuition.
-    clear H1; assert (In a s); auto.
-    rewrite (cardinal_2 (s:=remove a s) (s':=s) (x:=a)) in H; auto.
-    inversion H.
+    intros s.
+    rewrite M.cardinal_1.
+    intros H a Ha.
+    generalize (elements_1 Ha); clear Ha.
+    destruct (elements s); simpl in *; discriminate || inversion 1.
   Qed.
   Hint Resolve cardinal_inv_1.
  
   Lemma cardinal_inv_2 :
    forall (s : t) (n : nat), cardinal s = S n -> exists x : elt, In x s.
   Proof. 
-    intros; generalize (choose_1 (s:=s)) (choose_2 (s:=s)).
-    elim (choose s); intuition. 
-    exists a; auto.
-    intros; rewrite cardinal_1 in H; auto; inversion H.
+    intros.
+    rewrite M.cardinal_1 in H.
+    generalize (elements_2 (s:=s)).
+    destruct (elements s); try discriminate. 
+    exists e; auto.
   Qed.
 
   Lemma Equal_cardinal_aux :
@@ -992,7 +971,7 @@ Module Properties (M: S).
    forall (s : t) (p : nat),
    fold (fun _ => S) s p = fold (fun _ => S) s 0 + p.
   Proof.
-  assert (st := gen_st nat).
+  assert (st : Setoid_Theory nat (eq (A:=nat))) by auto.
   assert (fe : compat_op E.eq (eq (A:=_)) (fun _ : elt => S)). unfold compat_op in |- *; auto. 
   assert (fp : transpose (eq (A:=_)) (fun _ : elt => S)). unfold transpose in |- *; auto.
   intros s p; pattern s in |- *; apply set_induction.
@@ -1112,7 +1091,7 @@ Module Properties (M: S).
    forall (s : t) (x : elt), fold f s (f x i) = f x (fold f s i).
   Proof.
   intro A.
-  set (st := gen_st A) in *.
+  assert (st : Setoid_Theory A (eq (A:=A))) by auto.
   intros; pattern s in |- *; apply set_induction.
   intros.
   rewrite (fold_1 st i f H1).
@@ -1136,7 +1115,7 @@ Module Properties (M: S).
    fold f (union s s') (fold f (inter s s') i) = fold f s (fold f s' i).
   Proof.
   intro A.
-  set (st := gen_st A) in *.
+  assert (st : Setoid_Theory A (eq (A:=A))) by auto.
   intros; pattern s in |- *; apply set_induction.
   intros; rewrite (fold_1 st (fold f s' i) f H1).
   assert (H2 : Empty (inter s0 s')). auto with set.
@@ -1178,7 +1157,7 @@ Module Properties (M: S).
    forall s s' : t, fold f (diff s s') (fold f (inter s s') i) = fold f s i.
   Proof.
   intros.
-  assert (st := gen_st A).
+  assert (st : Setoid_Theory A (eq (A:=A))) by auto.
   rewrite <- (fold_union_inter i H H0 (diff s s') (inter s s')).
   rewrite (fold_equal st i H H0 (diff_inter_empty s s')).
   rewrite (fold_empty st).

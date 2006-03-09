@@ -77,6 +77,17 @@ End App.
 
 Section Fold.
 
+Lemma fold_left_length : 
+ forall l, fold_left (fun x _ => S x) l 0 = length l.
+Proof.
+cut (forall l n, fold_left (fun x _ => S x) l n = n + length l).
+intros.
+exact (H l 0).
+induction l; simpl; auto.
+intros; rewrite IHl.
+simpl; auto with arith.
+Qed.
+
 Lemma fold_left_app : forall (l l':list B)(f : A -> B -> A)(i:A), 
  fold_left f (l++l') i = fold_left f l' (fold_left f l i).
 Proof.
@@ -384,7 +395,7 @@ Qed.
 (* find whether a boolean function is satisfied by 
   all the elements of a list. *)
 
-Fixpoint forallb (l:list A) { struct l} : bool := 
+Fixpoint forallb (l:list A) {struct l} : bool := 
  match l with 
     | nil => true
     | a::l => f a && forallb l

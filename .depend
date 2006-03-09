@@ -15,8 +15,8 @@ Lib.vo: Lib.v MoreList.vo
 Lib.vi: Lib.v MoreList.vo
 OrderedType.vo: OrderedType.v Lib.vo
 OrderedType.vi: OrderedType.v Lib.vo
-DecidableType.vo: DecidableType.v
-DecidableType.vi: DecidableType.v
+DecidableType.vo: DecidableType.v Lib.vo
+DecidableType.vi: DecidableType.v Lib.vo
 Int.vo: Int.v
 Int.vi: Int.v
 FSetBridge.vo: FSetBridge.v FSetInterface.vo
@@ -37,6 +37,8 @@ FMapInterface.vo: FMapInterface.v FSetInterface.vo
 FMapInterface.vi: FMapInterface.v FSetInterface.vo
 FMapList.vo: FMapList.v FSetInterface.vo FMapInterface.vo
 FMapList.vi: FMapList.v FSetInterface.vo FMapInterface.vo
+FMapAVL.vo: FMapAVL.v FSetInterface.vo FMapInterface.vo FMapList.vo
+FMapAVL.vi: FMapAVL.v FSetInterface.vo FMapInterface.vo FMapList.vo
 FMapWeakInterface.vo: FMapWeakInterface.v FSetInterface.vo FSetWeakInterface.vo
 FMapWeakInterface.vi: FMapWeakInterface.v FSetInterface.vo FSetWeakInterface.vo
 FMapWeakList.vo: FMapWeakList.v FSetInterface.vo FSetWeakInterface.vo FMapWeakInterface.vo
@@ -56,7 +58,7 @@ extract.vi: extract.v FSet.vo
 MoreList.html: MoreList.v
 Lib.html: Lib.v MoreList.html
 OrderedType.html: OrderedType.v Lib.html
-DecidableType.html: DecidableType.v
+DecidableType.html: DecidableType.v Lib.html
 Int.html: Int.v
 FSetBridge.html: FSetBridge.v FSetInterface.html
 FSetInterface.html: FSetInterface.v Lib.html OrderedType.html
@@ -67,6 +69,7 @@ FSetWeakInterface.html: FSetWeakInterface.v Lib.html DecidableType.html
 FSetWeakList.html: FSetWeakList.v FSetWeakInterface.html
 FMapInterface.html: FMapInterface.v FSetInterface.html
 FMapList.html: FMapList.v FSetInterface.html FMapInterface.html
+FMapAVL.html: FMapAVL.v FSetInterface.html FMapInterface.html FMapList.html
 FMapWeakInterface.html: FMapWeakInterface.v FSetInterface.html FSetWeakInterface.html
 FMapWeakList.html: FMapWeakList.v FSetInterface.html FSetWeakInterface.html FMapWeakInterface.html
 FSetRBT.html: FSetRBT.v FSetInterface.html FSetList.html FSetBridge.html
