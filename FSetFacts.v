@@ -309,6 +309,11 @@ destruct H1 as (_,H1).
 exact (H1 (refl_equal true) _ Ha).
 Qed.
 
+Add Morphism Empty : Empty_m.
+Proof. 
+intros; do 2 rewrite is_empty_iff; rewrite H; intuition.
+Qed.
+
 Add Morphism mem : mem_m.
 Proof.
 unfold Equal; intros x y H s s' H0.
