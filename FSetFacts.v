@@ -35,7 +35,6 @@ Import Peano. (* to unmask [lt] *)
 Section IffSpec. 
 Variable s s' s'' : t.
 Variable x y z : elt.
-Variable f : elt->bool.
 
 Lemma In_eq_iff : E.eq x y -> (In x s <-> In y s).
 Proof.
@@ -106,6 +105,8 @@ Proof.
 split; [split; [apply diff_1 with s' | apply diff_2 with s] | destruct 1; apply diff_3]; auto.
 Qed.
 
+Variable f : elt->bool.
+
 Lemma filter_iff :  compat_bool E.eq f -> (In x (filter f s) <-> In x s /\ f x = true).
 Proof. 
 split; [split; [apply filter_1 with f | apply filter_2 with s] | destruct 1; apply filter_3]; auto. 
@@ -143,7 +144,6 @@ Ltac set_iff :=
 Section BoolSpec.
 Variable s s' s'' : t.
 Variable x y z : elt.
-Variable f : elt->bool.
 
 Lemma mem_b : E.eq x y -> mem x s = mem y s.
 Proof. 
@@ -200,6 +200,27 @@ generalize (mem_iff (diff s s') x)(mem_iff s x)(mem_iff s' x)(diff_iff s s' x).
 destruct (mem x s); destruct (mem x s'); destruct (mem x (diff s s')); simpl; intuition.
 Qed.
 
+Lemma elements_b : mem x s = existsb (eqb x) (elements s).
+Proof.
+generalize (mem_iff s x)(elements_iff s x)(existsb_exists (eqb x) (elements s)).
+rewrite InA_alt.
+destruct (mem x s); destruct (existsb (eqb x) (elements s)); auto; intros.
+symmetry.
+rewrite H1.
+destruct H0 as (H0,_).
+destruct H0 as (a,(Ha1,Ha2)); [ intuition |].
+exists a; intuition.
+unfold eqb; destruct (eq_dec x a); auto.
+rewrite <- H.
+rewrite H0.
+destruct H1 as (H1,_).
+destruct H1 as (a,(Ha1,Ha2)); [intuition|].
+exists a; intuition.
+unfold eqb in *; destruct (eq_dec x a); auto; discriminate.
+Qed.
+
+Variable f : elt->bool.
+
 Lemma filter_b : compat_bool E.eq f -> mem x (filter f s) = mem x s && f x.
 Proof. 
 intros.
@@ -247,25 +268,6 @@ rewrite (InA_alt E.eq a (elements s)) in Ha1.
 destruct Ha1 as (b,(Hb1,Hb2)).
 exists b; auto.
 rewrite <- (H _ _ Hb1); auto.
-Qed.
-
-Lemma elements_b : mem x s = existsb (eqb x) (elements s).
-Proof.
-generalize (mem_iff s x)(elements_iff s x)(existsb_exists (eqb x) (elements s)).
-rewrite InA_alt.
-destruct (mem x s); destruct (existsb (eqb x) (elements s)); auto; intros.
-symmetry.
-rewrite H1.
-destruct H0 as (H0,_).
-destruct H0 as (a,(Ha1,Ha2)); [ intuition |].
-exists a; intuition.
-unfold eqb; destruct (eq_dec x a); auto.
-rewrite <- H.
-rewrite H0.
-destruct H1 as (H1,_).
-destruct H1 as (a,(Ha1,Ha2)); [intuition|].
-exists a; intuition.
-unfold eqb in *; destruct (eq_dec x a); auto; discriminate.
 Qed.
 
 End BoolSpec.
@@ -368,6 +370,15 @@ Proof.
 intros s s' H s'' s''' H0.
 generalize (subset_iff s s'') (subset_iff s' s'''). 
 destruct (subset s s''); destruct (subset s' s'''); auto; intros.
+rewrite H in H1; rewrite H0 in H1; intuition.
+rewrite H in H1; rewrite H0 in H1; intuition.
+Qed.
+
+Add Morphism equal : equal_m.
+Proof.
+intros s s' H s'' s''' H0.
+generalize (equal_iff s s'') (equal_iff s' s''').
+destruct (equal s s''); destruct (equal s' s'''); auto; intros.
 rewrite H in H1; rewrite H0 in H1; intuition.
 rewrite H in H1; rewrite H0 in H1; intuition.
 Qed.

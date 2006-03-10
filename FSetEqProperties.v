@@ -22,6 +22,9 @@
 
 
 Require Import FSetProperties.
+Require Import Zerob.
+Require Import Sumbool.
+Require Import Omega.
 
 Module EqProperties (M:S).
   Import M.
@@ -30,6 +33,8 @@ Module EqProperties (M:S).
   
   Module ME := OrderedTypeFacts E.  
   Module MP := Properties M.
+  Import MP.
+  Import MP.FM.
 
   Definition Add := MP.Add.
 
@@ -41,170 +46,131 @@ Module EqProperties (M:S).
   Variable x y z : elt.
 
   Lemma mem_eq: 
-    (E.eq x y) -> (mem x s)=(mem y s).
+    E.eq x y -> mem x s=mem y s.
   Proof. 
-  intros; apply bool_1.
-  generalize (@mem_1 s x) (@mem_1 s y) (@mem_2 s x) (@mem_2 s y).
-  intuition. 
-  eauto.
-  apply H0; apply In_1 with y; auto.
+  intro H; rewrite H; auto.
   Qed.
 
   Lemma equal_mem_1: 
-    (forall (a:elt), (mem a s)=(mem a s')) -> (equal s s')=true.
+    (forall a, mem a s=mem a s') -> equal s s'=true.
   Proof. 
-  intros; apply equal_1; unfold Equal; intuition; eauto.
+  intros; apply equal_1; unfold Equal; intros.
+  do 2 rewrite mem_iff; rewrite H; tauto.
   Qed.
 
   Lemma equal_mem_2: 
-    (equal s s')=true -> forall (a:elt), (mem a s)=(mem a s').
+    equal s s'=true -> forall a, mem a s=mem a s'.
   Proof. 
-  intros; apply bool_1.
-  intros; cut (Equal s s'); [clear H; unfold Equal|auto].
-  intros H; generalize (H a); intuition.
+  intros; rewrite (equal_2 H); auto.
   Qed.
 
   Lemma subset_mem_1: 
-    (forall (a:elt), (mem a s)=true->(mem a s')=true) -> (subset s s')=true.
+    (forall a, mem a s=true->mem a s'=true) -> subset s s'=true.
   Proof. 
-  intros; apply subset_1; unfold Subset; intuition; eauto.
+  intros; apply subset_1; unfold Subset; intros a.
+  do 2 rewrite mem_iff; auto.
   Qed.
 
   Lemma subset_mem_2: 
-    (subset s s')=true -> forall (a:elt), (mem a s)=true -> (mem a s')=true.
+    subset s s'=true -> forall a, mem a s=true -> mem a s'=true.
   Proof. 
-  intros; apply bool_1.
-  cut (Subset s s'); [clear H; unfold Subset|auto].
-  intros H; generalize (H a); intuition.
+  intros H a; do 2 rewrite <- mem_iff; apply subset_2; auto.
   Qed.
   
-  Lemma empty_mem: (mem x empty)=false.
+  Lemma empty_mem: mem x empty=false.
   Proof. 
   apply not_true_is_false; intro; absurd (In x empty); auto.
   Qed.
 
-  Lemma is_empty_equal_empty: (is_empty s)=(equal s empty).
+  Lemma is_empty_equal_empty: is_empty s=equal s empty.
   Proof. 
-  generalize empty_1 (@is_empty_1 s) (@is_empty_2 s) 
-            (@equal_1 s empty) (@equal_2 s empty).
-  unfold Empty, Equal.
-  case (is_empty s); case (equal s empty); intuition.
-  clear H3 H1.
-  symmetry; apply H2; intuition.
-  generalize (H4 a); intuition.
-  generalize (H a); intuition.
-  clear H1 H3.
-  apply H0; intuition.
-  generalize (H4 a); intuition.
-  generalize (H a); intuition.
+  apply bool_1; split; intros.
+  rewrite <- (empty_is_empty_1 (s:=empty)); auto with set.
+  rewrite <- is_empty_iff; auto with set.
   Qed.
   
-  Lemma choose_mem_1: (choose s)=(Some x) -> (mem x s)=true.
+  Lemma choose_mem_1: choose s=Some x -> mem x s=true.
   Proof.  
   auto.
   Qed.
 
-  Lemma choose_mem_2: (choose s)=None -> (is_empty s)=true.
+  Lemma choose_mem_2: choose s=None -> is_empty s=true.
   Proof.
   auto.
   Qed.
 
-  Lemma add_mem_1: (mem x (add x s))=true.
+  Lemma add_mem_1: mem x (add x s)=true.
   Proof.
   auto.
   Qed.  
  
   Lemma add_mem_2: 
-  ~ (E.eq x y) -> (mem y (add x s))=(mem y s).
+  ~ E.eq x y -> mem y (add x s)=mem y s.
   Proof. 
-  intros; apply bool_1; intuition; eauto.
+  apply add_neq_b.
   Qed.
 
-  Lemma remove_mem_1: (mem x (remove x s))=false.
+  Lemma remove_mem_1: mem x (remove x s)=false.
   Proof. 
   apply not_true_is_false; intro; absurd (In x (remove x s)); auto.
   Qed. 
  
   Lemma remove_mem_2: 
-  ~ (E.eq x y) -> (mem y (remove x s))=(mem y s).
+  ~ E.eq x y -> mem y (remove x s)=mem y s.
   Proof. 
-  intros; apply bool_1; intuition; eauto. 
+  apply remove_neq_b.
   Qed.
 
   Lemma singleton_equal_add: 
-    (equal (singleton x) (add x empty))=true.
+    equal (singleton x) (add x empty)=true.
   Proof.
-  apply equal_1; unfold Equal; intuition.
-  apply In_1 with x; auto.
-  assert (E.eq a x); auto.
-  elim (ME.eq_dec a x); auto.
-  intros; assert (In a empty). 
-  eapply add_3; eauto.  
-  generalize (empty_1 H0); intuition.
+  rewrite (singleton_equal_add x); auto with set.
   Qed.  
 
   Lemma union_mem: 
-    (mem x (union s s'))=(orb (mem x s) (mem x s')).
+    mem x (union s s')=mem x s || mem x s'.
   Proof. 
-  apply bool_1; intuition.
-  elim (@union_1 s s' x); intuition.
-  elim (orb_prop _ _ H); intuition.
+  apply union_b.
   Qed.
 
   Lemma inter_mem: 
-    (mem x (inter s s'))=(andb (mem x s) (mem x s')).
+    mem x (inter s s')=mem x s && mem x s'.
   Proof. 
-  apply bool_1; intuition.
-  apply andb_true_intro; intuition eauto.
-  elim (andb_prop _ _ H); intuition.
+  apply inter_b.
   Qed.
 
   Lemma diff_mem: 
-    (mem x (diff s s'))=(andb (mem x s) (negb (mem x s'))).
+    mem x (diff s s')=mem x s && negb (mem x s').
   Proof. 
-  generalize (@diff_1 s s' x) (@diff_2 s s' x) (@diff_3 s s' x).
-  set (s0 := diff s s').
-  generalize (@mem_1 s x) (@mem_1 s' x) (@mem_1 s0 x) 
-             (@mem_2 s x) (@mem_2 s' x) (@mem_2 s0 x).
-  case (mem x s); case (mem x s'); case (mem x s0); intuition.
+  apply diff_b.
   Qed.
 
   Section fold. 
 
   Variable A:Set. 
   Variable eqA:A->A->Prop.
-  Variable st:(Setoid_Theory _ eqA).
+  Variable st:Setoid_Theory _ eqA.
   Variable i:A.
   Variable f:elt->A->A.
-  Variable Comp:(compat_op E.eq eqA f). 
-  Variable Assoc:(transpose eqA f).
+  Variable Comp:compat_op E.eq eqA f. 
+  Variable Assoc:transpose eqA f.
  
-  Lemma fold_empty: (eqA (fold f empty i) i).
+  Lemma fold_empty: eqA (fold f empty i) i.
   Proof. 
-  apply MP.fold_1; auto.
+  apply fold_empty; auto.
   Qed.
 
   Lemma fold_equal: 
-    (equal s s')=true -> (eqA (fold f s i) (fold f s' i)).
+    equal s s'=true -> eqA (fold f s i) (fold f s' i).
   Proof. 
-     pattern s; apply MP.set_induction; intros.
-     apply (Seq_trans _ _ st) with i; auto.
-     apply MP.fold_1; auto.
-     apply Seq_sym; auto; apply MP.fold_1; auto.
-     apply MP.cardinal_inv_1; rewrite <- (MP.Equal_cardinal (equal_2 H0)); auto.
-     apply MP.empty_cardinal_2; auto.
-     apply (Seq_trans _ _ st) with (f x0 (fold f s0 i)); auto.
-     apply MP.fold_2 with (eqA:=eqA); auto.
-     apply Seq_sym; auto; apply MP.fold_2 with (eqA := eqA); auto.
-     generalize (equal_2 H2) H1; unfold MP.Add, Equal; intros;
-       elim (H4 y0); elim (H3 y0); intuition.
+  intros; apply fold_equal with (eqA:=eqA); auto.
   Qed.
    
   Lemma fold_add: 
-    (mem x s)=false -> (eqA (fold f (add x s) i) (f x (fold f s i))).
+    mem x s=false -> eqA (fold f (add x s) i) (f x (fold f s i)).
   Proof. 
-    intros; apply MP.fold_2 with (eqA:=eqA); auto.
-    intro; rewrite mem_1 in H; auto; discriminate H. 
+    intros; apply fold_add with (eqA:=eqA); auto.
+    rewrite mem_iff;rewrite H; auto.
   Qed.
 
   End fold.
@@ -212,61 +178,55 @@ Module EqProperties (M:S).
   Section Filter.
   
   Variable f:elt->bool.
-  Variable Comp: (compat_bool E.eq f).
+  Variable Comp: compat_bool E.eq f.
 
-  Lemma filter_mem: (mem x (filter f s))=(andb (mem x s) (f x)).
+  Lemma filter_mem: mem x (filter f s)=mem x s && f x.
   Proof. 
-  apply bool_1; intuition.
-  apply andb_true_intro; intuition; eauto.
-  elim (andb_prop _ _ H); intuition. 
+  apply filter_b; auto.
   Qed.
 
   Lemma for_all_filter: 
-    (for_all f s)=(is_empty (filter (fun x => negb (f x)) s)).
+    for_all f s=is_empty (filter (fun x => negb (f x)) s).
   Proof. 
   assert (Comp' : compat_bool E.eq (fun x =>negb (f x))). 
-    generalize Comp; unfold compat_bool; intros; apply (f_equal negb); auto. 
-  apply bool_1; intuition. 
+    generalize Comp; unfold compat_bool; intros; f_equal; auto. 
+  apply bool_1; split; intros.
   apply is_empty_1.
   unfold Empty; intros. 
-  intro.
-  assert (In a s); eauto.
-  generalize (filter_2 Comp' H0).
-  generalize (for_all_2 Comp H H1); auto.
-  intros Eq; rewrite Eq; intuition.
-  apply for_all_1; unfold For_all; intros; auto. 
-  apply bool_3.
-  red; intros.
-  elim (@is_empty_2 _ H x0); auto.
+  rewrite filter_iff; auto.
+  red; destruct 1.
+  rewrite <- (@for_all_iff s f) in H; auto.
+  rewrite (H a H0) in H1; discriminate.
+  apply for_all_1; auto; red; intros.
+  revert H; rewrite <- is_empty_iff.
+  unfold Empty; intro H; generalize (H x0); clear H.
+  rewrite filter_iff; auto.
+  destruct (f x0); auto.
   Qed.
 
   Lemma exists_filter : 
-    (exists_ f s)=(negb (is_empty (filter f s))).
+    exists_ f s=negb (is_empty (filter f s)).
   Proof. 
-  apply bool_1; intuition. 
-  elim (exists_2 Comp H); intuition.
+  apply bool_1; split; intros. 
+  destruct (exists_2 Comp H) as (a,(Ha1,Ha2)).
   apply bool_6.
-  red; intros; apply (@is_empty_2 _ H0 x0); auto.
+  red; intros; apply (@is_empty_2 _ H0 a); auto.
   generalize (@choose_1 (filter f s)) (@choose_2 (filter f s)).
-  case (choose (filter f s)).
-  intros. 
-  clear H1. 
-  apply exists_1; auto.
-  exists e; generalize (H0 e); intuition; eauto.
-  intros. 
-  clear H0.
-  rewrite (@is_empty_1 (filter f s)) in H; auto.
-  discriminate H.
+  destruct (choose (filter f s)).
+  intros H0 _; apply exists_1; auto.
+  exists e; generalize (H0 e); rewrite filter_iff; auto.
+  intros _ H0.
+  rewrite (is_empty_1 (H0 (refl_equal None))) in H; auto; discriminate.
   Qed.
 
   Lemma partition_filter_1: 
-    (equal (fst (partition f s)) (filter f s))=true.
+     equal (fst (partition f s)) (filter f s)=true.
   Proof. 
   auto.
   Qed.
 
   Lemma partition_filter_2: 
-    (equal (snd (partition f s)) (filter (fun x => negb (f x)) s))=true.
+     equal (snd (partition f s)) (filter (fun x => negb (f x)) s)=true.
   Proof. 
   auto.
   Qed.
@@ -274,86 +234,54 @@ Module EqProperties (M:S).
   End Filter.
   End Old_Spec_Now_Properties.
 
-  Hint Immediate 
-  empty_mem   
-  is_empty_equal_empty 
-  add_mem_1
-  remove_mem_1
-  singleton_equal_add
-  union_mem
-  inter_mem
-  diff_mem 
-  filter_mem
-  for_all_filter
-  exists_filter : set. 
-
-  Hint Resolve 
-  equal_mem_1
-  subset_mem_1
-  choose_mem_1
-  choose_mem_2
-  add_mem_2
-  remove_mem_2 : set.
+  Hint Immediate empty_mem is_empty_equal_empty add_mem_1
+    remove_mem_1 singleton_equal_add union_mem inter_mem
+    diff_mem filter_mem for_all_filter exists_filter : set. 
+  Hint Resolve equal_mem_1 subset_mem_1 choose_mem_1
+    choose_mem_2 add_mem_2 remove_mem_2 : set.
 
 Section MoreProperties.
 
 (** properties of [mem] *)
 
-Lemma mem_3 : forall s x, ~(In x s) -> (mem x s)=false.
+Lemma mem_3 : forall s x, ~In x s -> mem x s=false.
 Proof.
-intros s x.
-generalize (@mem_1 s x) (@mem_2 s x); case (mem x s); intuition.
+intros s x; rewrite mem_iff; destruct (mem x s); intuition.
 Qed.
 
-Lemma mem_4 : forall s x, (mem x s)=false -> ~(In x s).
+Lemma mem_4 : forall s x, mem x s=false -> ~In x s.
 Proof.
-intros s x.
-generalize (@mem_1 s x) (@mem_2 s x); case (mem x s); intuition.
+intros s x; rewrite mem_iff; intros; rewrite H; auto.
 Qed.
 
 (** Properties of [equal] *) 
 
-Lemma equal_refl: forall s, (equal s s)=true.
+Lemma equal_refl: forall s, equal s s=true.
 Proof.
 auto with set.
 Qed.
 
-Lemma equal_sym: forall s s', (equal s s')=(equal s' s).
+Lemma equal_sym: forall s s', equal s s'=equal s' s.
 Proof.
-intros.
-apply bool_eq_ind;intros.
-rewrite equal_mem_1;auto.
-symmetry;apply equal_mem_2;auto.
-apply (bool_eq_ind (equal s s'));intros;auto.
-rewrite equal_mem_1 in H;auto.
-symmetry;apply equal_mem_2;auto.
+intros; apply bool_1; do 2 rewrite <- equal_iff; intuition.
 Qed.
 
 Lemma equal_trans: 
- forall s u v, (equal s u)=true -> (equal u v)=true -> (equal s v)=true.
+ forall s u v, equal s u=true -> equal u v=true -> equal s v=true.
 Proof.
-intros.
-apply equal_mem_1;intros.
-transitivity (mem a u);
-firstorder with equal_mem_2.
+intros; rewrite (equal_2 H); auto.
 Qed.
 
 Lemma equal_equal: 
- forall s t_ u, (equal s t_)=true -> (equal s u)=(equal t_ u).
+ forall s s' s'', equal s s'=true -> equal s s''=equal s' s''.
 Proof.
-intros.
-apply bool_eq_ind;intros.
-apply equal_trans with t_;auto with set.
-symmetry; apply bool_eq_ind;intros;auto.
-rewrite <- H0.
-apply equal_trans with s;auto with set.
-rewrite equal_sym;auto.
+intros; rewrite (equal_2 H); auto.
 Qed.
 
 Lemma equal_cardinal: 
- forall s s', (equal s s')=true -> (cardinal s)=(cardinal s').
+ forall s s', equal s s'=true -> cardinal s=cardinal s'.
 Proof.
-intros; apply MP.Equal_cardinal; auto.
+intros; rewrite (equal_2 H); auto.
 Qed.
 
 Hint Resolve equal_refl equal_cardinal equal_equal:set.
@@ -361,36 +289,29 @@ Hint Immediate equal_sym :set.
 
 (* Properties of [subset] *)
 
-Lemma subset_refl: forall s, (subset s s)=true. 
+Lemma subset_refl: forall s, subset s s=true. 
 Proof.
 auto with set.
 Qed.
 
 Lemma subset_antisym: 
- forall s s', (subset s s')=true -> (subset s' s)=true -> (equal s s')=true.
+ forall s s', subset s s'=true -> subset s' s=true -> equal s s'=true.
 Proof.
-intros;apply equal_mem_1;intros.
-apply bool_eq_ind;intros.
-eapply subset_mem_2;eauto.
-apply (bool_eq_ind (mem a s));intros;auto.
-rewrite <- (subset_mem_2 _ _ H _ H2);assumption.
+intros s s'; do 2 rewrite <- subset_iff; rewrite <- equal_iff.
+apply subset_antisym.
 Qed.
 
 Lemma subset_trans: 
- forall s t_ u, (subset s t_)=true -> (subset t_ u)=true -> (subset s u)=true.
+ forall s s' s'', subset s s'=true -> subset s' s''=true -> subset s s''=true.
 Proof.
-intros.
-apply subset_mem_1;intros.
-apply subset_mem_2 with t_;intros;auto.
-apply subset_mem_2 with s;auto.
+intros s s' s''; do 3 rewrite <- subset_iff; intros.
+apply subset_trans with s'; auto.
 Qed.
 
 Lemma subset_equal: 
- forall s s', (equal s s')=true -> (subset s s')=true.
+ forall s s', equal s s'=true -> subset s s'=true.
 Proof.
-intros.
-apply subset_mem_1;intros.
-rewrite <- (equal_mem_2 _ _ H);auto.
+intros; rewrite (equal_2 H); auto with set.
 Qed.
 
 Hint Resolve subset_refl subset_equal subset_antisym :set.
@@ -398,18 +319,17 @@ Hint Resolve subset_refl subset_equal subset_antisym :set.
 (** Properties of [choose] *)
 
 Lemma choose_mem_3: 
- forall s, (is_empty s)=false -> {x:elt|(choose s)=(Some x)/\(mem x s)=true}.
+ forall s, is_empty s=false -> {x:elt|choose s=Some x /\ mem x s=true}.
 Proof.
 intros.
-generalize (@choose_mem_1 s).
-generalize (@choose_mem_2 s).
+generalize (@choose_mem_1 s) (@choose_mem_2 s).
 case (choose s);intros.
 exists e;auto.
-lapply H0;trivial;intros.
+lapply H1;trivial;intros.
 rewrite H in H2;discriminate H2.
 Qed.
 
-Lemma choose_mem_4: (choose empty)=None.
+Lemma choose_mem_4: choose empty=None.
 Proof.
 generalize (@choose_mem_1 empty).
 case (@choose empty);intros;auto.
@@ -420,19 +340,15 @@ Qed.
 (** Properties of [add] *)
 
 Lemma add_mem_3: 
- forall s x y, (mem y s)=true -> (mem y (add x s))=true.
+ forall s x y, mem y s=true -> mem y (add x s)=true.
 Proof.
 auto.
 Qed.
 
 Lemma add_equal: 
- forall s x, (mem x s)=true -> (equal (add x s) s)=true.
+ forall s x, mem x s=true -> equal (add x s) s=true.
 Proof.
-intros;apply equal_mem_1;intros.
-elim (ME.eq_dec x a); intros; auto with set.
-rewrite <- (mem_eq s x);auto.
-rewrite <- (mem_eq (add x s) _ _ a0);auto.
-rewrite H;auto with set.
+intros s x; rewrite <- mem_iff; intros; apply equal_1; auto with set.
 Qed.
 
 Hint Resolve add_mem_3 add_equal :set.
@@ -462,14 +378,12 @@ Qed.
 (** Properties of [remove] *)
 
 Lemma remove_mem_3: 
- forall s x y, (mem y (remove x s))=true -> (mem y s)=true.
+ forall s x y, mem y (remove x s)=true -> mem y s=true.
 Proof.
-intros s x y;elim (ME.eq_dec x y); intro e.
-rewrite <- mem_eq with (x:=x);auto.
-rewrite <- (mem_eq s _ _ e);auto.
-rewrite (remove_mem_1 s x);intro H;discriminate H.
-intros;rewrite <- H;symmetry;auto with set.
+intros s x y; rewrite remove_b; intros H;destruct (andb_prop _ _ H); auto.
 Qed.
+
+(** A SUIVRE **)
 
 Lemma remove_equal: 
  forall s x,(mem x s)=false -> (equal (remove x s) s)=true.
