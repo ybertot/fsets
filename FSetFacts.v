@@ -24,11 +24,11 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 Module Facts (M: S).
+Module ME := OrderedTypeFacts M.E.  
+Import ME.
 Import M.
 Import Logic. (* to unmask [eq] *)  
 Import Peano. (* to unmask [lt] *)
-  
-Module ME := OrderedTypeFacts E.  
 
 (** * Specifications written using equivalences *)
 
@@ -47,12 +47,12 @@ Proof.
 split; [apply mem_1|apply mem_2].
 Qed.
 
-Lemma equal_iff : Equal s s' <-> equal s s' = true.
+Lemma equal_iff : s[=]s' <-> equal s s' = true.
 Proof. 
 split; [apply equal_1|apply equal_2].
 Qed.
 
-Lemma subset_iff : Subset s s' <-> subset s s' = true.
+Lemma subset_iff : s[<=]s' <-> subset s s' = true.
 Proof. 
 split; [apply subset_1|apply subset_2].
 Qed.
@@ -70,7 +70,7 @@ Qed.
 Lemma add_iff : In y (add x s) <-> E.eq x y \/ In y s.
 Proof. 
 split; [ | destruct 1; [apply add_1|apply add_2]]; auto.
-destruct (ME.eq_dec x y) as [E|E]; auto.
+destruct (eq_dec x y) as [E|E]; auto.
 intro H; right; exact (add_3 E H).
 Qed.
 
@@ -130,6 +130,14 @@ Qed.
 
 End IffSpec.
 
+(** Useful tactic for simplifying expressions like [In y (add x (union s s'))] *)
+  
+Ltac set_iff := 
+ repeat (progress (
+  rewrite add_iff || rewrite remove_iff || rewrite singleton_iff ||
+  rewrite union_iff || rewrite inter_iff || rewrite diff_iff)).
+
+
 (**  * Specifications written using boolean predicates *)
 
 Section BoolSpec.
@@ -144,10 +152,10 @@ generalize (mem_iff s x) (mem_iff s y)(In_eq_iff s H).
 destruct (mem x s); destruct (mem y s); intuition.
 Qed.
 
-Lemma add_b : mem y (add x s) = ME.eqb x y || mem y s.
+Lemma add_b : mem y (add x s) = eqb x y || mem y s.
 Proof.
-generalize (mem_iff (add x s) y)(mem_iff s y)(add_iff s x y); rewrite ME.eqb_alt.
-destruct (ME.eq_dec x y); destruct (mem y s); destruct (mem y (add x s)); intuition.
+generalize (mem_iff (add x s) y)(mem_iff s y)(add_iff s x y); unfold eqb.
+destruct (eq_dec x y); destruct (mem y s); destruct (mem y (add x s)); intuition.
 Qed.
 
 Lemma add_neq_b : ~ E.eq x y -> mem y (add x s) = mem y s.
@@ -156,10 +164,10 @@ intros; generalize (mem_iff (add x s) y)(mem_iff s y)(add_neq_iff s H).
 destruct (mem y s); destruct (mem y (add x s)); intuition.
 Qed.
 
-Lemma remove_b : mem y (remove x s) = mem y s && negb (ME.eqb x y).
+Lemma remove_b : mem y (remove x s) = mem y s && negb (eqb x y).
 Proof.
-generalize (mem_iff (remove x s) y)(mem_iff s y)(remove_iff s x y); rewrite ME.eqb_alt.
-destruct (ME.eq_dec x y); destruct (mem y s); destruct (mem y (remove x s)); simpl; intuition.
+generalize (mem_iff (remove x s) y)(mem_iff s y)(remove_iff s x y); unfold eqb.
+destruct (eq_dec x y); destruct (mem y s); destruct (mem y (remove x s)); simpl; intuition.
 Qed.
 
 Lemma remove_neq_b : ~ E.eq x y -> mem y (remove x s) = mem y s.
@@ -168,10 +176,10 @@ intros; generalize (mem_iff (remove x s) y)(mem_iff s y)(remove_neq_iff s H).
 destruct (mem y s); destruct (mem y (remove x s)); intuition.
 Qed.
 
-Lemma singleton_b : mem y (singleton x) = ME.eqb x y.
+Lemma singleton_b : mem y (singleton x) = eqb x y.
 Proof. 
-generalize (mem_iff (singleton x) y)(singleton_iff x y); rewrite ME.eqb_alt.
-destruct (ME.eq_dec x y); destruct (mem y (singleton x)); intuition.
+generalize (mem_iff (singleton x) y)(singleton_iff x y); unfold eqb.
+destruct (eq_dec x y); destruct (mem y (singleton x)); intuition.
 Qed.
 
 Lemma union_b : mem x (union s s') = mem x s || mem x s'.
@@ -241,23 +249,23 @@ exists b; auto.
 rewrite <- (H _ _ Hb1); auto.
 Qed.
 
-Lemma elements_b : mem x s = existsb (ME.eqb x) (elements s).
+Lemma elements_b : mem x s = existsb (eqb x) (elements s).
 Proof.
-generalize (mem_iff s x)(elements_iff s x)(existsb_exists (ME.eqb x) (elements s)).
+generalize (mem_iff s x)(elements_iff s x)(existsb_exists (eqb x) (elements s)).
 rewrite InA_alt.
-destruct (mem x s); destruct (existsb (ME.eqb x) (elements s)); auto; intros.
+destruct (mem x s); destruct (existsb (eqb x) (elements s)); auto; intros.
 symmetry.
 rewrite H1.
 destruct H0 as (H0,_).
 destruct H0 as (a,(Ha1,Ha2)); [ intuition |].
 exists a; intuition.
-unfold ME.eqb; ME.compare; auto.
+unfold eqb; destruct (eq_dec x a); auto.
 rewrite <- H.
 rewrite H0.
 destruct H1 as (H1,_).
 destruct H1 as (a,(Ha1,Ha2)); [intuition|].
 exists a; intuition.
-unfold ME.eqb in *; destruct (E.compare x a); auto; discriminate.
+unfold eqb in *; destruct (eq_dec x a); auto; discriminate.
 Qed.
 
 End BoolSpec.
@@ -312,7 +320,7 @@ Qed.
 Add Morphism singleton : singleton_m.
 Proof.
 unfold Equal; intros x y H a.
-do 2 rewrite singleton_iff; split; ME.order.
+do 2 rewrite singleton_iff; split; order.
 Qed.
 
 Add Morphism add : add_m.

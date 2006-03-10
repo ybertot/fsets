@@ -560,7 +560,7 @@ Proof.
  intros.
  rewrite (add_in x y0 e H6) in H1.
  intuition.
- apply MX.lt_eq with x; auto.
+ apply lt_eq with x; auto.
 Qed.
 
 Lemma add_1 : forall elt (m:t elt) x y e, avl m -> X.eq x y -> MapsTo y e (add x e m).
@@ -688,7 +688,7 @@ Proof.
  rewrite (bal_in x e y H7 H6) in H1.
  destruct H.
  firstorder.
- apply MX.lt_eq with x; auto.
+ apply lt_eq with x; auto.
  apply X.lt_trans with x; auto.
 Qed.
 
@@ -1975,11 +1975,11 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   case (X.compare k k0); intro.
   (* k < k0 *)
   constructor 1.
-  compute; MX.compare; auto.
+  compute; MX.elim_comp; auto.
   (* k = k0 *)
   destruct (D.compare t t1).
   constructor 1.
-  compute; MX.compare; auto.
+  compute; MX.elim_comp; auto.
   destruct (@cons _ t0 e) as [c1 (H2,(H3,H4))]; try inversion_clear He1; auto.
   destruct (@cons _ t2 e0) as [c2 (H5,(H6,H7))]; try inversion_clear He2; auto.
   assert (measure_e c1 + measure_e c2 <
@@ -1989,24 +1989,24 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   destruct (H c1 c2 H0 H2 H5); clear H.
   constructor 1.
   unfold flatten_slist, LO.lt in *; simpl; simpl in l.
-  MX.compare.
+  MX.elim_comp.
   right; split; auto.
   rewrite <- H7; rewrite <- H4; auto.
   constructor 2.
   unfold flatten_slist, LO.eq in *; simpl; simpl in e5.
-  MX.compare.
+  MX.elim_comp.
   split; auto.
   rewrite <- H7; rewrite <- H4; auto.
   constructor 3.
   unfold flatten_slist, LO.lt in *; simpl; simpl in l.
-  MX.compare.
+  MX.elim_comp.
   right; split; auto.
   rewrite <- H7; rewrite <- H4; auto.
   constructor 3.
-  compute; MX.compare; auto.
+  compute; MX.elim_comp; auto.
   (* k > k0 *)
   constructor 3.
-  compute; MX.compare; auto.
+  compute; MX.elim_comp; auto.
   Qed.
 
   Definition compare : forall m1 m2, Compare lt eq m1 m2.

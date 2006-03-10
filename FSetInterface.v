@@ -52,6 +52,7 @@ Module Type S.
   Definition Exists (P : elt -> Prop) s := exists x, In x s /\ P x.
   
   Notation "s [=] t" := (Equal s t) (at level 70, no associativity).
+  Notation "s [<=] t" := (Subset s t) (at level 70, no associativity).
 
   Parameter empty : t.
   (** The empty set. *)
@@ -177,8 +178,8 @@ Module Type S.
   Parameter equal_2 : equal s s' = true ->s[=]s'.
 
   (** Specification of [subset] *)
-  Parameter subset_1 : Subset s s' -> subset s s' = true.
-  Parameter subset_2 : subset s s' = true -> Subset s s'.
+  Parameter subset_1 : s[<=]s' -> subset s s' = true.
+  Parameter subset_2 : subset s s' = true -> s[<=]s'.
 
   (** Specification of [empty] *)
   Parameter empty_1 : Empty empty.

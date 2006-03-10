@@ -423,7 +423,7 @@ Proof.
  elim (Sort_Inf_NotIn H8 H9).
  destruct H3 as (e'', hyp); exists e''; auto.
  apply MapsTo_eq with k; auto; order.
- apply H2 with k; destruct (MX.eq_dec x k); auto.
+ apply H2 with k; destruct (eq_dec x k); auto.
 
  destruct (H0 x').
  assert (In x' ((x,e)::l)). 
@@ -487,13 +487,13 @@ Proof.
  split; intros.
  apply equal_2; auto.
  simpl.
- MX.compare.
+ elim_comp.
  rewrite H2; simpl.
  apply equal_1; auto.
  apply equal_2; auto.
  generalize (equal_1 H H0 H3).
  simpl.
- MX.compare.
+ elim_comp.
  rewrite H2; simpl; auto.
 Qed.
 
@@ -865,20 +865,20 @@ Proof.
  inversion Hm; inversion Hm'; subst.
  destruct (X.compare k k'); simpl;
   destruct (X.compare x k); 
-   MX.compare || destruct (X.compare x k'); simpl; auto.
- rewrite IHm; auto; simpl; MX.compare; auto.
- rewrite IHm; auto; simpl; MX.compare; auto.
- rewrite IHm; auto; simpl; MX.compare; auto.
+   elim_comp || destruct (X.compare x k'); simpl; auto.
+ rewrite IHm; auto; simpl; elim_comp; auto.
+ rewrite IHm; auto; simpl; elim_comp; auto.
+ rewrite IHm; auto; simpl; elim_comp; auto.
  change (find x (combine ((k, e) :: m) m') = at_least_one None (find x m')).
  rewrite IHm'; auto. 
- simpl find; MX.compare; auto.
+ simpl find; elim_comp; auto.
  change (find x (combine ((k, e) :: m) m') = Some (Some e, find x m')).
  rewrite IHm'; auto. 
- simpl find; MX.compare; auto.
+ simpl find; elim_comp; auto.
  change (find x (combine ((k, e) :: m) m') = 
          at_least_one (find x m) (find x m')).
  rewrite IHm'; auto. 
- simpl find; MX.compare; auto.
+ simpl find; elim_comp; auto.
 Qed.
 
 Definition at_least_one_then_f (o:option elt)(o':option elt') := 
@@ -911,7 +911,7 @@ Proof.
  destruct (X.compare x k); simpl in *.
  (* x < k *)
  destruct (f' (oo,oo')); simpl.
- MX.compare.
+ elim_comp.
  destruct o; destruct o'; simpl in *; try discriminate; auto.
  destruct (IHm0 H0) as (H2,_); apply H2; auto.
  rewrite <- H.
@@ -926,7 +926,7 @@ Proof.
  rewrite H2.
  unfold f'; simpl.
  destruct (f oo oo'); simpl.
- MX.compare; auto.
+ elim_comp; auto.
  destruct (IHm0 H0) as (_,H4); apply H4; auto.
  case_eq (find x m0); intros; auto.
  assert (eqk (elt:=oee') (k,(oo,oo')) (x,(oo,oo'))).
@@ -936,7 +936,7 @@ Proof.
  (* k < x *)
  unfold f'; simpl.
  destruct (f oo oo'); simpl.
- MX.compare; auto.
+ elim_comp; auto.
  destruct (IHm0 H0) as (H3,_); apply H3; auto.
  destruct (IHm0 H0) as (H3,_); apply H3; auto.
 
@@ -948,7 +948,7 @@ Proof.
  (* x < k *)
  unfold f'; simpl.
  destruct (f oo oo'); simpl.
- MX.compare; auto.
+ elim_comp; auto.
  destruct (IHm0 H0) as (_,H4); apply H4; auto.
  case_eq (find x m0); intros; auto.
  assert (ltk (elt:=oee') (x,(oo,oo')) (k,(oo,oo'))).
@@ -960,7 +960,7 @@ Proof.
  (* k < x *)
  unfold f'; simpl.
  destruct (f oo oo'); simpl.
- MX.compare; auto.
+ elim_comp; auto.
  destruct (IHm0 H0) as (_,H4); apply H4; auto.
  destruct (IHm0 H0) as (_,H4); apply H4; auto.
 Qed.
@@ -1142,14 +1142,14 @@ Proof.
  unfold equal; simpl. 
  destruct (X.compare x x'); simpl; intuition.
  unfold cmp at 1. 
- MD.compare; clear H; simpl.
+ MD.elim_comp; clear H; simpl.
  inversion_clear Hl.
  inversion_clear Hl'.
  destruct (IHl H (Build_slist H3)).
  unfold equal, eq in H5; simpl in H5; auto.
  destruct (andb_prop _ _ H); clear H.
  generalize H0; unfold cmp.
- MD.compare; auto; intro; discriminate.
+ MD.elim_comp; auto; intro; discriminate.
  destruct (andb_prop _ _ H); clear H.
  inversion_clear Hl.
  inversion_clear Hl'.
@@ -1191,7 +1191,7 @@ Proof.
  intros (m,Hm); induction m; 
  intros (m', Hm'); destruct m'; unfold eq; simpl;
  try destruct a as (x,e); try destruct p as (x',e'); auto.
- destruct (X.compare x x'); MapS.Raw.MX.compare; intuition.
+ destruct (X.compare x x'); MapS.Raw.MX.elim_comp; intuition.
  inversion_clear Hm; inversion_clear Hm'.
  apply (IHm H0 (Build_slist H4)); auto.
 Qed.
@@ -1206,7 +1206,7 @@ Proof.
  try destruct p0 as (x'',e''); try contradiction; auto.
  destruct (X.compare x x'); 
   destruct (X.compare x' x''); 
-   MapS.Raw.MX.compare.
+   MapS.Raw.MX.elim_comp.
  intuition.
  apply D.eq_trans with e'; auto.
  inversion_clear Hm1; inversion_clear Hm2; inversion_clear Hm3.
@@ -1223,11 +1223,11 @@ Proof.
  try destruct p0 as (x'',e''); try contradiction; auto.
  destruct (X.compare x x'); 
   destruct (X.compare x' x''); 
-   MapS.Raw.MX.compare; auto.
+   MapS.Raw.MX.elim_comp; auto.
  intuition.
  left; apply D.lt_trans with e'; auto.
- left; apply MD.lt_eq with e'; auto.
- left; apply MD.eq_lt with e'; auto.
+ left; apply lt_eq with e'; auto.
+ left; apply eq_lt with e'; auto.
  right.
  split.
  apply D.eq_trans with e'; auto.
@@ -1248,7 +1248,7 @@ Proof.
  apply (IHm1 H0 (Build_slist H5)); intuition.
 Qed.
 
-Ltac cmp_solve := unfold eq, lt; simpl; try Raw.MX.compare; auto.
+Ltac cmp_solve := unfold eq, lt; simpl; try Raw.MX.elim_comp; auto.
 
 Definition compare : forall m1 m2, Compare lt eq m1 m2.
 Proof.

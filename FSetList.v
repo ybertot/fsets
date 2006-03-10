@@ -219,8 +219,8 @@ Module Raw (X: OrderedType).
   inversion H.
   inversion_clear Hs.
   inversion_clear H0.
-  simpl; MX.compare; trivial.
-  simpl; compare_gt x a; auto.
+  simpl; elim_comp; trivial.
+  simpl; elim_comp_gt x a; auto.
   apply Sort_Inf_In with l; trivial.
   Qed.
 

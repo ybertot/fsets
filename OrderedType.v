@@ -279,7 +279,7 @@ Ltac false_order := elimtype False; order.
    exists H'; auto.   
   Qed.
 
-  Ltac compare_gen := 
+  Ltac elim_comp := 
     match goal with 
       | |- ?e => match e with 
            | context ctx [ compare ?a ?b ] =>
@@ -289,17 +289,15 @@ Ltac false_order := elimtype False; order.
          end
     end.
 
-  Ltac compare:=compare_gen.
-
-  Ltac compare_eq x y :=
+  Ltac elim_comp_eq x y :=
     elim (elim_compare_eq (x:=x) (y:=y));
      [ intros _1 _2; rewrite _2; clear _1 _2 | auto ]. 
 
-  Ltac compare_lt x y :=
+  Ltac elim_comp_lt x y :=
     elim (elim_compare_lt (x:=x) (y:=y));
      [ intros _1 _2; rewrite _2; clear _1 _2 | auto ]. 
 
-  Ltac compare_gt x y :=
+  Ltac elim_comp_gt x y :=
     elim (elim_compare_gt (x:=x) (y:=y));
      [ intros _1 _2; rewrite _2; clear _1 _2 | auto ].
 
@@ -313,16 +311,12 @@ Ltac false_order := elimtype False; order.
    intros; elim (compare x y); [ left | right | right ]; auto.
   Qed.
 
-  Definition eqb x y : bool := 
-    match compare x y with 
-      | Eq _ => true 
-      | _ => false
-    end.
+  Definition eqb x y : bool := if eq_dec x y then true else false.
 
-  Lemma eqb_alt : forall x y, eqb x y = if eq_dec x y then true else false.
+  Lemma eqb_alt : 
+    forall x y, eqb x y = match compare x y with Eq _ => true | _ => false end. 
   Proof.
-  unfold eqb.
-  intros; destruct (eq_dec x y); compare_gen; auto.
+  unfold eqb; intros; destruct (eq_dec x y); elim_comp; auto.
   Qed.
 
 (* Specialization of resuts about lists modulo. *)
