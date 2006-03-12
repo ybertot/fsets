@@ -46,6 +46,11 @@ Proof.
 split; [apply mem_1|apply mem_2].
 Qed.
 
+Lemma not_mem_iff : ~In x s <-> mem x s = false.
+Proof.
+rewrite mem_iff; destruct (mem x s); intuition.
+Qed.
+
 Lemma equal_iff : s[=]s' <-> equal s s' = true.
 Proof. 
 split; [apply equal_1|apply equal_2].
@@ -54,6 +59,11 @@ Qed.
 Lemma subset_iff : s[<=]s' <-> subset s s' = true.
 Proof. 
 split; [apply subset_1|apply subset_2].
+Qed.
+
+Lemma empty_iff : In x empty <-> False.
+Proof.
+intuition; apply (empty_1 H).
 Qed.
 
 Lemma is_empty_iff : Empty s <-> is_empty s = true. 
@@ -135,9 +145,9 @@ End IffSpec.
   
 Ltac set_iff := 
  repeat (progress (
-  rewrite add_iff || rewrite remove_iff || rewrite singleton_iff ||
-  rewrite union_iff || rewrite inter_iff || rewrite diff_iff)).
-
+  rewrite add_iff || rewrite remove_iff || rewrite singleton_iff 
+  || rewrite union_iff || rewrite inter_iff || rewrite diff_iff
+  || rewrite empty_iff)).
 
 (**  * Specifications written using boolean predicates *)
 
