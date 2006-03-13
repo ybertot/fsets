@@ -413,35 +413,20 @@ apply H0; intuition.
 rewrite H1; auto. 
 Qed.
 
-(* Returns the first element that satisfies a boolean function (or None) *)
+(** [filter] *)
 
-Fixpoint find_such  (l : list A) {struct l} : option A :=
+Fixpoint filter (l:list A) {struct l} : list A := 
  match l with 
-  | nil => None
-  | x :: l => if f x then Some x else find_such l
+  | nil => nil
+  | x :: l => if f x then x::(filter l) else filter l
  end.
 
-(* Remove of the list the first element that satisfies a boolean function. *)
-
-Fixpoint remove_such (l : list A) {struct l} : list A :=
- match l with
-   | nil => nil
-   | x :: l => if f x then l else (x :: remove_such l)
- end.
-
-Lemma find_remove_such : forall l, existsb l = true -> 
-  forall x, In x l <-> find_such l = Some x \/ In x (remove_such l).
+Lemma filter_In : forall x l, In x (filter l) <-> In x l /\ f x = true.
 Proof.
-induction l.
-simpl.
-inversion 1.
-simpl; intros.
-destruct (orb_prop _ _ H).
-rewrite H0; simpl.
-firstorder congruence.
-destruct (f a).
-firstorder congruence.
-firstorder.
+induction l; simpl.
+intuition.
+intros.
+case_eq (f a); intros; simpl; intuition congruence.
 Qed.
 
 End Bool.

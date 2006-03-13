@@ -394,7 +394,13 @@ rewrite H in H1; rewrite H0 in H1; intuition.
 Qed.
 
 (* [fold], [filter], [for_all], [exists_] and [partition] cannot be proved morphism
-   without additional hypothesis on [f] *)
+   without additional hypothesis on [f]. For instance: *)
+
+Lemma filter_equal : forall f, compat_bool E.eq f -> 
+  forall s s', s[=]s' -> filter f s [=] filter f s'.
+Proof.
+unfold Equal; intros; repeat rewrite filter_iff; auto; rewrite H0; tauto.
+Qed.
 
 (* For [elements], [min_elt], [max_elt] and [choose], we would need setoid 
    structures on [list elt] and [option elt]. *)

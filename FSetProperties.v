@@ -259,7 +259,7 @@ Module Properties (M: S).
   unfold Subset; intuition.
   Qed.
 
-  Lemma subset_union : s[<=]s'' -> s'[<=]s'' -> union s s' [<=] s''.
+  Lemma union_subset_3 : s[<=]s'' -> s'[<=]s'' -> union s s' [<=] s''.
   Proof.
   unfold Subset; intros H H0 a; set_iff; intuition.
   Qed.
@@ -444,7 +444,7 @@ Module Properties (M: S).
     subset_add_2 in_subset empty_is_empty_1 empty_is_empty_2 add_equal
     remove_equal singleton_equal_add union_subset_equal union_equal_1 
     union_equal_2 union_assoc add_union_singleton union_add union_subset_1 
-    union_subset_2 subset_union inter_subset_equal inter_equal_1 inter_equal_2
+    union_subset_2 union_subset_3 inter_subset_equal inter_equal_1 inter_equal_2
     inter_assoc union_inter_1 union_inter_2 inter_add_1 inter_add_2
     empty_inter_1 empty_inter_2 empty_union_1 empty_union_2 empty_diff_1 
     empty_diff_2 union_Add inter_Add union_Equal inter_Add_2 not_in_union 
@@ -456,7 +456,7 @@ Module Properties (M: S).
 
   Section noredunA_Remove.
 
-  Definition remove_list x l := remove_such (eqb x) l.
+  Definition remove_list x l := MoreList.filter (fun y => negb (eqb x y)) l.
 
   Lemma remove_list_correct :
     forall s x, NoRedun s -> 
@@ -467,24 +467,23 @@ Module Properties (M: S).
    repeat (split; trivial).
    inversion H0.
    destruct 1; inversion H0.
-   inversion_clear H0; unfold eqb; destruct (eq_dec x a); trivial.  
-   intuition.
-   apply H1; apply In_eq with y; auto; order.
-   inversion_clear H3; auto.
-   destruct H4; order. 
-   destruct (H x H2) as (H3,H4).
-   split.
-   constructor; trivial.
+   inversion_clear H0.
+   destruct (H x H2) as (H3,H4); clear H.
+   unfold eqb; destruct (eq_dec x a); simpl; trivial.  
+   split; auto; intros.
+   rewrite H4; clear H4.
+   split; destruct 1; split; auto.
+   inversion_clear H; auto; order.
+   split; auto; intros.
+   constructor; auto.
    rewrite H4; intuition.
-   intro y; destruct (H4 y); clear H4.
-   repeat split.
-   inversion_clear H4; auto.
-   elim (H0 H6); auto.
-   inversion_clear H4; auto.
-   order.
-   destruct (H0 H6); auto.
+   split.
+   inversion_clear 1.
+   split; auto; order.
+   rewrite (H4 y) in H0; destruct H0; auto.
    destruct 1.
-   inversion_clear H4; auto.
+   inversion_clear H; auto.
+   constructor 2; rewrite H4; auto.
   Qed. 
 
   Let ListEq l l' := forall y : elt, ME.In y l <-> ME.In y l'.
@@ -533,13 +532,21 @@ Module Properties (M: S).
    destruct H11; auto. 
   Qed.
 
-  Variable A : Set.
-  Variable eqA : A -> A -> Prop.
-  Variable st : Setoid_Theory A eqA.
-  Variable i:A.
-  Variable f: elt -> A -> A.
-  Hypothesis Hf1 : compat_op E.eq eqA f.
-  Hypothesis Hf2 : transpose eqA f.
+  Variables (A:Set)(eqA:A->A->Prop)(st:Setoid_Theory _ eqA).
+  Variables (f:elt->A->A)(Comp:compat_op E.eq eqA f)(Ass:transpose eqA f).
+  Variables (i:A).
+
+  Lemma remove_list_fold_right_0 :
+    forall s x, NoRedun s -> ~ME.In x s ->
+    eqA (fold_right f i s) (fold_right f i (remove_list x s)).
+  Proof.
+   simple induction s; simpl; intros.
+   refl_st.
+   inversion_clear H0.
+   unfold eqb; destruct (eq_dec x a); simpl; intros.
+   absurd_hyp e; auto.
+   apply Comp; auto. 
+  Qed.   
 
   Lemma remove_list_fold_right :
     forall s x, NoRedun s -> ME.In x s ->
@@ -550,8 +557,9 @@ Module Properties (M: S).
    intros.
    inversion_clear H0.
    unfold eqb; destruct (eq_dec x a); simpl; intros.
-   apply Hf1; auto. 
-   refl_st.
+   apply Comp; auto. 
+   apply remove_list_fold_right_0; auto.
+   swap H2; apply ME.In_eq with x; auto.
    inversion_clear H1. 
    destruct n; auto.
    trans_st (f a (f x (fold_right f i (remove_list x l)))).
@@ -569,7 +577,7 @@ Module Properties (M: S).
    assert (X : ME.In t0 nil); auto; inversion X.
    intros x l Hrec s' N N' E; simpl in *.
    trans_st (f x (fold_right f i (remove_list x s'))).
-   apply Hf1; auto.
+   apply Comp; auto.
    apply Hrec; auto.
    inversion N; auto.
    destruct (remove_list_correct x N'); auto.
@@ -591,7 +599,7 @@ Module Properties (M: S).
    intros x' l' Hrec s x N N' IN EQ; simpl.
    (* if x=x' *)
    destruct (eq_dec x x').
-   apply Hf1; auto.
+   apply Comp; auto.
    apply fold_right_equal; auto.
    inversion_clear N'; trivial.
    unfold ListEq; unfold ListAdd in EQ; intros.
@@ -604,7 +612,7 @@ Module Properties (M: S).
    destruct IN; apply In_eq with y; auto; order.
    (* else x<>x' *)   
    trans_st (f x' (f x (fold_right f i (remove_list x' s)))).
-   apply Hf1; auto.
+   apply Comp; auto.
    apply Hrec; auto.
    destruct (remove_list_correct x' N); auto.
    inversion_clear N'; auto.
@@ -613,7 +621,7 @@ Module Properties (M: S).
    intuition.
    apply remove_list_add; auto.
    trans_st (f x (f x' (fold_right f i (remove_list x' s)))).
-   apply Hf1; auto.
+   apply Comp; auto.
    sym_st.
    apply remove_list_fold_right; auto.
    destruct (EQ x'). 
@@ -679,7 +687,7 @@ Module Properties (M: S).
   intros; rewrite <- Hl1; rewrite <- Hl'1; auto.
   Qed.
 
-  (** Similar specification for [cardinal]. *)
+  (** Similar specifications for [cardinal]. *)
 
   Lemma cardinal_fold : forall s, cardinal s = fold (fun _ => S) s 0.
   Proof.
@@ -756,13 +764,6 @@ Module Properties (M: S).
 
   Hint Resolve Add_add Add_remove Equal_remove cardinal_inv_1 Equal_cardinal.
 
-  Lemma empty_cardinal : cardinal empty = 0.
-  Proof.
-  rewrite cardinal_fold; apply fold_1; auto.
-  Qed.
-
-  Hint Immediate empty_cardinal cardinal_1 : set.
-
   Lemma cardinal_induction :
    forall P : t -> Type,
    (forall s, Empty s -> P s) ->
@@ -785,141 +786,165 @@ Module Properties (M: S).
   intros; apply cardinal_induction with (cardinal s); auto.
   Qed.  
 
-  (** Other formulation of [fold_1] and [fold_2]. *)
+  (** Other properties of [fold]. *)
 
   Section Fold. 
+  Variables (A:Set)(eqA:A->A->Prop)(st:Setoid_Theory _ eqA).
+  Variables (f:elt->A->A)(Comp:compat_op E.eq eqA f)(Ass:transpose eqA f).
 
-  Variable A : Set. 
-  Variable eqA : A -> A -> Prop.
-  Variable st : Setoid_Theory _ eqA.
-  Variable i : A.
-  Variable f : elt -> A -> A.
-  Variable Comp : compat_op E.eq eqA f. 
-  Variable Assoc : transpose eqA f.
- 
+  Section Fold_1. 
+  Variable i i':A.
+
   Lemma fold_empty : eqA (fold f empty i) i.
   Proof. 
   apply fold_1; auto.
   Qed.
 
-  Lemma fold_equal : forall s s', s[=]s' -> eqA (fold f s i) (fold f s' i).
+  Lemma fold_equal : 
+   forall s s', s[=]s' -> eqA (fold f s i) (fold f s' i).
   Proof. 
-     intros s; pattern s; apply set_induction; clear s; intros.
-     trans_st i.
-     apply fold_1; auto.
-     sym_st; apply fold_1; auto.
-     rewrite <- H0; auto.
-     trans_st (f x (fold f s i)).
-     apply fold_2 with (eqA := eqA); auto.
-     sym_st; apply fold_2 with (eqA := eqA); auto.
-     unfold Add in *; intros.
-     rewrite <- H2; auto.
+  intros s; pattern s; apply set_induction; clear s; intros.
+  trans_st i.
+  apply fold_1; auto.
+  sym_st; apply fold_1; auto.
+  rewrite <- H0; auto.
+  trans_st (f x (fold f s i)).
+  apply fold_2 with (eqA := eqA); auto.
+  sym_st; apply fold_2 with (eqA := eqA); auto.
+  unfold Add in *; intros.
+  rewrite <- H2; auto.
   Qed.
    
-  Lemma fold_add : forall s x, ~In x s -> eqA (fold f (add x s) i) (f x (fold f s i)).
+  Lemma fold_add : forall s x, ~In x s -> 
+   eqA (fold f (add x s) i) (f x (fold f s i)).
   Proof. 
-    intros; apply fold_2 with (eqA := eqA); auto.
+  intros; apply fold_2 with (eqA := eqA); auto.
   Qed.
 
-  End Fold.
+  Lemma add_fold : forall s x, In x s -> 
+   eqA (fold f (add x s) i) (fold f s i).
+  Proof.
+  intros; apply fold_equal; auto with set.
+  Qed.
 
-  (** properties of [cardinal] *)
-
-  Lemma singleton_cardinal : forall x, cardinal (singleton x) = 1.
+  Lemma remove_fold_1: forall s x, In x s -> 
+   eqA (f x (fold f (remove x s) i)) (fold f s i).
   Proof.
   intros.
-  rewrite (singleton_equal_add x).
-  replace 0 with (cardinal empty); auto with set.
-  apply cardinal_2 with x; auto with set.
+  sym_st.
+  apply fold_2 with (eqA:=eqA); auto.
   Qed.
 
-  Hint Resolve singleton_cardinal: set.
-
-  Lemma fold_commutes :
-   forall (A:Set)(eqA:A->A->Prop)(st:Setoid_Theory _ eqA)
-    (f:elt->A->A)(i:A), compat_op E.eq eqA f -> transpose eqA f ->
-    forall s x, eqA (fold f s (f x i)) (f x (fold f s i)).
+  Lemma remove_fold_2: forall s x, ~In x s -> 
+   eqA (fold f (remove x s) i) (fold f s i).
   Proof.
-  intro A.
+  intros.
+  apply fold_equal; auto with set.
+  Qed.
+
+  Lemma fold_commutes : forall s x, 
+   eqA (fold f s (f x i)) (f x (fold f s i)).
+  Proof.
   intros; pattern s; apply set_induction; clear s; intros.
   trans_st (f x i).
   apply fold_1; auto.
   sym_st.
-  apply H; auto.
+  apply Comp; auto.
   apply fold_1; auto.
   trans_st (f x0 (fold f s (f x i))).
   apply fold_2 with (eqA:=eqA); auto.
   trans_st (f x0 (f x (fold f s i))).
   trans_st (f x (f x0 (fold f s i))).
-  apply H; auto.
+  apply Comp; auto.
   sym_st.
   apply fold_2 with (eqA:=eqA); auto.
   Qed.
 
-  Lemma fold_union_inter :
-   forall (A:Set)(f:elt->A->A)(i:A),
-   compat_op E.eq (@eq _) f -> transpose (@eq _) f ->
-   forall s s',
-   fold f (union s s') (fold f (inter s s') i) = fold f s (fold f s' i).
-  Proof.
-  intro A.
-  assert (st := gen_st A). 
+  Lemma fold_init : forall s, eqA i i' -> 
+   eqA (fold f s i) (fold f s i').
+  Proof. 
   intros; pattern s; apply set_induction; clear s; intros.
-  rewrite (fold_1 st (fold f s' i) f H1).
-  rewrite (fold_1 st i f (empty_inter_1 (s':=s') H1)).
-  assert (H3:union s s'[=]s') by auto with set.
-  rewrite (fold_equal st i H H0 H3); auto.
-  assert (H4:Add x (union s s') (union s'0 s')) by auto with set.
+  trans_st i.
+  apply fold_1; auto.
+  trans_st i'.
+  sym_st; apply fold_1; auto.
+  trans_st (f x (fold f s i)).
+  apply fold_2 with (eqA:=eqA); auto.
+  trans_st (f x (fold f s i')).
+  sym_st; apply fold_2 with (eqA:=eqA); auto.
+  Qed.
+
+  End Fold_1.
+  Section Fold_2.
+  Variable i:A.
+
+  Lemma fold_union_inter : forall s s',
+   eqA (fold f (union s s') (fold f (inter s s') i))
+       (fold f s (fold f s' i)).
+  Proof.
+  intros; pattern s; apply set_induction; clear s; intros.
+  trans_st (fold f s' (fold f (inter s s') i)).
+  apply fold_equal; auto with set.
+  trans_st (fold f s' i).
+  apply fold_init; auto.
+  apply fold_1; auto with set.
+  sym_st; apply fold_1; auto.
+  rename s'0 into s''.
   destruct (In_dec x s').
-  (* In x s' *)
-  assert (H5:Add x (inter s s') (inter s'0 s')) by auto with set.
-  assert (H6:~In x (inter s s')) by rewrite inter_iff; intuition.
-  rewrite (fold_2 st i H H0 H6 H5).
-  rewrite (fold_2 st (fold f s' i) H H0 H2 H3).
-  assert (H7:union s'0 s'[=]union s s').
-   apply equal_sym; apply union_Equal with x; auto with set.
-  rewrite (fold_equal st (f x (fold f (inter s s') i)) H H0 H7).
-  rewrite (fold_commutes st (fold f (inter s s') i) H H0); auto.
+  (* In x s' *)   
+  trans_st (fold f (union s'' s') (f x (fold f (inter s s') i))); auto with set.
+  apply fold_init; auto.
+  apply fold_2 with (eqA:=eqA); auto with set.
+  rewrite inter_iff; intuition.
+  trans_st (f x (fold f s (fold f s' i))).
+  trans_st (fold f (union s s') (f x (fold f (inter s s') i))).
+  apply fold_equal; auto.
+  apply equal_sym; apply union_Equal with x; auto with set.
+  trans_st (f x (fold f (union s s') (fold f (inter s s') i))).
+  apply fold_commutes; auto.
+  sym_st; apply fold_2 with (eqA:=eqA); auto.
   (* ~(In x s') *)
-  rewrite (fold_2 st (fold f s' i) H H0 H2 H3).
-  assert (H5:inter s'0 s'[=]inter s s').
-   apply equal_sym; apply inter_Add_2 with x; auto with set.
-  rewrite (fold_equal st i H H0 H5).
-  assert (H6:Add x (union s s') (union s'0 s')) by auto with set. 
-  assert (H7:~In x (union s s')) by auto with set. 
-  rewrite (fold_2 st (fold f (inter s s') i) H H0 H7 H6); auto.
+  trans_st (f x (fold f (union s s') (fold f (inter s'' s') i))).
+  apply fold_2 with (eqA:=eqA); auto with set.
+  trans_st (f x (fold f (union s s') (fold f (inter s s') i))).
+  apply Comp;auto.
+  apply fold_init;auto.
+  apply fold_equal;auto.
+  apply equal_sym; apply inter_Add_2 with x; auto with set.
+  trans_st (f x (fold f s (fold f s' i))).
+  sym_st; apply fold_2 with (eqA:=eqA); auto.
   Qed.
 
-  Lemma fold_diff_inter :
-   forall (A:Set)(f:elt->A->A)(i:A),
-   compat_op E.eq (@eq A) f -> transpose (@eq A) f ->
-   forall s s' : t, 
-   fold f (diff s s') (fold f (inter s s') i) = fold f s i.
+  End Fold_2.
+  Section Fold_3.
+  Variable i:A.
+
+  Lemma fold_diff_inter : forall s s', 
+   eqA (fold f (diff s s') (fold f (inter s s') i)) (fold f s i).
   Proof.
   intros.
-  assert (st := gen_st A).
-  rewrite <- (fold_union_inter i H H0 (diff s s') (inter s s')).
-  rewrite (fold_equal st i H H0 (diff_inter_empty s s')).
-  rewrite (fold_empty st).
-  apply fold_equal with (eqA:=@eq A); auto.
-  apply diff_inter_all.
+  trans_st (fold f (union (diff s s') (inter s s')) 
+              (fold f (inter (diff s s') (inter s s')) i)).
+  sym_st; apply fold_union_inter; auto.
+  trans_st (fold f s (fold f (inter (diff s s') (inter s s')) i)).
+  apply fold_equal; auto with set.
+  apply fold_init; auto.
+  apply fold_1; auto with set.
   Qed.
 
-  Lemma fold_union: 
-   forall (A:Set)(f:elt->A->A)(i:A), 
-   compat_op E.eq (@eq A) f -> transpose (@eq A) f -> 
-   forall s s', (forall x, ~In x s\/~In x s') ->
-   fold f (union s s') i = fold f s (fold f s' i).
+  Lemma fold_union: forall s s', (forall x, ~In x s\/~In x s') ->
+   eqA (fold f (union s s') i) (fold f s (fold f s' i)).
   Proof.
   intros.
-  assert (st:= gen_st A).
-  rewrite <- (fold_union_inter i H H0 s s').
-  assert (inter s s'[=]empty).
-  unfold Equal; intro a; set_iff.
-  generalize (H1 a)(@empty_1 a); tauto.
-  rewrite (fold_equal st i H H0 H2). 
-  rewrite (fold_empty st);auto.
+  trans_st (fold f (union s s') (fold f (inter s s') i)).
+  apply fold_init; auto.
+  sym_st; apply fold_1; auto with set.
+  unfold Empty; intro a; generalize (H a); set_iff; tauto.
+  apply fold_union_inter; auto.
   Qed.
+
+  End Fold_3.
+  End Fold.
 
   Lemma fold_plus :
    forall s p, fold (fun _ => S) s p = fold (fun _ => S) s 0 + p.
@@ -939,12 +964,31 @@ Module Properties (M: S).
   simpl; auto.
   Qed.
 
+  (** properties of [cardinal] *)
+
+  Lemma empty_cardinal : cardinal empty = 0.
+  Proof.
+  rewrite cardinal_fold; apply fold_1; auto.
+  Qed.
+
+  Hint Immediate empty_cardinal cardinal_1 : set.
+
+  Lemma singleton_cardinal : forall x, cardinal (singleton x) = 1.
+  Proof.
+  intros.
+  rewrite (singleton_equal_add x).
+  replace 0 with (cardinal empty); auto with set.
+  apply cardinal_2 with x; auto with set.
+  Qed.
+
+  Hint Resolve singleton_cardinal: set.
+
   Lemma diff_inter_cardinal :
    forall s s', cardinal (diff s s') + cardinal (inter s s') = cardinal s .
   Proof.
   intros; do 3 rewrite cardinal_fold.
   rewrite <- fold_plus.
-  apply fold_diff_inter; auto.
+  apply fold_diff_inter with (eqA:=@eq nat); auto.
   Qed.
 
   Lemma union_cardinal: 
@@ -971,7 +1015,7 @@ Module Properties (M: S).
   intros.
   do 4 rewrite cardinal_fold.
   do 2 rewrite <- fold_plus.
-  apply fold_union_inter; auto.
+  apply fold_union_inter with (eqA:=@eq nat); auto.
   Qed.
 
   Lemma union_cardinal_le : 
@@ -994,6 +1038,21 @@ Module Properties (M: S).
   do 2 rewrite cardinal_fold.
   change S with ((fun _ => S) x);
    apply fold_add with (eqA:=@eq nat); auto.
+  Qed.
+
+  Lemma remove_cardinal_1 :
+   forall s x, In x s -> S (cardinal (remove x s)) = cardinal s.
+  Proof.
+  intros.
+  do 2 rewrite cardinal_fold.
+  change S with ((fun _ =>S) x).
+  apply remove_fold_1 with (eqA:=@eq nat); auto.
+  Qed.
+
+  Lemma remove_cardinal_2 : 
+   forall s x, ~In x s -> cardinal (remove x s) = cardinal s.
+  Proof. 
+  auto with set.
   Qed.
 
   Hint Resolve subset_cardinal union_cardinal add_cardinal_1 add_cardinal_2.
