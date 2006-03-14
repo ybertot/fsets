@@ -13,6 +13,7 @@
 
 Require Import FSet.
 
+Require Import Sumbool.
 Require Import Compare_dec.
 Require Import Even.
 Require Import Div2.
@@ -222,7 +223,7 @@ assert (mem x (set_pred G n) = true -> (mem x (set_succ G n))=true -> False).
   elim (andb_prop _ _  H0); elim (andb_prop _ _ H1); intros.
   elim (@Hacyclic G n); apply chain_t with x; apply chain_i; auto.
 generalize H0; case (mem x (set_pred G n)); case (mem x (set_succ G n)); intuition.
-unfold set_linked, is_linked, set_pred, set_succ; apply filter_orb; auto.
+unfold set_linked, is_linked, set_pred, set_succ; apply eq_sym; apply union_filter; auto.
 Qed.
 
 (** Any acyclic graph has an initial element *)
