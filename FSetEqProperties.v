@@ -692,6 +692,21 @@ assert (f a = true -> ~E.eq x a).
 tauto. 
 Qed.
 
+Lemma union_filter: forall f g, (compat_bool E.eq f) -> (compat_bool E.eq g) ->
+  forall s, union (filter f s) (filter g s) [=] filter (fun x=>orb (f x) (g x)) s.
+Proof.
+clear Comp' Comp f.
+intros.
+assert (compat_bool E.eq (fun x => orb (f x) (g x))).
+  unfold compat_bool; intros.
+  rewrite (H x y H1);  rewrite (H0 x y H1); auto.
+unfold Equal; intros; set_iff; repeat rewrite filter_iff; auto.
+assert (f a || g a = true <-> f a = true \/ g a = true).
+  split; auto with bool.
+  intro H3; destruct (orb_prop _ _ H3); auto.
+tauto.
+Qed.
+
 (** Properties of [for_all] *)
 
 Lemma for_all_mem_1: forall s, 
@@ -817,6 +832,8 @@ End Bool'.
 
 Section Sum.
 
+(** Adding a valuation function on all elements of a set. *)
+
 Definition sum (f:elt -> nat)(s:t) := fold (fun x => plus (f x)) s 0. 
 
 Lemma sum_plus : 
@@ -842,7 +859,6 @@ rewrite H0;simpl;omega.
 intros; do 3 rewrite (fold_empty _ _ st);auto.
 Qed.
 
-
 Lemma sum_filter : forall f, (compat_bool E.eq f) -> 
   forall s, (sum (fun x => if f x then 1 else 0) s) = (cardinal (filter f s)).
 Proof.
@@ -862,13 +878,13 @@ intros; rewrite (fold_add _ _ st _ cc ct); auto.
 generalize (@add_filter_1 f Hf s0 (add x s0) x) (@add_filter_2 f Hf s0 (add x s0) x) .
 assert (~ In x (filter f s0)).
  intro H1; rewrite (mem_1 (filter_1 Hf H1)) in H; discriminate H.
-case (f x); simpl; intuition.
-rewrite (MP.cardinal_2 H1 (H4 (MP.Add_add s0 x))); auto.
-rewrite <- (MP.Equal_cardinal (H4 (MP.Add_add s0 x))); auto.
+case (f x); simpl; intros.
+rewrite (MP.cardinal_2 H1 (H2 (refl_equal true) (MP.Add_add s0 x))); auto.
+rewrite <- (MP.Equal_cardinal (H3 (refl_equal false) (MP.Add_add s0 x))); auto.
 intros; rewrite (fold_empty _ _ st);auto.
 rewrite MP.cardinal_1; auto.
-unfold Empty; intuition.
-elim (@empty_1 a); eauto.
+unfold Empty; intros.
+rewrite filter_iff; auto; set_iff; tauto.
 Qed.
 
 Lemma fold_compat : 
@@ -881,21 +897,19 @@ Lemma fold_compat :
 Proof.
 intros A eqA st f g fc ft gc gt i.
 intro s; pattern s; apply set_rec; intros.
-apply (Seq_trans _ _ st) with (fold f s0 i).
+trans_st (fold f s0 i).
 apply fold_equal with (eqA:=eqA); auto.
 rewrite equal_sym; auto.
-apply (Seq_trans _ _ st) with (fold g s0 i).
+trans_st (fold g s0 i).
 apply H0; intros; apply H1; auto.
-elim  (equal_2 H x); intuition.
+elim  (equal_2 H x); auto; intros.
 apply fold_equal with (eqA:=eqA); auto.
-apply (Seq_trans _ _ st) with (f x (fold f s0 i)).
+trans_st (f x (fold f s0 i)).
 apply fold_add with (eqA:=eqA); auto.
-apply (Seq_trans _ _ st) with (g x (fold f s0 i)).
-apply H1; auto with set.
-apply (Seq_trans _ _ st) with (g x (fold g s0 i)).
-apply gc; auto.
-apply Seq_sym; auto; apply fold_add with (eqA:=eqA); auto.
-apply (Seq_trans _ _ st) with i; [idtac | apply Seq_sym; auto]; apply fold_empty; auto.
+trans_st (g x (fold f s0 i)).
+trans_st (g x (fold g s0 i)).
+sym_st; apply fold_add with (eqA:=eqA); auto.
+trans_st i; [idtac | sym_st ]; apply fold_empty; auto.
 Qed.
 
 Lemma sum_compat : 
@@ -908,22 +922,5 @@ unfold transpose; intros; omega.
 Qed.
 
 End Sum.
-
-Lemma union_filter: forall f g, (compat_bool E.eq f) -> (compat_bool E.eq g) ->
-  forall s, union (filter f s) (filter g s) [=] filter (fun x=>orb (f x) (g x)) s.
-Proof.
-intros.
-assert (compat_bool E.eq (fun x => orb (f x) (g x))).
-  unfold compat_bool; intros.
-  rewrite (H x y H1).
-  rewrite (H0 x y H1); auto.
-unfold Equal; split; intros.
-elim (union_1 H2); intros. 
-apply filter_3; [ auto | eauto | rewrite (filter_2 H H3); auto ].
-apply filter_3; [ auto | eauto | rewrite (filter_2 H0 H3); auto with bool].
-assert (H3 := filter_1 H1 H2).
-assert (H4 := filter_2 H1 H2).
-elim (orb_prop _ _ H4); intros; eauto.
-Qed.
 
 End EqProperties. 
