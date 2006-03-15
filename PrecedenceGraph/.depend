@@ -1,3 +1,3 @@
-PrecedenceGraph.vo: PrecedenceGraph.v ../FSet.vo
-PrecedenceGraph.vi: PrecedenceGraph.v ../FSet.vo
-PrecedenceGraph.html: PrecedenceGraph.v ../FSet.html
+PrecedenceGraph.vo: PrecedenceGraph.v
+PrecedenceGraph.vi: PrecedenceGraph.v
+PrecedenceGraph.html: PrecedenceGraph.v

@@ -75,10 +75,12 @@ VFILES=Int.v\
   FMapAVL.v\
   FSetRBT.v\
   FSetAVL.v\
-  FSetAVL_nodep.v\
+  FSetAVL_dep.v\
   FSetAVL_int.v\
-  FSet.v\
-  extract.v
+  FSetAll.v\
+  FMapAll.v\
+  extract.v\
+  compute.v
 VOFILES=$(VFILES:.v=.vo)
 VIFILES=$(VFILES:.v=.vi)
 GFILES=$(VFILES:.v=.g)
@@ -89,10 +91,12 @@ all: Int.vo\
   FMapAVL.vo\
   FSetRBT.vo\
   FSetAVL.vo\
-  FSetAVL_nodep.vo\
+  FSetAVL_dep.vo\
   FSetAVL_int.vo\
-  FSet.vo\
+  FSetAll.vo\
+  FMapAll.vo\
   extract.vo\
+  compute.vo\
   PrecedenceGraph
 
 spec: $(VIFILES)

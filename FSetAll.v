@@ -13,10 +13,9 @@
 
 (* $Id$ *)
 
-Require Export FSetInterface.
-Require Export FSetBridge.
-Require Export FSetProperties.
-Require Export FSetEqProperties.
-Require Export FSetList.
+(* Now in Coq Standard Library *)
+Require Export FSet.
+
+(* Still in the present contrib *)
 Require Export FSetRBT.
 Require Export FSetAVL.

@@ -1,5 +1,11 @@
+avl.cmo: avl.ml avl.cmi
+avl.cmx: avl.ml avl.cmi
 int.cmo: int.ml
 int.cmx: int.ml
+rbt.cmo: rbt.ml rbt.cmi
+rbt.cmx: rbt.ml rbt.cmi
+avl.cmi: avl.mli
+rbt.cmi: rbt.mli
 Int.vo: Int.v
 Int.vi: Int.v
 FMapAVL.vo: FMapAVL.v
@@ -8,19 +14,22 @@ FSetRBT.vo: FSetRBT.v
 FSetRBT.vi: FSetRBT.v
 FSetAVL.vo: FSetAVL.v
 FSetAVL.vi: FSetAVL.v
-FSetAVL_nodep.vo: FSetAVL_nodep.v
-FSetAVL_nodep.vi: FSetAVL_nodep.v
+FSetAVL_dep.vo: FSetAVL_dep.v
+FSetAVL_dep.vi: FSetAVL_dep.v
 FSetAVL_int.vo: FSetAVL_int.v Int.vo
 FSetAVL_int.vi: FSetAVL_int.v Int.vo
-FSet.vo: FSet.v FSetRBT.vo FSetAVL.vo
-FSet.vi: FSet.v FSetRBT.vo FSetAVL.vo
-extract.vo: extract.v FSet.vo
-extract.vi: extract.v FSet.vo
+FSetAll.vo: FSetAll.v FSetRBT.vo FSetAVL.vo
+FSetAll.vi: FSetAll.v FSetRBT.vo FSetAVL.vo
+FMapAll.vo: FMapAll.v FMapAVL.vo
+FMapAll.vi: FMapAll.v FMapAVL.vo
+extract.vo: extract.v
+extract.vi: extract.v
 Int.html: Int.v
 FMapAVL.html: FMapAVL.v
 FSetRBT.html: FSetRBT.v
 FSetAVL.html: FSetAVL.v
-FSetAVL_nodep.html: FSetAVL_nodep.v
+FSetAVL_dep.html: FSetAVL_dep.v
 FSetAVL_int.html: FSetAVL_int.v Int.html
-FSet.html: FSet.v FSetRBT.html FSetAVL.html
-extract.html: extract.v FSet.html
+FSetAll.html: FSetAll.v FSetRBT.html FSetAVL.html
+FMapAll.html: FMapAll.v FMapAVL.html
+extract.html: extract.v
