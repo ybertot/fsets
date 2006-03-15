@@ -71,24 +71,8 @@ COQLIBS=-I .
 #                                 #
 ###################################
 
-VFILES=MoreList.v\
-  Lib.v\
-  OrderedType.v\
-  DecidableType.v\
-  Int.v\
-  FSetBridge.v\
-  FSetInterface.v\
-  FSetList.v\
-  FSetFacts.v\
-  FSetEqProperties.v\
-  FSetProperties.v\
-  FSetWeakInterface.v\
-  FSetWeakList.v\
-  FMapInterface.v\
-  FMapList.v\
+VFILES=Int.v\
   FMapAVL.v\
-  FMapWeakInterface.v\
-  FMapWeakList.v\
   FSetRBT.v\
   FSetAVL.v\
   FSetAVL_nodep.v\
@@ -101,24 +85,8 @@ GFILES=$(VFILES:.v=.g)
 HTMLFILES=$(VFILES:.v=.html)
 GHTMLFILES=$(VFILES:.v=.g.html)
 
-all: MoreList.vo\
-  Lib.vo\
-  OrderedType.vo\
-  DecidableType.vo\
-  Int.vo\
-  FSetBridge.vo\
-  FSetInterface.vo\
-  FSetList.vo\
-  FSetFacts.vo\
-  FSetEqProperties.vo\
-  FSetProperties.vo\
-  FSetWeakInterface.vo\
-  FSetWeakList.vo\
-  FMapInterface.vo\
-  FMapList.vo\
+all: Int.vo\
   FMapAVL.vo\
-  FMapWeakInterface.vo\
-  FMapWeakList.vo\
   FSetRBT.vo\
   FSetAVL.vo\
   FSetAVL_nodep.vo\
