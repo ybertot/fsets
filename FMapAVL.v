@@ -1579,7 +1579,7 @@ unfold anti_elements, empty; intros; apply anti_elements_bst_aux; auto.
 Qed.
 
 Lemma anti_elements_mapsto_aux : forall (l:list (key*elt'')) m k e,
-  bst m -> avl m -> noredunA (eqk (elt:=elt'')) l -> 
+  bst m -> avl m -> NoDupA (eqk (elt:=elt'')) l -> 
   (forall x, L.PX.In x l -> In x m -> False) -> 
   (MapsTo k e (L.fold (@add _) l m) <-> L.PX.MapsTo k e l \/ MapsTo k e m).
 Proof.
@@ -1620,7 +1620,7 @@ destruct (H2 k); eauto.
 right; apply add_2; auto.
 Qed.
 
-Lemma anti_elements_mapsto : forall l k e, noredunA (eqk (elt:=elt'')) l ->
+Lemma anti_elements_mapsto : forall l k e, NoDupA (eqk (elt:=elt'')) l ->
   (MapsTo k e (anti_elements l) <-> L.PX.MapsTo k e l).
 Proof. 
 intros. 
@@ -1665,13 +1665,13 @@ case_eq (L.find x l); intros.
 apply find_1.
 apply anti_elements_bst; auto.
 rewrite anti_elements_mapsto.
-apply L.PX.Sort_noredunA; auto.
+apply L.PX.Sort_NoDupA; auto.
 apply L.find_2; auto.
 case_eq (find x (anti_elements l)); auto; intros.
 rewrite <- H0; symmetry.
 apply L.find_1; auto.
 rewrite <- anti_elements_mapsto.
-apply L.PX.Sort_noredunA; auto.
+apply L.PX.Sort_NoDupA; auto.
 apply find_2; auto.
 Qed.
 
@@ -1704,7 +1704,7 @@ rewrite <- In_alt.
 destruct 1.
 exists x0.
 rewrite <- anti_elements_mapsto; auto.
-apply L.PX.Sort_noredunA; auto.
+apply L.PX.Sort_NoDupA; auto.
 apply L.map2_sorted; auto.
 apply elements_sort; auto.
 apply elements_sort; auto.

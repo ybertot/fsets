@@ -1,5 +1,5 @@
 Require Import FSetInterface.
-Require Import FSetAVL_nodep.
+Require Import FSetAVL.
 Require Import FSetAVL_int.
 Require Import ZArith.
 Open Scope Z_scope.
@@ -36,7 +36,7 @@ Module ZOT <: OrderedType.
 
 End ZOT.
 
-Module M := FSetAVL_nodep.Make(ZOT).
+Module M := FSetAVL.Make(ZOT).
 
 Eval compute in (M.min_elt (M.union'  (M.add 3 (M.add 0 (M.empty))) (M.add 1 (M.add 2 (M.empty))))).
 

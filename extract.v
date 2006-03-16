@@ -15,7 +15,7 @@
 
 (* extraction *)
 
-Require Import FSet.
+Require Import FSetAll.
 Require Import ZArith.
 
 Extract Inductive bool => "bool" [ "true" "false" ].
