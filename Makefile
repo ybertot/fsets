@@ -72,12 +72,13 @@ COQLIBS=-I .
 ###################################
 
 VFILES=Int.v\
-  FMapAVL.v\
   FSetRBT.v\
   FSetAVL.v\
   FSetAVL_dep.v\
   FSetAVL_int.v\
   FSetAll.v\
+  FMapAVL.v\
+  FMapAVL_int.v\
   FMapAll.v\
   extract.v\
   compute.v
@@ -88,12 +89,13 @@ HTMLFILES=$(VFILES:.v=.html)
 GHTMLFILES=$(VFILES:.v=.g.html)
 
 all: Int.vo\
-  FMapAVL.vo\
   FSetRBT.vo\
   FSetAVL.vo\
   FSetAVL_dep.vo\
   FSetAVL_int.vo\
   FSetAll.vo\
+  FMapAVL.vo\
+  FMapAVL_int.vo\
   FMapAll.vo\
   extract.vo\
   compute.vo\

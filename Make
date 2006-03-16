@@ -1,10 +1,11 @@
 Int.v 
-FMapAVL.v
 FSetRBT.v 
 FSetAVL.v 
 FSetAVL_dep.v
 FSetAVL_int.v 
 FSetAll.v 
+FMapAVL.v
+FMapAVL_int.v
 FMapAll.v
 extract.v 
 compute.v
