@@ -415,7 +415,7 @@ Ltac bal_tac :=
      | ] ]; intros.
 
 Ltac bal_tac_imp := match goal with 
-  | |- context id [ assert_false ] => 
+  | |- context [ assert_false ] => 
       inv avl; avl_nns; simpl in *; false_omega
   | _ => idtac
 end.
@@ -462,7 +462,7 @@ Proof.
 Qed.
 
 Ltac omega_bal := match goal with 
-  | H:avl ?l, H':avl ?r |- context id [ bal ?l ?x ?e ?r ] => 
+  | H:avl ?l, H':avl ?r |- context [ bal ?l ?x ?e ?r ] => 
      generalize (bal_height_1 x e H H') (bal_height_2 x e H H'); 
      omega_max
   end. 
@@ -701,7 +701,6 @@ Proof.
  apply bal_avl; auto.
  simpl; omega_max.
  omega_bal.
- simpl in *; omega_max.
 Qed.
 
 Lemma merge_avl : forall elt (s1 s2:t elt), avl s1 -> avl s2 -> 

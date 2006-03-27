@@ -19,6 +19,7 @@
 
 Require Import FSetInterface.
 Require Import FSetList.
+Require Import ROmega.
 
 Require Import ZArith.
 Open Scope Z_scope.
@@ -36,22 +37,6 @@ Proof.
  intros; unfold max, Zle, Zge.
  destruct (Zcompare x y); [ left | right | left ]; split; auto; discriminate.
 Qed.
-
-Ltac omega_max := 
-  let om x y := 
-    generalize (max_spec x y); 
-    let z := fresh "z" in let Hz := fresh "Hz" in 
-    (set (z:=Zmax x y) in *; clearbody z; intro Hz)
-  in 
-  match goal with 
-    | |- context id [ max ?x ?y ] => om x y; omega_max
-    | H:context id [ max ?x ?y ] |- _ => om x y; omega_max
-    | _ => intros; try omega
-  end.
-
-Ltac false_omega := elimtype False; omega.
-Ltac false_omega_max := elimtype False; omega_max.
-
 
 
 Module Raw (X: OrderedType).
@@ -222,6 +207,28 @@ Inductive avl : tree -> Prop :=
 
 Hint Constructors avl.
 
+Ltac omega_max := 
+  let om x y := 
+    generalize (max_spec x y); 
+    let z := fresh "z" in let Hz := fresh "Hz" in 
+    (set (z:=Zmax x y) in *; clearbody z; intro Hz)
+  in 
+  let hei x := 
+     let h := fresh "h" in 
+     (set (h:=height x) in *; clearbody h)
+  in
+  (simpl in *; 
+  match goal with 
+    | |- context [ height ?x ] => hei x; omega_max
+    | H:context [ height ?x ] |- _ => hei x; omega_max
+    | |- context [ max ?x ?y ] => om x y; omega_max
+    | H:context [ max ?x ?y ] |- _ => om x y; omega_max
+    | _ => intros; try romega
+  end).
+
+Ltac false_omega := elimtype False; romega.
+Ltac false_omega_max := elimtype False; omega_max.
+
 (** Results about [avl] *)
 
 Lemma avl_node :
@@ -350,7 +357,7 @@ Qed.
 Lemma singleton_avl : forall x : elt, avl (singleton x).
 Proof.
  unfold singleton; intro.
- constructor; auto; try red; simpl; try omega.
+ constructor; auto; try red; simpl; try romega.
 Qed.
 
 Lemma singleton_1 : forall x y, In y (singleton x) -> X.eq x y. 
@@ -491,7 +498,7 @@ Proof.
 Qed.
 
 Ltac omega_bal := match goal with 
-  | H:avl ?l, H':avl ?r |- context id [ bal ?l ?x ?r ] => 
+  | H:avl ?l, H':avl ?r |- context [ bal ?l ?x ?r ] => 
      generalize (bal_height_1 l x r H H') (bal_height_2 l x r H H'); 
      omega_max
   end. 
@@ -516,12 +523,12 @@ Proof.
  (* Lt *)
  destruct H; auto.
  split.
- apply bal_avl; auto; omega.
+ apply bal_avl; auto; omega_max.
  omega_bal.
  (* Gt *)
  destruct H; auto.
  split.
- apply bal_avl; auto; omega.
+ apply bal_avl; auto; omega_max.
  omega_bal.
 Qed.
 
@@ -645,10 +652,10 @@ Proof.
  assert (height (Node rl rx rr rh) = rh); auto.
  set (l := Node ll lx lr lh) in *; clearbody l.
  set (r := Node rl rx rr rh) in *; clearbody r.
- assert (-2 <= height l - height r <= 2) by omega.
+ assert (-2 <= height l - height r <= 2) by omega_max.
  split.
  apply create_avl; auto.
- rewrite create_height; auto; omega.
+ rewrite create_height; auto; omega_max.
 Qed.
 
 Lemma join_avl : forall l x r, avl l -> avl r -> avl (join l x r).
@@ -817,7 +824,6 @@ Proof.
  apply bal_avl; auto.
  simpl; omega_max.
  omega_bal.
- simpl in *; omega_max.
 Qed.
 
 Lemma merge_avl : forall s1 s2, avl s1 -> avl s2 -> 
@@ -2332,9 +2338,9 @@ Ltac Measure_e := unfold measure_e in |- *; fold measure_e in |- *.
 Lemma measure_e_t_0 : forall s : tree, measure_e_t s >= 0.
 Proof.
  simple induction s.
- simpl in |- *; omega.
+ simpl in |- *; romega.
  intros.
- Measure_e_t; omega. (* BUG Simpl! *)
+ Measure_e_t; romega. (* BUG Simpl! *)
 Qed.
 
 Ltac Measure_e_t_0 s := generalize (measure_e_t_0 s); intro.
@@ -2342,9 +2348,9 @@ Ltac Measure_e_t_0 s := generalize (measure_e_t_0 s); intro.
 Lemma measure_e_0 : forall e : enumeration, measure_e e >= 0.
 Proof.
  simple induction e.
- simpl in |- *; omega.
+ simpl in |- *; romega.
  intros.
- Measure_e; Measure_e_t_0 t; omega.
+ Measure_e; Measure_e_t_0 t; romega.
 Qed.
 
 Ltac Measure_e_0 e := generalize (measure_e_0 e); intro.
@@ -2369,7 +2375,7 @@ Proof.
             Zabs_nat (measure_e (fst xx') + measure_e (snd xx'))).
  intros; apply Zabs.Zabs_nat_lt.
  Measure_e_0 (fst x0); Measure_e_0 (snd x0); Measure_e_0 (fst y);
- Measure_e_0 (snd y); intros; omega.
+ Measure_e_0 (snd y); intros; romega.
 Qed.
 
 (** [cons t e] adds the elements of tree [t] on the head of 
@@ -2398,7 +2404,7 @@ Proof.
  constructor; inversion_clear H1; auto.
  inversion_clear H0; inv bst; intuition; order.
  exists x; intuition.
- generalize H4; Measure_e; intros; Measure_e_t; omega.
+ generalize H4; Measure_e; intros; Measure_e_t; romega.
  rewrite H5.
  apply flatten_e_elements.
 Qed.
@@ -2434,7 +2440,7 @@ Proof.
  destruct (cons t e0) as [c1 (H2,(H3,H4))]; try inversion_clear H0; auto.
  destruct (cons t0 e4) as [c2 (H5,(H6,H7))]; try inversion_clear H1; auto.
  destruct (H c1 c2); clear H; intuition.
- Measure_e; omega.
+ Measure_e; romega.
  constructor 1; simpl.
  apply L.lt_cons_eq; auto.
  rewrite H4 in l; rewrite H7 in l; auto.

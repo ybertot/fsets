@@ -465,7 +465,7 @@ Proof.
 Qed.
 
 Ltac omega_bal := match goal with 
-  | H:avl ?l, H':avl ?r |- context id [ bal ?l ?x ?r ] => 
+  | H:avl ?l, H':avl ?r |- context [ bal ?l ?x ?r ] => 
      generalize (bal_height_1 l x r H H') (bal_height_2 l x r H H'); 
      omega_max
   end. 
@@ -793,7 +793,6 @@ Proof.
  apply bal_avl; auto.
  simpl; omega_max.
  omega_bal.
- simpl in *; omega_max.
 Qed.
 
 Lemma merge_avl : forall s1 s2, avl s1 -> avl s2 -> 
