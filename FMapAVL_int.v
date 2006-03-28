@@ -473,9 +473,9 @@ Fixpoint add (elt:Set)(x:key)(e:elt)(s:t elt) { struct s } : t elt := match s wi
    | Leaf => Node (Leaf _) x e (Leaf _) 1
    | Node l y e' r h => 
       match X.compare x y with
-         | Lt _ => bal (add x e l) y e' r
-         | Eq _ => Node l y e r h
-         | Gt _ => bal l y e' (add x e r)
+         | LT _ => bal (add x e l) y e' r
+         | EQ _ => Node l y e r h
+         | GT _ => bal l y e' (add x e r)
       end
   end.
 
@@ -484,14 +484,14 @@ Lemma add_avl_1 :  forall elt (m:t elt) x e, avl m ->
 Proof. 
  intros elt m x e; functional induction add elt x e m; intros; inv avl; simpl in *.
  intuition; try constructor; simpl; auto; try omega_max.
- (* Lt *)
+ (* LT *)
  destruct H; auto.
  split.
  apply bal_avl; auto; omega_max.
  omega_bal.
- (* Eq *)
+ (* EQ *)
  intuition; omega_max.
- (* Gt *)
+ (* GT *)
  destruct H; auto.
  split.
  apply bal_avl; auto; omega_max.
@@ -509,15 +509,15 @@ Lemma add_in : forall elt (m:t elt) x y e, avl m ->
 Proof.
  intros elt m x y e; functional induction add elt x e m; auto; intros.
  intuition_in.
- (* Lt *)
+ (* LT *)
  inv avl.
  rewrite bal_in; auto.
  rewrite (H H1); intuition_in.
- (* Eq *)  
+ (* EQ *)  
  inv avl.
  firstorder_in.
  eapply In_1; eauto.
- (* Gt *)
+ (* GT *)
  inv avl.
  rewrite bal_in; auto.
  rewrite (H H2); intuition_in.
@@ -758,9 +758,9 @@ Fixpoint remove (elt:Set)(x:key)(s:t elt) { struct s } : t elt := match s with
   | Leaf => Leaf _
   | Node l y e r h =>
       match X.compare x y with
-         | Lt _ => bal (remove x l) y e r
-         | Eq _ => merge l r
-         | Gt _ => bal l y e (remove x r)
+         | LT _ => bal (remove x l) y e r
+         | EQ _ => merge l r
+         | GT _ => bal l y e (remove x r)
       end
    end.
 
@@ -769,18 +769,18 @@ Lemma remove_avl_1 : forall elt (s:t elt) x, avl s ->
 Proof.
  intros elt s x; functional induction remove elt x s; simpl; intros.
  split; auto; omega_max.
- (* Lt *)
+ (* LT *)
  inv avl.
  destruct (H H1).
  split. 
  apply bal_avl; auto.
  omega_max.
  omega_bal.
- (* Eq *)
+ (* EQ *)
  inv avl. 
  generalize (merge_avl_1 H0 H1 H2).
  intuition omega_max.
- (* Gt *)
+ (* GT *)
  inv avl.
  destruct (H H2).
  split. 
@@ -800,15 +800,15 @@ Lemma remove_in : forall elt (s:t elt) x y, bst s -> avl s ->
 Proof.
  intros elt s x; functional induction remove elt x s; simpl; intros.
  intuition_in.
- (* Lt *)
+ (* LT *)
  inv avl; inv bst; clear H_eq_0.
  rewrite bal_in; auto.
  generalize (H y0 H1); intuition; [ order | order | intuition_in ].
- (* Eq *)
+ (* EQ *)
  inv avl; inv bst; clear H_eq_0.
  rewrite merge_in; intuition; [ order | order | intuition_in ].
  elim H9; eauto.
- (* Gt *)
+ (* GT *)
  inv avl; inv bst; clear H_eq_0.
  rewrite bal_in; auto.
  generalize (H y0 H6); intuition; [ order | order | intuition_in ].
@@ -818,16 +818,16 @@ Lemma remove_bst : forall elt (s:t elt) x, bst s -> avl s -> bst (remove x s).
 Proof. 
  intros elt s x; functional induction remove elt x s; simpl; intros.
  auto.
- (* Lt *)
+ (* LT *)
  inv avl; inv bst.
  apply bal_bst; auto.
  intro; intro.
  rewrite (remove_in x y0 H1) in H0; auto.
  destruct H0; eauto.
- (* Eq *)
+ (* EQ *)
  inv avl; inv bst.
  apply merge_bst; eauto.
- (* Gt *) 
+ (* GT *) 
  inv avl; inv bst.
  apply bal_bst; auto.
  intro; intro.
@@ -915,9 +915,9 @@ Fixpoint mem (x:key)(m:t elt) { struct m } : bool :=
    match m with 
      |  Leaf => false 
      |  Node l y e r _ => match X.compare x y with 
-             | Lt _ => mem x l 
-             | Eq _ => true
-             | Gt _ => mem x r
+             | LT _ => mem x l 
+             | EQ _ => true
+             | GT _ => mem x r
          end
    end.
 Implicit Arguments mem. 
@@ -941,9 +941,9 @@ Fixpoint find (x:key)(m:t elt) { struct m } : option elt :=
    match m with 
      |  Leaf => None 
      |  Node l y e r _ => match X.compare x y with 
-             | Lt _ => find x l 
-             | Eq _ => Some e
-             | Gt _ => find x r
+             | LT _ => find x l 
+             | EQ _ => Some e
+             | GT _ => find x r
          end
    end.
 
@@ -1356,7 +1356,7 @@ Proof.
  intuition order. 
  (* k = k0 *)
  case_eq (cmp e e3).
- intros Eq.
+ intros EQ.
  destruct (@cons t e0) as [c1 (H2,(H3,H4))]; try inversion_clear H0; auto.
  destruct (@cons t0 e4) as [c2 (H5,(H6,H7))]; try inversion_clear H1; auto.
  destruct (H c1 c2); clear H; intuition.
@@ -1872,7 +1872,7 @@ Module Make_ord (I:Int)(X: OrderedType)(D : OrderedType) <:
 
   Definition t := MapS.t D.t. 
 
-  Definition cmp e e' := match D.compare e e' with Eq _ => true | _ => false end.	
+  Definition cmp e e' := match D.compare e e' with EQ _ => true | _ => false end.	
 
   Definition elements (m:t) := 
     LO.MapS.Build_slist (Raw.elements_sort m.(is_bst)).

@@ -11,7 +11,7 @@
 (* $Id$ *)
 
 (* Now in Coq Standard Library: *)
-Require Export FMap.
+Require Export FMaps.
 
 (* Still in the present contrib: *)
 Require Export FMapAVL.

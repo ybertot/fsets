@@ -14,7 +14,7 @@
 (* $Id$ *)
 
 (* Now in Coq Standard Library *)
-Require Export FSet.
+Require Export FSets.
 
 (* Still in the present contrib *)
 Require Export FSetRBT.

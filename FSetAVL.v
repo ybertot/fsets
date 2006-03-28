@@ -324,9 +324,9 @@ Fixpoint mem (x:elt)(s:t) { struct s } : bool :=
    match s with 
      |  Leaf => false 
      |  Node l y r _ => match X.compare x y with 
-             | Lt _ => mem x l 
-             | Eq _ => true
-             | Gt _ => mem x r
+             | LT _ => mem x l 
+             | EQ _ => true
+             | GT _ => mem x r
          end
    end.
 
@@ -509,9 +509,9 @@ Fixpoint add (x:elt)(s:t) { struct s } : t := match s with
    | Leaf => Node Leaf x Leaf 1
    | Node l y r h => 
       match X.compare x y with
-         | Lt _ => bal (add x l) y r
-         | Eq _ => Node l y r h
-         | Gt _ => bal l y (add x r)
+         | LT _ => bal (add x l) y r
+         | EQ _ => Node l y r h
+         | GT _ => bal l y (add x r)
       end
   end.
 
@@ -520,12 +520,12 @@ Lemma add_avl_1 :  forall s x, avl s ->
 Proof. 
  intros s x; functional induction add x s; intros; inv avl; simpl in *; 
   try solve [intuition].
- (* Lt *)
+ (* LT *)
  destruct H; auto.
  split.
  apply bal_avl; auto; omega_max.
  omega_bal.
- (* Gt *)
+ (* GT *)
  destruct H; auto.
  split.
  apply bal_avl; auto; omega_max.
@@ -543,15 +543,15 @@ Lemma add_in : forall s x y, avl s ->
 Proof.
  intros s x; functional induction add x s; auto; intros.
  intuition_in.
- (* Lt *)
+ (* LT *)
  inv avl.
  rewrite bal_in; auto.
  rewrite (H y0 H1); intuition_in.
- (* Eq *)  
+ (* EQ *)  
  inv avl.
  intuition.
  eapply In_1; eauto.
- (* Gt *)
+ (* GT *)
  inv avl.
  rewrite bal_in; auto.
  rewrite (H y0 H2); intuition_in.
@@ -864,9 +864,9 @@ Fixpoint remove (x:elt)(s:tree) { struct s } : t := match s with
   | Leaf => Leaf
   | Node l y r h =>
       match X.compare x y with
-         | Lt _ => bal (remove x l) y r
-         | Eq _ => merge l r
-         | Gt _ => bal l  y (remove x r)
+         | LT _ => bal (remove x l) y r
+         | EQ _ => merge l r
+         | GT _ => bal l  y (remove x r)
       end
    end.
 
@@ -875,18 +875,18 @@ Lemma remove_avl_1 : forall s x, avl s ->
 Proof.
  intros s x; functional induction remove x s; simpl; intros.
  intuition.
- (* Lt *)
+ (* LT *)
  inv avl.
  destruct (H H1).
  split. 
  apply bal_avl; auto.
  omega_max.
  omega_bal.
- (* Eq *)
+ (* EQ *)
  inv avl. 
  generalize (merge_avl_1 l r H0 H1 H2).
  intuition omega_max.
- (* Gt *)
+ (* GT *)
  inv avl.
  destruct (H H2).
  split. 
@@ -906,15 +906,15 @@ Lemma remove_in : forall s x y, bst s -> avl s ->
 Proof.
  intros s x; functional induction remove x s; simpl; intros.
  intuition_in.
- (* Lt *)
+ (* LT *)
  inv avl; inv bst; clear H_eq_0.
  rewrite bal_in; auto.
  generalize (H y0 H1); intuition; [ order | order | intuition_in ].
- (* Eq *)
+ (* EQ *)
  inv avl; inv bst; clear H_eq_0.
  rewrite merge_in; intuition; [ order | order | intuition_in ].
  elim H9; eauto.
- (* Gt *)
+ (* GT *)
  inv avl; inv bst; clear H_eq_0.
  rewrite bal_in; auto.
  generalize (H y0 H6); intuition; [ order | order | intuition_in ].
@@ -924,16 +924,16 @@ Lemma remove_bst : forall s x, bst s -> avl s -> bst (remove x s).
 Proof. 
  intros s x; functional induction remove x s; simpl; intros.
  auto.
- (* Lt *)
+ (* LT *)
  inv avl; inv bst.
  apply bal_bst; auto.
  intro; intro.
  rewrite (remove_in l x y0) in H0; auto.
  destruct H0; eauto.
- (* Eq *)
+ (* EQ *)
  inv avl; inv bst.
  apply merge_bst; eauto.
- (* Gt *) 
+ (* GT *) 
  inv avl; inv bst.
  apply bal_bst; auto.
  intro; intro.
@@ -1104,7 +1104,7 @@ Proof.
  rewrite (join_in s1 m s2' y H0).
  generalize (remove_min_avl l2 x2 r2 h2 H2); rewrite H_eq_1; simpl; auto.
  generalize (remove_min_in l2 x2 r2 h2 y H2); rewrite H_eq_1; simpl.
- intro Eq; rewrite Eq; intuition.
+ intro EQ; rewrite EQ; intuition.
 Qed.
 
 (** * Splitting 
@@ -1119,11 +1119,11 @@ Fixpoint split (x:elt)(s:t) {struct s} : t * (bool * t) := match s with
   | Leaf => (Leaf, (false, Leaf))
   | Node l y r h => 
      match X.compare x y with 
-      | Lt _ => match split x l with 
+      | LT _ => match split x l with 
                  | (ll,(pres,rl)) => (ll, (pres, join rl y r))
                 end
-      | Eq _ => (l, (true, r))
-      | Gt _ => match split x r with 
+      | EQ _ => (l, (true, r))
+      | GT _ => match split x r with 
                  | (rl,(pres,rr)) => (join l y rl, (pres, rr))
                 end
      end
@@ -1146,17 +1146,17 @@ Lemma split_in_1 : forall s x y, bst s -> avl s ->
 Proof. 
  intros s x; functional induction split x s.
  intuition; try inversion_clear H1.
- (* Lt *)
+ (* LT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H8.
  rewrite (H y0 H1 H5); clear H H_eq_0.
  intuition.
  inversion_clear H0; auto; order.
- (* Eq *)
+ (* EQ *)
  simpl in *; inversion_clear 1; inversion_clear 1; clear H6 H7 H_eq_0.
  intuition.
  order.
  intuition_in; order.
- (* Gt *)
+ (* GT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H8.
  rewrite join_in; auto.
  generalize (split_avl r x H6); rewrite H_eq_1; simpl; intuition.
@@ -1169,16 +1169,16 @@ Lemma split_in_2 : forall s x y, bst s -> avl s ->
 Proof. 
  intros s x; functional induction split x s.
  intuition; try inversion_clear H1.
- (* Lt *)
+ (* LT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H8.
   rewrite join_in; auto.
  generalize (split_avl l x H5); rewrite H_eq_1; simpl; intuition.
  rewrite (H y0 H1 H5); clear H H_eq_0.
  intuition; [ order | order | intuition_in ].
- (* Eq *)
+ (* EQ *)
  simpl in *; inversion_clear 1; inversion_clear 1; clear H6 H7 H_eq_0.
  intuition; [ order | intuition_in; order ]. 
- (* Gt *)
+ (* GT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H8.
  rewrite (H y0 H2 H6); clear H H_eq_0.
  intuition; intuition_in; order. 
@@ -1189,13 +1189,13 @@ Lemma split_in_3 : forall s x, bst s -> avl s ->
 Proof. 
  intros s x; functional induction split x s.
  intuition; try inversion_clear H1.
- (* Lt *)
+ (* LT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H8.
  rewrite H; auto.
  intuition_in; absurd (X.lt x y); eauto.
- (* Eq *)
+ (* EQ *)
  simpl in *; inversion_clear 1; inversion_clear 1; intuition.
- (* Gt *)
+ (* GT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H8.
  rewrite H; auto.
  intuition_in; absurd (X.lt y x); eauto.
@@ -1206,16 +1206,16 @@ Lemma split_bst : forall s x, bst s -> avl s ->
 Proof. 
  intros s x; functional induction split x s.
  intuition.
- (* Lt *)
+ (* LT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1.
  intuition.
  apply join_bst; auto.
  generalize (split_avl l x H5); rewrite H_eq_1; simpl; intuition.
  intro; intro.
  generalize (split_in_2 l x y0 H1 H5); rewrite H_eq_1; simpl; intuition.
- (* Eq *)
+ (* EQ *)
  simpl in *; inversion_clear 1; inversion_clear 1; intuition.
- (* Gt *)
+ (* GT *)
  destruct p; simpl in *; inversion_clear 1; inversion_clear 1.
  intuition.
  apply join_bst; auto.

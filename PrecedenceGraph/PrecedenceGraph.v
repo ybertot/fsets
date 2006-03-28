@@ -11,7 +11,7 @@
 
 (** Reference: J. Beauqier, B. Berard, Systemes d'exploitations, Mac Graw Hill *)
 
-Require Import FSet.
+Require Import FSets.
 
 Require Import Sumbool.
 Require Import Compare_dec.
@@ -48,9 +48,9 @@ Module Nat <: OrderedType.
   Definition compare : forall (x y:t),(Compare lt eq x y).
     unfold lt, eq; intros x y; elim (lt_eq_lt_dec x y); auto.
     destruct 1.
-    apply Lt; auto.
-    apply Eq; auto.
-    intro; apply Gt; auto.
+    apply LT; auto.
+    apply EQ; auto.
+    intro; apply GT; auto.
   Defined.
 
   Hint Immediate eq_sym.
