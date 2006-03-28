@@ -36,8 +36,6 @@ Module Type Int.
  Parameter z2i : Z -> int. 
  Arguments Scope i2z [ Int_scope ].
  Arguments Scope z2i [ Z_scope ].
- Notation "[[ n ]]" := (z2i n).  
- Notation "{{ n }}" := (i2z n).
 
  Parameter _0 : int. 
  Parameter _1 : int. 
@@ -48,7 +46,6 @@ Module Type Int.
  Parameter minus : int -> int -> int. 
  Parameter mult : int -> int -> int.
  Parameter max : int -> int -> int. 
-
 
  Notation "0" := _0 : Int_scope.
  Notation "1" := _1 : Int_scope. 
@@ -63,12 +60,12 @@ Module Type Int.
    since they don't appear after extraction. Moreover, using tactics 
    like omega is easier this way. *)
 
- Notation "x == y" := ({{x}} = {{y}})
+ Notation "x == y" := (i2z x = i2z y)
    (at level 70, y at next level, no associativity) : Int_scope.
- Notation "x <= y" := (Zle {{x}} {{y}}) : Int_scope.
- Notation "x < y" := (Zlt {{x}} {{y}}) : Int_scope.
- Notation "x >= y" := (Zge {{x}} {{y}}) : Int_scope.
- Notation "x > y" := (Zgt {{x}} {{y}}): Int_scope.
+ Notation "x <= y" := (Zle (i2z x) (i2z y)): Int_scope.
+ Notation "x < y" := (Zlt (i2z x) (i2z y)) : Int_scope.
+ Notation "x >= y" := (Zge (i2z x) (i2z y)) : Int_scope.
+ Notation "x > y" := (Zgt (i2z x) (i2z y)): Int_scope.
  Notation "x <= y <= z" := (x <= y /\ y <= z) : Int_scope.
  Notation "x <= y < z" := (x <= y /\ y < z) : Int_scope.
  Notation "x < y < z" := (x < y /\ y < z) : Int_scope.
@@ -84,8 +81,8 @@ Module Type Int.
 
  (* First, we have a bijection between [int] and [Z]. *) 
 
- Axiom z2i2z : forall z, {{ [[z]] }} = z.
- Axiom i2z2i : forall i, [[ {{ i }} ]] = i.
+ Axiom z2i2z : forall z, i2z (z2i z) = z.
+ Axiom i2z2i : forall i,  z2i (i2z i) = i.
  Arguments Scope i2z2i [ Int_scope ].
  Arguments Scope z2i2z [ Z_scope ].
 
@@ -93,36 +90,32 @@ Module Type Int.
     Z counterparts. *)
 
  Open Scope Z_scope.
- Axiom i2z_0 : {{ _0 }} = 0.
- Axiom i2z_1 : {{ _1 }} = 1.
- Axiom i2z_2 : {{ _2 }} = 2.
- Axiom i2z_3 : {{ _3 }} = 3.
- Axiom i2z_plus : forall n p, {{ n + p }} = {{n}}+{{p}}.
- Axiom i2z_opp : forall n, {{-n}} = -{{n}}.
- Axiom i2z_minus : forall n p, {{ n - p }} = {{n}}-{{p}}.
- Axiom i2z_mult : forall n p, {{ n * p }} = {{n}}*{{p}}.
- Axiom i2z_max : forall n p, {{ max n p }} = Zmax {{n}} {{p}}.
+ Axiom i2z_0 : i2z _0 = 0.
+ Axiom i2z_1 : i2z _1 = 1.
+ Axiom i2z_2 : i2z _2 = 2.
+ Axiom i2z_3 : i2z _3 = 3.
+ Axiom i2z_plus : forall n p, i2z (n + p) = i2z n + i2z p.
+ Axiom i2z_opp : forall n, i2z (-n) = -i2z n.
+ Axiom i2z_minus : forall n p, i2z (n - p) = i2z n - i2z p.
+ Axiom i2z_mult : forall n p, i2z (n * p) = i2z n * i2z p.
+ Axiom i2z_max : forall n p, i2z (max n p) = Zmax (i2z n) (i2z p).
+
+End Int. 
+
+Module MoreInt (I:Int).
+ Import I.
+
+ Open Scope Int_scope.
 
  (* Our ad-hoc equality [==] and the generic [=] are in fact equivalent. 
     We define [==] nonetheless since the translation to [Z] for using 
-    automatic tactic is easier. 
+    automatic tactic is easier. This equivalence property is a consequence 
+    of [i2z2i]. *)
 
-    This equivalence property is a consequence of [i2z2i]. We state it 
-    explicitely since it is needed for the following tactic. 
-    By the way: too bad there isn't any proof editing mode in interfaces... 
- *)
-
-(*
- Lemma i2z_eq (n p :int) : n == p -> n = p.
- Proof. 
- intro H ; rewrite <- (i2z2i n); rewrite H; apply i2z2i. 
- Qed.
-*)
- 
- Definition i2z_eq (n p : int) :  n == p -> n = p := 
-   fun H => eq_ind [[{{n}}]] (fun q => q = p)
-                   (eq_ind_r (fun z => [[z]] = p) (i2z2i p) H) n (i2z2i n).
- Opaque i2z_eq.
+  Lemma i2z_eq : forall n p : int, n == p -> n = p.
+  Proof. 
+  intros n p H ; rewrite <- (i2z2i n); rewrite H; apply i2z2i. 
+  Qed.
 
  (** A magic (but costly) tactic that goes from [int] back to the [Z] 
      friendly world ... *)
@@ -139,17 +132,19 @@ Module Type Int.
   | H : _ |- _ => progress autorewrite with i2z in H; i2z
   | _ => try autorewrite with i2z
  end.
-(*
+
+ (*
  Ltac iauto := i2z; auto with zarith.
  Ltac iomega := i2z; omega.
-*)
-End Int. 
+ *)
 
-Module MoreInt (I:Int).
- Import I.
-  
-  (* a reflexive version of the [i2z] tactic *)
+ (** A reflexive version of the [i2z] tactic *)
 
+ (* this [i2z_refl] is actually weaker than [i2z]. For instance, if a 
+      [i2z] is buried deep inside a subterm, [i2z_refl] may miss it. 
+      See also the limitation about [Set] or [Type] part below. 
+      Anyhow, [i2z_refl] is enough for applying [romega]. *)
+ 
   Ltac i2z_gen := match goal with 
     | |- (eq (A:=int) ?a ?b) => apply (i2z_eq a b); i2z_gen
     | H : (eq (A:=int) ?a ?b) |- _ => 
@@ -159,7 +154,11 @@ Module MoreInt (I:Int).
     | H : (Zle ?a ?b) |- _ => generalize H; clear H; i2z_gen
     | H : (Zgt ?a ?b) |- _ => generalize H; clear H; i2z_gen
     | H : (Zge ?a ?b) |- _ => generalize H; clear H; i2z_gen
-    | H : _ -> ?X |- _ => match type of X with 
+    | H : _ -> ?X |- _ => 
+      (* A [Set] or [Type] part cannot be dealt with easily
+         using the [ExprP] datatype. So we forget it, leaving 
+         a goal that can be weaker than the original. *)
+      match type of X with 
        | Type => clear H; i2z_gen
        | Prop => generalize H; clear H; i2z_gen
       end
@@ -205,217 +204,199 @@ Module MoreInt (I:Int).
    | EPneg : ExprP -> ExprP
    | EPraw : Prop -> ExprP.
 
-Ltac interp_int trm := 
- match constr:trm with 
-    | (plus ?X1 ?X2) => 
-        let e1 := interp_int X1 with e2 := interp_int X2 
-        in constr:(EIplus e1 e2)
-    | (minus ?X1 ?X2) => 
-       let e1 := interp_int X1 with e2 := interp_int X2 
-        in constr:(EIminus e1 e2)
-    | (mult ?X1 ?X2) => 
-       let e1 := interp_int X1 with e2 := interp_int X2 
-        in constr:(EImult e1 e2)
-    | (max ?X1 ?X2) => 
-       let e1 := interp_int X1 with e2 := interp_int X2 
-        in constr:(EImax e1 e2)
-    | (opp ?X1) => 
-        let e1 := interp_int X1 in constr:(EIopp e1)
-    | (_0) => constr:EI0
-    | (_1) => constr:EI1
-    | (_2) => constr:EI2
-    | (_3) => constr:EI3
-    | (z2i ?X1) => 
-        let e1 := interp_z X1 in constr:(EIofZ e1)
-    | ?X1 => constr:(EIraw X1)
+ (* [int] to [ExprI] *)
+
+ Ltac i2ei trm := 
+  match constr:trm with 
+    | 0 => constr:EI0
+    | 1 => constr:EI1
+    | 2 => constr:EI2
+    | 3 => constr:EI3
+    | ?x + ?y => let ex := i2ei x with ey := i2ei y in constr:(EIplus ex ey)
+    | ?x - ?y => let ex := i2ei x with ey := i2ei y in constr:(EIminus ex ey)
+    | ?x * ?y => let ex := i2ei x with ey := i2ei y in constr:(EImult ex ey)
+    | max ?x ?y => let ex := i2ei x with ey := i2ei y in constr:(EImax ex ey)
+    | - ?x => let ex := i2ei x in constr:(EIopp ex)
+    | z2i ?x => let ex := z2ez x in constr:(EIofZ ex)
+    | ?x => constr:(EIraw x)
    end
-with interp_z trm := 
+
+ (* [Z] to [ExprZ] *)
+
+ with z2ez trm := 
    match constr:trm with 
-    | (Zplus ?X1 ?X2) => 
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EZplus e1 e2)
-    | (Zminus ?X1 ?X2) => 
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EZminus e1 e2)
-    | (Zmult ?X1 ?X2) => 
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EZmult e1 e2)
-    | (Zmax ?X1 ?X2) => 
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EZmax e1 e2)
-    | (Zopp ?X1) => 
-        let e1 := interp_z X1 in constr:(EZopp e1)
-    | (i2z ?X1) => 
-        let e1 := interp_int X1 in constr:(EZofI e1)
-    | ?X1 => constr:(EZraw X1)
+    | (?x+?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EZplus ex ey)
+    | (?x-?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EZminus ex ey)
+    | (?x*?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EZmult ex ey)
+    | (Zmax ?x ?y) => let ex := z2ez x with ey := z2ez y in constr:(EZmax ex ey)
+    | (-?x)%Z =>  let ex := z2ez x in constr:(EZopp ex)
+    | i2z ?x => let ex := i2ei x in constr:(EZofI ex)
+    | ?x => constr:(EZraw x)
    end.
 
-Ltac interp_prop trm :=
+ (* [Prop] to [ExprP] *)
+
+ Ltac p2ep trm :=
   match constr:trm with
-    | (?X1 <-> ?X2) => 
-        let e1 := interp_prop X1 with e2 := interp_prop X2 
-        in constr:(EPequiv e1 e2)
-    | (?X1 -> ?X2) => 
-        let e1 := interp_prop X1 with e2 := interp_prop X2 
-        in constr:(EPimpl e1 e2)
-    | (?X1 /\ ?X2) => 
-        let e1 := interp_prop X1 with e2 := interp_prop X2 
-        in constr:(EPand e1 e2)
-    | (?X1 \/ ?X2) => 
-        let e1 := interp_prop X1 with e2 := interp_prop X2 
-        in constr:(EPor e1 e2)
-    | (~ ?X1) =>
-        let e1 := interp_prop X1 in constr:(EPneg e1)
-    | (eq (A:=Z) ?X1 ?X2) => 
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EPeq e1 e2)
-    | (Zlt ?X1 ?X2) =>
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EPlt e1 e2)
-    | (Zle ?X1 ?X2) =>
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EPle e1 e2)   
-    | (Zgt ?X1 ?X2) =>
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EPgt e1 e2)   
-    | (Zge ?X1 ?X2) =>
-        let e1 := interp_z X1 with e2 := interp_z X2 
-        in constr:(EPge e1 e2)
-    | ?X1 =>  constr:(EPraw X1)
+    | (?x <-> ?y) => let ex := p2ep x with ey := p2ep y in constr:(EPequiv ex ey)
+    | (?x -> ?y) => let ex := p2ep x with ey := p2ep y in constr:(EPimpl ex ey)
+    | (?x /\ ?y) => let ex := p2ep x with ey := p2ep y in constr:(EPand ex ey)
+    | (?x \/ ?y) => let ex := p2ep x with ey := p2ep y in constr:(EPor ex ey)
+    | (~ ?x) => let ex := p2ep x in constr:(EPneg ex)
+    | (eq (A:=Z) ?x ?y) => let ex := z2ez x with ey := z2ez y in constr:(EPeq ex ey)
+    | (?x<?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EPlt ex ey)
+    | (?x<=?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EPle ex ey)   
+    | (?x>?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EPgt ex ey)   
+    | (?x>=?y)%Z => let ex := z2ez x with ey := z2ez y in constr:(EPge ex ey)
+    | ?x =>  constr:(EPraw x)
    end.   
 
-Fixpoint interp_ExprI (e:ExprI) : int :=
+ (* [ExprI] to [int] *)
+
+ Fixpoint ei2i (e:ExprI) : int :=
   match e with
-  | EI0 => _0
-  | EI1 => _1
-  | EI2 => _2
-  | EI3 => _3 
-  | EIplus e1 e2 => plus (interp_ExprI e1) (interp_ExprI e2)
-  | EIminus e1 e2 => minus (interp_ExprI e1) (interp_ExprI e2)
-  | EImult e1 e2 => mult (interp_ExprI e1) (interp_ExprI e2)
-  | EImax e1 e2 => max (interp_ExprI e1) (interp_ExprI e2)
-  | EIopp e1 => opp (interp_ExprI e1)
-  | EIofZ e1 => z2i (interp_ExprZ e1)
+  | EI0 => 0
+  | EI1 => 1
+  | EI2 => 2
+  | EI3 => 3 
+  | EIplus e1 e2 => (ei2i e1)+(ei2i e2)
+  | EIminus e1 e2 => (ei2i e1)-(ei2i e2)
+  | EImult e1 e2 => (ei2i e1)*(ei2i e2)
+  | EImax e1 e2 => max (ei2i e1) (ei2i e2)
+  | EIopp e => -(ei2i e)
+  | EIofZ e => z2i (ez2z e)
   | EIraw i => i 
   end 
-with interp_ExprZ (e:ExprZ) : Z := 
- match e with 
+ 
+ (* [ExprZ] to [Z] *)
+
+ with ez2z (e:ExprZ) : Z := 
+  match e with 
+  | EZplus e1 e2 => ((ez2z e1)+(ez2z e2))%Z
+  | EZminus e1 e2 => ((ez2z e1)-(ez2z e2))%Z
+  | EZmult e1 e2 => ((ez2z e1)*(ez2z e2))%Z
+  | EZmax e1 e2 => Zmax (ez2z e1) (ez2z e2)
+  | EZopp e => (-(ez2z e))%Z
+  | EZofI e => i2z (ei2i e)
   | EZraw z => z
-  | EZplus e1 e2 => Zplus (interp_ExprZ e1) (interp_ExprZ e2)
-  | EZminus e1 e2 => Zminus (interp_ExprZ e1) (interp_ExprZ e2)
-  | EZmult e1 e2 => Zmult (interp_ExprZ e1) (interp_ExprZ e2)
-  | EZmax e1 e2 => Zmax (interp_ExprZ e1) (interp_ExprZ e2)
-  | EZopp e1 => Zopp (interp_ExprZ e1)
-  | EZofI e1 => i2z (interp_ExprI e1)
   end.
 
-Fixpoint interp_ExprP (e:ExprP) : Prop := 
- match e with 
-   | EPeq e1 e2 => (interp_ExprZ e1) = (interp_ExprZ e2)
-   | EPlt e1 e2 => Zlt (interp_ExprZ e1) (interp_ExprZ e2)
-   | EPle e1 e2 => Zle (interp_ExprZ e1) (interp_ExprZ e2)
-   | EPgt e1 e2 => Zgt (interp_ExprZ e1) (interp_ExprZ e2)
-   | EPge e1 e2 => Zge (interp_ExprZ e1) (interp_ExprZ e2)
-   | EPimpl e1 e2 => (interp_ExprP e1) -> (interp_ExprP e2)
-   | EPequiv e1 e2 => (interp_ExprP e1) <-> (interp_ExprP e2)
-   | EPand e1 e2 => (interp_ExprP e1) /\ (interp_ExprP e2)
-   | EPor e1 e2 => (interp_ExprP e1) \/ (interp_ExprP e2)
-   | EPneg e1 => ~ (interp_ExprP e1)
+ (* [ExprP] to [Prop] *)
+
+ Fixpoint ep2p (e:ExprP) : Prop := 
+  match e with 
+   | EPeq e1 e2 => (ez2z e1) = (ez2z e2)
+   | EPlt e1 e2 => ((ez2z e1)<(ez2z e2))%Z
+   | EPle e1 e2 => ((ez2z e1)<=(ez2z e2))%Z
+   | EPgt e1 e2 => ((ez2z e1)>(ez2z e2))%Z
+   | EPge e1 e2 => ((ez2z e1)>=(ez2z e2))%Z
+   | EPimpl e1 e2 => (ep2p e1) -> (ep2p e2)
+   | EPequiv e1 e2 => (ep2p e1) <-> (ep2p e2)
+   | EPand e1 e2 => (ep2p e1) /\ (ep2p e2)
+   | EPor e1 e2 => (ep2p e1) \/ (ep2p e2)
+   | EPneg e => ~ (ep2p e)
    | EPraw p => p
  end.
 
-Fixpoint norm_ExprZ (e:ExprZ) : ExprZ := 
- match e with 
+ (* [ExprZ] to a simplified [ExprZ] *)
+
+ Fixpoint norm_ez (e:ExprZ) : ExprZ := 
+  match e with 
+  | EZplus e1 e2 => EZplus (norm_ez e1) (norm_ez e2)
+  | EZminus e1 e2 => EZminus (norm_ez e1) (norm_ez e2)
+  | EZmult e1 e2 => EZmult (norm_ez e1) (norm_ez e2)
+  | EZmax e1 e2 => EZmax (norm_ez e1) (norm_ez e2)
+  | EZopp e => EZopp (norm_ez e)
+  | EZofI e =>  norm_ei e
   | EZraw z => EZraw z
-  | EZplus e1 e2 => EZplus (norm_ExprZ e1) (norm_ExprZ e2)
-  | EZminus e1 e2 => EZminus (norm_ExprZ e1) (norm_ExprZ e2)
-  | EZmult e1 e2 => EZmult (norm_ExprZ e1) (norm_ExprZ e2)
-  | EZmax e1 e2 => EZmax (norm_ExprZ e1) (norm_ExprZ e2)
-  | EZopp e1 => EZopp (norm_ExprZ e1)
-  | EZofI e1 =>  norm_ExprI_i2z e1
  end
-with norm_ExprI_i2z (e:ExprI) : ExprZ := 
+ 
+ (* [ExprI] (supposed under a [i2z]) to a simplified [ExprZ] *)
+   
+ with norm_ei (e:ExprI) : ExprZ := 
  match e with 
   | EI0 => EZraw (0%Z)
   | EI1 => EZraw (1%Z)
   | EI2 => EZraw (2%Z)
   | EI3 => EZraw (3%Z) 
-  | EIplus e1 e2 => EZplus (norm_ExprI_i2z e1) (norm_ExprI_i2z e2)
-  | EIminus e1 e2 => EZminus (norm_ExprI_i2z e1) (norm_ExprI_i2z e2)
-  | EImult e1 e2 => EZmult (norm_ExprI_i2z e1) (norm_ExprI_i2z e2)
-  | EImax e1 e2 => EZmax (norm_ExprI_i2z e1) (norm_ExprI_i2z e2)
-  | EIopp e1 => EZopp (norm_ExprI_i2z e1)
-  | EIofZ e1 => norm_ExprZ e1
+  | EIplus e1 e2 => EZplus (norm_ei e1) (norm_ei e2)
+  | EIminus e1 e2 => EZminus (norm_ei e1) (norm_ei e2)
+  | EImult e1 e2 => EZmult (norm_ei e1) (norm_ei e2)
+  | EImax e1 e2 => EZmax (norm_ei e1) (norm_ei e2)
+  | EIopp e => EZopp (norm_ei e)
+  | EIofZ e => norm_ez e
   | EIraw i => EZofI (EIraw i) 
  end.
 
-Fixpoint norm_ExprP (e:ExprP) : ExprP := 
+ (* [ExprP] to a simplified [ExprP] *)
+
+ Fixpoint norm_ep (e:ExprP) : ExprP := 
   match e with 
-   | EPeq e1 e2 => EPeq (norm_ExprZ e1) (norm_ExprZ e2)
-   | EPlt e1 e2 => EPlt (norm_ExprZ e1) (norm_ExprZ e2)
-   | EPle e1 e2 => EPle (norm_ExprZ e1) (norm_ExprZ e2)
-   | EPgt e1 e2 => EPgt (norm_ExprZ e1) (norm_ExprZ e2)
-   | EPge e1 e2 => EPge (norm_ExprZ e1) (norm_ExprZ e2)
-   | EPimpl e1 e2 => EPimpl (norm_ExprP e1) (norm_ExprP e2)
-   | EPequiv e1 e2 => EPequiv (norm_ExprP e1) (norm_ExprP e2)
-   | EPand e1 e2 => EPand (norm_ExprP e1) (norm_ExprP e2)
-   | EPor e1 e2 => EPor (norm_ExprP e1) (norm_ExprP e2)
-   | EPneg e1 => EPneg (norm_ExprP e1)
+   | EPeq e1 e2 => EPeq (norm_ez e1) (norm_ez e2)
+   | EPlt e1 e2 => EPlt (norm_ez e1) (norm_ez e2)
+   | EPle e1 e2 => EPle (norm_ez e1) (norm_ez e2)
+   | EPgt e1 e2 => EPgt (norm_ez e1) (norm_ez e2)
+   | EPge e1 e2 => EPge (norm_ez e1) (norm_ez e2)
+   | EPimpl e1 e2 => EPimpl (norm_ep e1) (norm_ep e2)
+   | EPequiv e1 e2 => EPequiv (norm_ep e1) (norm_ep e2)
+   | EPand e1 e2 => EPand (norm_ep e1) (norm_ep e2)
+   | EPor e1 e2 => EPor (norm_ep e1) (norm_ep e2)
+   | EPneg e => EPneg (norm_ep e)
    | EPraw p => EPraw p
  end.
 
-Scheme ExprZ_mrec := Induction for ExprZ Sort Prop
-with ExprI_mrec := Induction for ExprI Sort Prop.
+ Scheme ExprZ_mrec := Induction for ExprZ Sort Prop
+ with ExprI_mrec := Induction for ExprI Sort Prop.
 
-Lemma norm_ExprIZ_correct : 
-  forall e:ExprZ, interp_ExprZ (norm_ExprZ e) = interp_ExprZ e.
-Proof.
-  set (P:= fun e => interp_ExprZ (norm_ExprZ e) = interp_ExprZ e).
-  set (Q:= fun e => interp_ExprZ (norm_ExprI_i2z e) = i2z (interp_ExprI e)).
+ Lemma norm_ez_correct : 
+  forall e:ExprZ, ez2z (norm_ez e) = ez2z e.
+ Proof.
+  set (P:= fun e => ez2z (norm_ez e) = ez2z e).
+  set (Q:= fun e => ez2z (norm_ei e) = i2z (ei2i e)).
   apply (ExprZ_mrec P Q); unfold P, Q; simpl; intros; i2z; auto; try congruence.
-Qed. 
+ Qed. 
 
-Lemma norm_ExprP_correct : 
-  forall e:ExprP, interp_ExprP (norm_ExprP e) <-> interp_ExprP e.
-Proof.
-induction e; simpl; repeat (rewrite norm_ExprIZ_correct); intuition.
-Qed.
+ Lemma norm_ep_correct : 
+  forall e:ExprP, ep2p (norm_ep e) <-> ep2p e.
+ Proof.
+  induction e; simpl; repeat (rewrite norm_ez_correct); intuition.
+ Qed.
 
-Lemma norm_ExprP_correct2 : 
-  forall e:ExprP, interp_ExprP (norm_ExprP e) -> interp_ExprP e.
-Proof.
-intros; destruct (norm_ExprP_correct e); auto.
-Qed.
+ Lemma norm_ep_correct2 : 
+  forall e:ExprP, ep2p (norm_ep e) -> ep2p e.
+ Proof.
+  intros; destruct (norm_ep_correct e); auto.
+ Qed.
 
-Ltac i2z_refl := 
+ Ltac i2z_refl := 
   i2z_gen;
   match goal with |- ?t => 
-     let e := interp_prop t 
+     let e := p2ep t 
      in 
-     (change (interp_ExprP e); 
-      apply norm_ExprP_correct2; 
+     (change (ep2p e); 
+      apply norm_ep_correct2; 
       simpl)
    end.
 
-Ltac iauto := i2z_refl; auto.
-Ltac iomega := i2z_refl; intros; romega.
+ Ltac iauto := i2z_refl; auto.
+ Ltac iomega := i2z_refl; intros; romega.
 
-  Open Scope Z_scope.
+ Open Scope Z_scope.
 
-  Lemma max_spec : forall (x y:Z), 
+ Lemma max_spec : forall (x y:Z), 
   x >= y /\ Zmax x y = x  \/
-  x <= y /\ Zmax x y = y.
-  Proof.
-  intros; unfold Zmax, Zle, Zge.
+  x < y /\ Zmax x y = y.
+ Proof.
+  intros; unfold Zmax, Zlt, Zge.
   destruct (Zcompare x y); [ left | right | left ]; split; auto; discriminate.
-  Qed.
+ Qed.
 
-  Ltac omega_max_genspec x y := 
+ Ltac omega_max_genspec x y := 
     generalize (max_spec x y); 
     let z := fresh "z" in let Hz := fresh "Hz" in 
     (set (z:=Zmax x y); clearbody z).
 
-  Ltac omega_max_loop := 
+ Ltac omega_max_loop := 
     match goal with 
       (* hack: we don't want [i2z (height ...)] to be reduced by romega later... *)
       | |- context [ i2z (?f ?x) ] => 
@@ -424,16 +405,16 @@ Ltac iomega := i2z_refl; intros; romega.
       | _ => intros
     end.
 
-  Ltac omega_max := i2z_refl; omega_max_loop; try romega.
+ Ltac omega_max := i2z_refl; omega_max_loop; try romega.
 
-  Ltac false_omega := elimtype False; i2z_refl; intros; romega.
-  Ltac false_omega_max := elimtype False; omega_max.
+ Ltac false_omega := i2z_refl; intros; romega.
+ Ltac false_omega_max := elimtype False; omega_max.
 
  Open Scope Int_scope.
 End MoreInt.
 
 
-(** Even if it's useless, it's always nice to know that our [Int] 
+(** Even if we don't use it, it's always nice to know that our [Int] 
      interface is realizable :-) *)
 
 Module Z_as_Int <: Int.
@@ -453,22 +434,16 @@ Module Z_as_Int <: Int.
  Definition eq_dec := Z_eq_dec.
  Definition i2z : int -> Z := fun n => n.
  Definition z2i : Z -> int := fun n => n.
- Notation "[[ n ]]" := (z2i n).  
- Notation "{{ n }}" := (i2z n).
- Lemma z2i2z : forall z, {{ [[z]] }} = z.  Proof. auto. Qed.
- Lemma i2z2i : forall i, [[ {{ i }} ]] = i.  Proof. auto. Qed.
- Lemma i2z_0 : {{ _0 }} = 0.  Proof. auto. Qed.
- Lemma i2z_1 : {{ _1 }} = 1.  Proof. auto. Qed.
- Lemma i2z_2 : {{ _2 }} = 2.  Proof. auto. Qed.
- Lemma i2z_3 : {{ _3 }} = 3.  Proof. auto. Qed.
- Lemma i2z_plus : forall n p, {{ n + p }} = {{n}}+{{p}}.  Proof. auto. Qed.
- Lemma i2z_opp : forall n, {{ - n }} = - {{n}}.  Proof. auto. Qed.
- Lemma i2z_minus : forall n p, {{ n - p }} = {{n}}-{{p}}.  Proof. auto. Qed.
- Lemma i2z_mult : forall n p, {{ n * p }} = {{n}}*{{p}}.  Proof. auto. Qed.
- Lemma i2z_max : forall n p, {{max n p}} = Zmax {{n}} {{p}}. Proof. auto. Qed.
- Definition i2z_eq (n p : int) :  {{n}} = {{p}} -> n = p := 
-   fun H => eq_ind [[{{n}}]] (fun q => q = p)
-                   (eq_ind_r (fun z => [[z]] = p) (i2z2i p) H) n (i2z2i n).
-
+ Lemma z2i2z : forall z, i2z (z2i z) = z.  Proof. auto. Qed.
+ Lemma i2z2i : forall i, z2i (i2z i) = i.  Proof. auto. Qed.
+ Lemma i2z_0 : i2z _0 = 0.  Proof. auto. Qed.
+ Lemma i2z_1 : i2z _1 = 1.  Proof. auto. Qed.
+ Lemma i2z_2 : i2z _2 = 2.  Proof. auto. Qed.
+ Lemma i2z_3 : i2z _3 = 3.  Proof. auto. Qed.
+ Lemma i2z_plus : forall n p, i2z (n + p) = i2z n + i2z p.  Proof. auto. Qed.
+ Lemma i2z_opp : forall n, i2z (- n)  = - i2z n.  Proof. auto. Qed.
+ Lemma i2z_minus : forall n p, i2z (n - p)  = i2z n - i2z p.  Proof. auto. Qed.
+ Lemma i2z_mult : forall n p, i2z (n * p)  = i2z n * i2z p.  Proof. auto. Qed.
+ Lemma i2z_max : forall n p, i2z (max n p) = Zmax (i2z n) (i2z p). Proof. auto. Qed.
 End Z_as_Int.
 

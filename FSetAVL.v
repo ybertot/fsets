@@ -32,9 +32,9 @@ Notation max := Zmax.
 
 Lemma max_spec : forall x y, 
   x >= y /\ max x y = x  \/
-  x <= y /\ max x y = y.
+  x < y /\ max x y = y.
 Proof.
- intros; unfold max, Zle, Zge.
+ intros; unfold max, Zlt, Zge.
  destruct (Zcompare x y); [ left | right | left ]; split; auto; discriminate.
 Qed.
 
