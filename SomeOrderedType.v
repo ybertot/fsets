@@ -126,3 +126,65 @@ Module Positive_as_OT <: OrderedType.
   Qed.
 
 End Positive_as_OT.
+
+(** From two ordered types, we can build a new OrderedType 
+   over their cartesian product, using the lexicographic order. *)
+
+Module PairOrderedType(O1 O2:OrderedType) <: OrderedType.
+ Module MO1:=OrderedTypeFacts(O1).
+ Module MO2:=OrderedTypeFacts(O2).
+
+ Definition t := prod O1.t O2.t.
+  
+ Definition eq x y := O1.eq (fst x) (fst y) /\ O2.eq (snd x) (snd y).
+
+ Definition lt x y := 
+    O1.lt (fst x) (fst y) \/ 
+    (O1.eq (fst x) (fst y) /\ O2.lt (snd x) (snd y)).
+
+ Lemma eq_refl : forall x : t, eq x x.
+ Proof. 
+ intros (x1,x2); red; simpl; auto.
+ Qed.
+
+ Lemma eq_sym : forall x y : t, eq x y -> eq y x.
+ Proof. 
+ intros (x1,x2) (y1,y2); unfold eq; simpl; intuition.
+ Qed.
+
+ Lemma eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
+ Proof. 
+ intros (x1,x2) (y1,y2) (z1,z2); unfold eq; simpl; intuition eauto.
+ Qed.
+ 
+ Lemma lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z. 
+ Proof.
+ intros (x1,x2) (y1,y2) (z1,z2); unfold eq, lt; simpl; intuition.
+ left; eauto.
+ left; eapply MO1.lt_eq; eauto.
+ left; eapply MO1.eq_lt; eauto.
+ right; split; eauto.
+ Qed.
+
+ Lemma lt_not_eq : forall x y : t, lt x y -> ~ eq x y.
+ Proof.
+ intros (x1,x2) (y1,y2); unfold eq, lt; simpl; intuition.
+ apply (O1.lt_not_eq H0 H1).
+ apply (O2.lt_not_eq H3 H2).
+ Qed.
+
+ Definition compare : forall x y : t, Compare lt eq x y.
+ intros (x1,x2) (y1,y2).
+ destruct (O1.compare x1 y1).
+ apply LT; unfold lt; auto.
+ destruct (O2.compare x2 y2).
+ apply LT; unfold lt; auto.
+ apply EQ; unfold eq; auto.
+ apply GT; unfold lt; auto.
+ apply GT; unfold lt; auto.
+ Qed.
+
+End PairOrderedType.
+
+
+
