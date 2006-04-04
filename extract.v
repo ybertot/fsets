@@ -16,7 +16,10 @@
 (* extraction *)
 
 Require Import FSetAll.
+Require Import FSetAVL_int.
+Require Import FSetAVL_dep.
 Require Import ZArith.
+Require Import SomeOrderedType.
 
 Extract Inductive bool => "bool" [ "true" "false" ].
 Extract Inductive sumbool => "bool" [ "true" "false" ].
@@ -26,43 +29,14 @@ Extraction Inline Wf_nat.lt_wf_rec.
 Extraction Inline Z_lt_rec.
 Extraction Inline Acc_iter_2 well_founded_induction_type_2.
 
-Module Nat : OrderedType.
-
-  Definition t := nat.
-
-  Definition eq := eq (A:=nat).
-  Definition lt := lt.
-
-  Lemma eq_refl : forall x : t, eq x x. 
-  Proof. unfold eq in |- *; auto. Qed.
-
-  Lemma eq_sym : forall x y : t, eq x y -> eq y x.
-  Proof. unfold eq in |- *; auto. Qed.
-
-  Lemma eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-  Proof. unfold eq in |- *; intros; rewrite H; auto. Qed.
-
-  Lemma lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
-  Proof. unfold lt in |- *; intros; apply lt_trans with y; auto. Qed.
-
-  Lemma lt_not_eq : forall x y : t, lt x y -> ~ eq x y.
-  Proof. unfold lt, eq in |- *; intros; omega. Qed.
-
-  Definition compare : forall x y : t, Compare lt eq x y.
-  Proof.
-    intros; case (lt_eq_lt_dec x y).
-    simple destruct 1; intro.
-    constructor 1; auto.
-    constructor 2; auto.
-    intro; constructor 3; auto.
-  Qed.
-
-End Nat.
-
-Module NatRBT := FSetRBT.Make Nat.
-
+Module NatRBT := FSetRBT.Make Nat_as_OT.
 Extraction "rbt.ml" NatRBT.empty.
 
-Module NatAVL := FSetAVL.Make Nat.
-
+Module NatAVL := FSetAVL.Make Nat_as_OT.
 Extraction "avl.ml" NatAVL.empty.
+
+Module NatAVL_int := FSetAVL_int.Make(Int.Z_as_Int)(Nat_as_OT).
+Extraction "avl_int.ml" NatAVL_int.empty.
+
+Module NatAVL_dep := FSetAVL_dep.Make Nat_as_OT.
+Extraction "avl_dep.ml" NatAVL_dep.empty.

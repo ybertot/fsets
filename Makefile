@@ -72,6 +72,7 @@ COQLIBS=-I .
 ###################################
 
 VFILES=Int.v\
+  SomeOrderedType.v\
   FSetRBT.v\
   FSetAVL.v\
   FSetAVL_dep.v\
@@ -80,6 +81,7 @@ VFILES=Int.v\
   FMapAVL.v\
   FMapAVL_int.v\
   FMapAll.v\
+  FMapPositive.v\
   extract.v\
   compute.v
 VOFILES=$(VFILES:.v=.vo)
@@ -89,6 +91,7 @@ HTMLFILES=$(VFILES:.v=.html)
 GHTMLFILES=$(VFILES:.v=.g.html)
 
 all: Int.vo\
+  SomeOrderedType.vo\
   FSetRBT.vo\
   FSetAVL.vo\
   FSetAVL_dep.vo\
@@ -97,9 +100,11 @@ all: Int.vo\
   FMapAVL.vo\
   FMapAVL_int.vo\
   FMapAll.vo\
+  FMapPositive.vo\
   extract.vo\
   compute.vo\
-  PrecedenceGraph
+  PrecedenceGraph\
+  demo.vo
 
 spec: $(VIFILES)
 
@@ -116,6 +121,15 @@ all-gal.ps: $(VFILES)
 	$(COQDOC) -ps -g -o $@ `$(COQDEP) -sort -suffix .v $(VFILES)`
 
 
+
+###################
+#                 #
+# Custom targets. #
+#                 #
+###################
+
+demo.vo: compute.vo demo.v
+	coqc demo.v > /dev/null 
 
 ###################
 #                 #
@@ -185,6 +199,7 @@ Makefile: Make
 clean:
 	rm -f *.cmo *.cmi *.cmx *.o $(VOFILES) $(VIFILES) $(GFILES) *~
 	rm -f all.ps all-gal.ps $(HTMLFILES) $(GHTMLFILES)
+	- rm -f demo.vo
 	(cd PrecedenceGraph ; $(MAKE) clean)
 
 archclean:

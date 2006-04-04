@@ -1,4 +1,5 @@
 Int.v 
+SomeOrderedType.v
 FSetRBT.v 
 FSetAVL.v 
 FSetAVL_dep.v
@@ -7,7 +8,9 @@ FSetAll.v
 FMapAVL.v
 FMapAVL_int.v
 FMapAll.v
+FMapPositive.v
 extract.v 
 compute.v
 PrecedenceGraph
+-custom "coqc demo.v > /dev/null " "compute.vo demo.v" demo.vo
 

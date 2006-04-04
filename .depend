@@ -1,13 +1,21 @@
+avl_dep.cmo: avl_dep.ml avl_dep.cmi
+avl_dep.cmx: avl_dep.ml avl_dep.cmi
+avl_int.cmo: avl_int.ml avl_int.cmi
+avl_int.cmx: avl_int.ml avl_int.cmi
 avl.cmo: avl.ml avl.cmi
 avl.cmx: avl.ml avl.cmi
 int.cmo: int.ml
 int.cmx: int.ml
 rbt.cmo: rbt.ml rbt.cmi
 rbt.cmx: rbt.ml rbt.cmi
+avl_dep.cmi: avl_dep.mli
+avl_int.cmi: avl_int.mli
 avl.cmi: avl.mli
 rbt.cmi: rbt.mli
 Int.vo: Int.v
 Int.vi: Int.v
+SomeOrderedType.vo: SomeOrderedType.v
+SomeOrderedType.vi: SomeOrderedType.v
 FSetRBT.vo: FSetRBT.v
 FSetRBT.vi: FSetRBT.v
 FSetAVL.vo: FSetAVL.v
@@ -24,11 +32,14 @@ FMapAVL_int.vo: FMapAVL_int.v Int.vo
 FMapAVL_int.vi: FMapAVL_int.v Int.vo
 FMapAll.vo: FMapAll.v FMapAVL.vo
 FMapAll.vi: FMapAll.v FMapAVL.vo
-extract.vo: extract.v FSetAll.vo
-extract.vi: extract.v FSetAll.vo
-compute.vo: compute.v FSetAVL.vo FSetAVL_int.vo
-compute.vi: compute.v FSetAVL.vo FSetAVL_int.vo
+FMapPositive.vo: FMapPositive.v
+FMapPositive.vi: FMapPositive.v
+extract.vo: extract.v FSetAll.vo FSetAVL_int.vo FSetAVL_dep.vo SomeOrderedType.vo
+extract.vi: extract.v FSetAll.vo FSetAVL_int.vo FSetAVL_dep.vo SomeOrderedType.vo
+compute.vo: compute.v FSetAVL.vo FSetAVL_int.vo SomeOrderedType.vo
+compute.vi: compute.v FSetAVL.vo FSetAVL_int.vo SomeOrderedType.vo
 Int.html: Int.v
+SomeOrderedType.html: SomeOrderedType.v
 FSetRBT.html: FSetRBT.v
 FSetAVL.html: FSetAVL.v
 FSetAVL_dep.html: FSetAVL_dep.v
@@ -37,5 +48,6 @@ FSetAll.html: FSetAll.v FSetRBT.html FSetAVL.html
 FMapAVL.html: FMapAVL.v
 FMapAVL_int.html: FMapAVL_int.v Int.html
 FMapAll.html: FMapAll.v FMapAVL.html
-extract.html: extract.v FSetAll.html
-compute.html: compute.v FSetAVL.html FSetAVL_int.html
+FMapPositive.html: FMapPositive.v
+extract.html: extract.v FSetAll.html FSetAVL_int.html FSetAVL_dep.html SomeOrderedType.html
+compute.html: compute.v FSetAVL.html FSetAVL_int.html SomeOrderedType.html
