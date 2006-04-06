@@ -1,5 +1,6 @@
 Int.v 
 SomeOrderedType.v
+OrderedTypeAlt.v
 FSetRBT.v 
 FSetAVL.v 
 FSetAVL_dep.v

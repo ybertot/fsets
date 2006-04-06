@@ -16,6 +16,8 @@ Int.vo: Int.v
 Int.vi: Int.v
 SomeOrderedType.vo: SomeOrderedType.v
 SomeOrderedType.vi: SomeOrderedType.v
+OrderedTypeAlt.vo: OrderedTypeAlt.v
+OrderedTypeAlt.vi: OrderedTypeAlt.v
 FSetRBT.vo: FSetRBT.v
 FSetRBT.vi: FSetRBT.v
 FSetAVL.vo: FSetAVL.v
@@ -40,6 +42,7 @@ compute.vo: compute.v FSetAVL.vo FSetAVL_int.vo SomeOrderedType.vo
 compute.vi: compute.v FSetAVL.vo FSetAVL_int.vo SomeOrderedType.vo
 Int.html: Int.v
 SomeOrderedType.html: SomeOrderedType.v
+OrderedTypeAlt.html: OrderedTypeAlt.v
 FSetRBT.html: FSetRBT.v
 FSetAVL.html: FSetAVL.v
 FSetAVL_dep.html: FSetAVL_dep.v

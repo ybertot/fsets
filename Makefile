@@ -73,6 +73,7 @@ COQLIBS=-I .
 
 VFILES=Int.v\
   SomeOrderedType.v\
+  OrderedTypeAlt.v\
   FSetRBT.v\
   FSetAVL.v\
   FSetAVL_dep.v\
@@ -92,6 +93,7 @@ GHTMLFILES=$(VFILES:.v=.g.html)
 
 all: Int.vo\
   SomeOrderedType.vo\
+  OrderedTypeAlt.vo\
   FSetRBT.vo\
   FSetAVL.vo\
   FSetAVL_dep.vo\
