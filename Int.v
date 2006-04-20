@@ -33,9 +33,7 @@ Module Type Int.
  Parameter int : Set. 
 
  Parameter i2z : int -> Z.
- Parameter z2i : Z -> int. 
  Arguments Scope i2z [ Int_scope ].
- Arguments Scope z2i [ Z_scope ].
 
  Parameter _0 : int. 
  Parameter _1 : int. 
@@ -79,12 +77,11 @@ Module Type Int.
 
  (** Specifications *)
 
- (* First, we have a bijection between [int] and [Z]. *) 
+ (* First, we ask [i2z] to be injective. Said otherwise, our ad-hoc equality 
+    [==] and the generic [=] are in fact equivalent. We define [==] 
+    nonetheless since the translation to [Z] for using automatic tactic is easier. *)
 
- Axiom z2i2z : forall z, i2z (z2i z) = z.
- Axiom i2z2i : forall i,  z2i (i2z i) = i.
- Arguments Scope i2z2i [ Int_scope ].
- Arguments Scope z2i2z [ Z_scope ].
+ Axiom i2z_eq : forall n p : int, n == p -> n = p. 
 
  (* Then, we express the specifications of the above parameters using their 
     Z counterparts. *)
@@ -107,22 +104,11 @@ Module MoreInt (I:Int).
 
  Open Scope Int_scope.
 
- (* Our ad-hoc equality [==] and the generic [=] are in fact equivalent. 
-    We define [==] nonetheless since the translation to [Z] for using 
-    automatic tactic is easier. This equivalence property is a consequence 
-    of [i2z2i]. *)
-
-  Lemma i2z_eq : forall n p : int, n == p -> n = p.
-  Proof. 
-  intros n p H ; rewrite <- (i2z2i n); rewrite H; apply i2z2i. 
-  Qed.
-
  (** A magic (but costly) tactic that goes from [int] back to the [Z] 
      friendly world ... *)
 
  Hint Rewrite -> 
-   i2z_0 i2z_1 i2z_2 i2z_3 i2z_plus i2z_opp i2z_minus i2z_mult i2z_max 
-   i2z2i z2i2z : i2z.
+   i2z_0 i2z_1 i2z_2 i2z_3 i2z_plus i2z_opp i2z_minus i2z_mult i2z_max : i2z.
 
  Ltac i2z := match goal with 
   | H : (eq (A:=int) ?a ?b) |- _ => 
@@ -179,10 +165,9 @@ Module MoreInt (I:Int).
    | EIminus : ExprI -> ExprI -> ExprI
    | EImult : ExprI -> ExprI -> ExprI
    | EImax : ExprI -> ExprI -> ExprI
-   | EIofZ : ExprZ -> ExprI
-   | EIraw : int -> ExprI
-  with 
-  ExprZ : Set := 
+   | EIraw : int -> ExprI.
+
+  Inductive ExprZ : Set :=  
    | EZplus : ExprZ -> ExprZ -> ExprZ
    | EZopp : ExprZ -> ExprZ
    | EZminus : ExprZ -> ExprZ -> ExprZ
@@ -217,7 +202,6 @@ Module MoreInt (I:Int).
     | ?x * ?y => let ex := i2ei x with ey := i2ei y in constr:(EImult ex ey)
     | max ?x ?y => let ex := i2ei x with ey := i2ei y in constr:(EImax ex ey)
     | - ?x => let ex := i2ei x in constr:(EIopp ex)
-    | z2i ?x => let ex := z2ez x in constr:(EIofZ ex)
     | ?x => constr:(EIraw x)
    end
 
@@ -264,13 +248,12 @@ Module MoreInt (I:Int).
   | EImult e1 e2 => (ei2i e1)*(ei2i e2)
   | EImax e1 e2 => max (ei2i e1) (ei2i e2)
   | EIopp e => -(ei2i e)
-  | EIofZ e => z2i (ez2z e)
   | EIraw i => i 
-  end 
+  end. 
  
  (* [ExprZ] to [Z] *)
 
- with ez2z (e:ExprZ) : Z := 
+ Fixpoint ez2z (e:ExprZ) : Z := 
   match e with 
   | EZplus e1 e2 => ((ez2z e1)+(ez2z e2))%Z
   | EZminus e1 e2 => ((ez2z e1)-(ez2z e2))%Z
@@ -298,6 +281,22 @@ Module MoreInt (I:Int).
    | EPraw p => p
  end.
 
+ (* [ExprI] (supposed under a [i2z]) to a simplified [ExprZ] *)
+   
+ Fixpoint norm_ei (e:ExprI) : ExprZ := 
+ match e with 
+  | EI0 => EZraw (0%Z)
+  | EI1 => EZraw (1%Z)
+  | EI2 => EZraw (2%Z)
+  | EI3 => EZraw (3%Z) 
+  | EIplus e1 e2 => EZplus (norm_ei e1) (norm_ei e2)
+  | EIminus e1 e2 => EZminus (norm_ei e1) (norm_ei e2)
+  | EImult e1 e2 => EZmult (norm_ei e1) (norm_ei e2)
+  | EImax e1 e2 => EZmax (norm_ei e1) (norm_ei e2)
+  | EIopp e => EZopp (norm_ei e)
+  | EIraw i => EZofI (EIraw i) 
+ end.
+
  (* [ExprZ] to a simplified [ExprZ] *)
 
  Fixpoint norm_ez (e:ExprZ) : ExprZ := 
@@ -309,23 +308,6 @@ Module MoreInt (I:Int).
   | EZopp e => EZopp (norm_ez e)
   | EZofI e =>  norm_ei e
   | EZraw z => EZraw z
- end
- 
- (* [ExprI] (supposed under a [i2z]) to a simplified [ExprZ] *)
-   
- with norm_ei (e:ExprI) : ExprZ := 
- match e with 
-  | EI0 => EZraw (0%Z)
-  | EI1 => EZraw (1%Z)
-  | EI2 => EZraw (2%Z)
-  | EI3 => EZraw (3%Z) 
-  | EIplus e1 e2 => EZplus (norm_ei e1) (norm_ei e2)
-  | EIminus e1 e2 => EZminus (norm_ei e1) (norm_ei e2)
-  | EImult e1 e2 => EZmult (norm_ei e1) (norm_ei e2)
-  | EImax e1 e2 => EZmax (norm_ei e1) (norm_ei e2)
-  | EIopp e => EZopp (norm_ei e)
-  | EIofZ e => norm_ez e
-  | EIraw i => EZofI (EIraw i) 
  end.
 
  (* [ExprP] to a simplified [ExprP] *)
@@ -345,15 +327,14 @@ Module MoreInt (I:Int).
    | EPraw p => EPraw p
  end.
 
- Scheme ExprZ_mrec := Induction for ExprZ Sort Prop
- with ExprI_mrec := Induction for ExprI Sort Prop.
+ Lemma norm_ei_correct : forall e:ExprI, ez2z (norm_ei e) = i2z (ei2i e).
+ Proof. 
+ induction e; simpl; intros; i2z; auto; try congruence.
+ Qed.
 
- Lemma norm_ez_correct : 
-  forall e:ExprZ, ez2z (norm_ez e) = ez2z e.
+ Lemma norm_ez_correct : forall e:ExprZ, ez2z (norm_ez e) = ez2z e.
  Proof.
-  set (P:= fun e => ez2z (norm_ez e) = ez2z e).
-  set (Q:= fun e => ez2z (norm_ei e) = i2z (ei2i e)).
-  apply (ExprZ_mrec P Q); unfold P, Q; simpl; intros; i2z; auto; try congruence.
+ induction e; simpl; intros; i2z; auto; try congruence; apply norm_ei_correct.
  Qed. 
 
  Lemma norm_ep_correct : 
@@ -433,9 +414,7 @@ Module Z_as_Int <: Int.
  Definition ge_lt_dec := Z_ge_lt_dec.
  Definition eq_dec := Z_eq_dec.
  Definition i2z : int -> Z := fun n => n.
- Definition z2i : Z -> int := fun n => n.
- Lemma z2i2z : forall z, i2z (z2i z) = z.  Proof. auto. Qed.
- Lemma i2z2i : forall i, z2i (i2z i) = i.  Proof. auto. Qed.
+ Lemma i2z_eq : forall n p, i2z n=i2z p -> n = p. Proof. auto. Qed.
  Lemma i2z_0 : i2z _0 = 0.  Proof. auto. Qed.
  Lemma i2z_1 : i2z _1 = 1.  Proof. auto. Qed.
  Lemma i2z_2 : i2z _2 = 2.  Proof. auto. Qed.

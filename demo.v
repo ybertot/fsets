@@ -266,7 +266,6 @@ Module Type Int.
  Parameter int : Set. 
 
  Parameter i2z : int -> Z.
- Parameter z2i : Z -> int. 
 
  Parameter _0 : int. 
  Parameter _1 : int. 
@@ -298,10 +297,9 @@ Module Type Int.
 
  (* Specification of [int] parameters. *)
 
- (* First, [int] and [Z] are isomorphic. *)
+ (* First, [i2z] is an injection. *)
 
- Axiom z2i2z : forall z, i2z (z2i z) = z.
- Axiom i2z2i : forall i,  z2i (i2z i) = i.
+ Axiom i2z_eq : forall n p, n == p -> n = p.
 
  (* Then, all the operators are morphisms. *)
 
@@ -320,7 +318,7 @@ End Int.
    module [Int] is used instead of [Z] for every height.
    Similarly from Map. *)
 
-Module MI := FSetAVL_int.Make(Int.Z_as_Int)(Z_as_OT).
+Module MI := FSetAVL_int.Make(Z_as_OT).
 
 Eval compute in 
  (MI.elements 

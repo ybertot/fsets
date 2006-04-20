@@ -1698,7 +1698,7 @@ End Raw.
    Now, in order to really provide a functor implementing [S], we 
    need to encapsulate everything into a type of balanced binary search trees. *)
 
-Module Make (I:Int)(X: OrderedType) <: S with Module E := X.
+Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Module E := X.
  Module Raw := Raw I X. 
@@ -1854,15 +1854,15 @@ Module Make (I:Int)(X: OrderedType) <: S with Module E := X.
  apply m'.(is_bst).
  Qed.
 
-End Make.
+End IntMake.
 
 
-Module Make_ord (I:Int)(X: OrderedType)(D : OrderedType) <: 
+Module IntMake_ord (I:Int)(X: OrderedType)(D : OrderedType) <: 
     Sord with Module Data := D 
             with Module MapS.E := X.
 
   Module Data := D.
-  Module MapS := Make(I)(X). 
+  Module MapS := IntMake(I)(X). 
   Import MapS.
 
   Module MD := OrderedTypeFacts(D).
@@ -2003,15 +2003,24 @@ Module Make_ord (I:Int)(X: OrderedType)(D : OrderedType) <:
   simpl in H22; rewrite <- app_nil_end in H22.
   destruct (compare_aux H1 H2); intuition.
   constructor 1.
-  unfold lt, LO.lt, Make_ord.elements, flatten_slist in *; simpl in *.
+  unfold lt, LO.lt, IntMake_ord.elements, flatten_slist in *; simpl in *.
   rewrite <- H0; rewrite <- H4; auto.
   constructor 2.
-  unfold eq, LO.eq, Make_ord.elements, flatten_slist in *; simpl in *.
+  unfold eq, LO.eq, IntMake_ord.elements, flatten_slist in *; simpl in *.
   rewrite <- H0; rewrite <- H4; auto.
   constructor 3.
-  unfold lt, LO.lt, Make_ord.elements, flatten_slist in *; simpl in *.
+  unfold lt, LO.lt, IntMake_ord.elements, flatten_slist in *; simpl in *.
   rewrite <- H0; rewrite <- H4; auto.
   Qed.
 
-End Make_ord.
+End IntMake_ord.
 
+(* For concrete use inside Coq, we propose an instantiation of [Int] by [Z]. *)
+
+Module Make (X: OrderedType) <: S with Module E := X
+ :=IntMake(Z_as_Int)(X).
+
+Module Make_ord (X: OrderedType)(D: OrderedType) 
+ <: Sord with Module Data := D 
+            with Module MapS.E := X
+ :=IntMake_ord(Z_as_Int)(X)(D).

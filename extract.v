@@ -35,7 +35,7 @@ Extraction "rbt.ml" NatRBT.empty.
 Module NatAVL := FSetAVL.Make Nat_as_OT.
 Extraction "avl.ml" NatAVL.empty.
 
-Module NatAVL_int := FSetAVL_int.Make(Int.Z_as_Int)(Nat_as_OT).
+Module NatAVL_int := FSetAVL_int.Make Nat_as_OT.
 Extraction "avl_int.ml" NatAVL_int.empty.
 
 Module NatAVL_dep := FSetAVL_dep.Make Nat_as_OT.

@@ -2554,7 +2554,7 @@ End Raw.
    Now, in order to really provide a functor implementing [S], we 
    need to encapsulate everything into a type of balanced binary search trees. *)
 
-Module Make (I:Int)(X: OrderedType) <: S with Module E := X.
+Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Module E := X.
  Module Raw := Raw I X. 
@@ -2873,4 +2873,11 @@ Module Make (I:Int)(X: OrderedType) <: S with Module E := X.
  Definition lt_not_eq s s' := lt_not_eq _ _ (is_bst s) (is_bst s').
 
  End Specs.
-End Make.
+End IntMake.
+
+(* For concrete use inside Coq, we propose an instantiation of [Int] by [Z]. *)
+
+Module Make (X: OrderedType) <: S with Module E := X
+ :=IntMake(Z_as_Int)(X).
+
+
