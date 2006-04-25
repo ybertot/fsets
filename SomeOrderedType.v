@@ -3,23 +3,37 @@ Require Import OrderedType.
 Require Import ZArith.
 Require Import Compare_dec.
 
+(** First, a particular case of [OrderedType] is these 
+     where the equality is the usual one of Coq. *)
+
+Module Type UsualOrderedType.
+ Parameter t : Set.
+ Definition eq := @eq t.
+ Parameter lt : t -> t -> Prop.
+ Definition eq_refl := @refl_equal t.
+ Definition eq_sym := @sym_eq t.
+ Definition eq_trans := @trans_eq t.
+ Axiom lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
+ Axiom lt_not_eq : forall x y : t, lt x y -> ~ eq x y.
+ Parameter compare : forall x y : t, Compare lt eq x y.
+End UsualOrderedType.
+
+(** a [UsualOrderedType] is in particular an [OrderedType]. *)
+
+Module UOT_to_OT (U:UsualOrderedType) <: OrderedType := U.
+
 (** [nat] is an ordered type with respect to the usual order on natural numbers. *)
 
-Module Nat_as_OT : OrderedType.
+Module Nat_as_OT <: UsualOrderedType.
 
   Definition t := nat.
 
-  Definition eq := eq (A:=nat).
+  Definition eq := @eq nat.
+  Definition eq_refl := @refl_equal t.
+  Definition eq_sym := @sym_eq t.
+  Definition eq_trans := @trans_eq t.
+
   Definition lt := lt.
-
-  Lemma eq_refl : forall x : t, eq x x. 
-  Proof. unfold eq in |- *; auto. Qed.
-
-  Lemma eq_sym : forall x y : t, eq x y -> eq y x.
-  Proof. unfold eq in |- *; auto. Qed.
-
-  Lemma eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-  Proof. unfold eq in |- *; intros; rewrite H; auto. Qed.
 
   Lemma lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
   Proof. unfold lt in |- *; intros; apply lt_trans with y; auto. Qed.
@@ -39,44 +53,34 @@ Module Nat_as_OT : OrderedType.
 End Nat_as_OT.
 
 
-
 (** [Z] is an ordered type with respect to the usual order on integers. *)
 
 Open Scope Z_scope.
 
-Module Z_as_OT <: OrderedType.
+Module Z_as_OT <: UsualOrderedType.
 
   Definition t := Z.
-  Definition eq (x y:Z) := (x=y).
+  Definition eq := @eq Z. 
+  Definition eq_refl := @refl_equal t.
+  Definition eq_sym := @sym_eq t.
+  Definition eq_trans := @trans_eq t.
+
   Definition lt (x y:Z) := (x<y).
 
-  Section xyz.
-  Variables x y z : Z.
-
-  Lemma eq_refl : x=x .  
-  Proof. auto. Qed.
-
-  Lemma eq_sym : x=y -> y=x.
-  Proof. auto. Qed.
-
-  Lemma eq_trans : x=y -> y=z -> x=z.
+  Lemma lt_trans : forall x y z, x<y -> y<z -> x<z.
   Proof. auto with zarith. Qed.
 
-  Lemma lt_trans : x<y -> y<z -> x<z.
+  Lemma lt_not_eq : forall x y, x<y -> ~ x=y.
   Proof. auto with zarith. Qed.
 
-  Lemma lt_not_eq : x<y -> ~ x=y.
-  Proof. auto with zarith. Qed.
-
-  Definition compare : Compare lt eq x y.
+  Definition compare : forall x y, Compare lt eq x y.
   Proof.
-    case_eq (x ?= y); intros.
+    intros x y; case_eq (x ?= y); intros.
     apply EQ; unfold eq; apply Zcompare_Eq_eq; auto.
     apply LT; unfold lt, Zlt; auto.
     apply GT; unfold lt, Zlt; rewrite <- Zcompare_Gt_Lt_antisym; auto.
   Defined.
 
-  End xyz.
 End Z_as_OT.
 
 
@@ -85,19 +89,14 @@ End Z_as_OT.
 
 Open Scope positive_scope.
 
-Module Positive_as_OT <: OrderedType.
+Module Positive_as_OT <: UsualOrderedType.
   Definition t:=positive.
   Definition eq:=@eq positive.
+  Definition eq_refl := @refl_equal t.
+  Definition eq_sym := @sym_eq t.
+  Definition eq_trans := @trans_eq t.
+
   Definition lt p q:= (p ?= q) Eq = Lt.
-
-  Lemma eq_refl : forall x : t, eq x x.
-  Proof. red; auto. Qed.
-
-  Lemma eq_sym : forall x y : t, eq x y -> eq y x.
-  Proof. red; auto. Qed.
-
-  Lemma eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-  Proof. red; intros; transitivity y; auto. Qed.
  
   Lemma lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
   Proof. 
