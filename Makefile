@@ -83,6 +83,8 @@ VFILES=Int.v\
   FMapAVL_int.v\
   FMapAll.v\
   FMapPositive.v\
+  FMapToFiniteMap.v\
+  FMapIntMap.v\
   extract.v\
   compute.v
 VOFILES=$(VFILES:.v=.vo)
@@ -103,6 +105,8 @@ all: Int.vo\
   FMapAVL_int.vo\
   FMapAll.vo\
   FMapPositive.vo\
+  FMapToFiniteMap.vo\
+  FMapIntMap.vo\
   extract.vo\
   compute.vo\
   PrecedenceGraph\

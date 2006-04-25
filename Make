@@ -10,6 +10,8 @@ FMapAVL.v
 FMapAVL_int.v
 FMapAll.v
 FMapPositive.v
+FMapToFiniteMap.v
+FMapIntMap.v
 extract.v 
 compute.v
 PrecedenceGraph
