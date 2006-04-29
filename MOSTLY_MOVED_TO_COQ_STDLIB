@@ -1,0 +1,32 @@
+
+The FSets / FMaps library of finite sets / finite maps has been almost
+entirely moved to Coq standard library. The parts that remain here are 
+mostly of historical or development interest: 
+
+- FSetRBT.v: implementation of sets based on red-black trees. Still 
+ in its original form. It would probably be worth an inclusion in 
+ Coq standard library, except that its compilation time in coq could 
+ be improved. 
+
+- FSetAVL_dep.v: the original version of AVL sets by J-C Filliatre. 
+ Kept mainly for comparison with the newer versions. 
+
+- FSetAVL_z.v / FMapAVL_z.v: newer version of AVL, in direct style 
+ instead of dependent, and with romega instead of omega. The only
+ difference with the files included in Coq standard library is the 
+ use of Z for coding the height of trees, instead of an axiomatic 
+ int. 
+
+- extract.v: an extraction test
+
+- compute.v: an test of coq internal computation
+
+- demo.v: a demo 
+
+- PrecedenceGraph: a problem about graphs, using FSet.
+
+
+
+
+
+
