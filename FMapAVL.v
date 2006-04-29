@@ -44,7 +44,7 @@ Module Raw (X: OrderedType).
 
 Module E := X.
 Module MX := OrderedTypeFacts X.
-Module PX := PairOrderedType X.
+Module PX := KeyOrderedType X.
 Module L := FMapList.Raw X.
 Import MX. 
 Import PX.
@@ -57,7 +57,7 @@ Section Elt.
 
 Variable elt : Set.
 
-(* Now in PairOrderedType:
+(* Now in KeyOrderedType:
 Definition eqk (p p':key*elt) := X.eq (fst p) (fst p').
 Definition eqke (p p':key*elt) := 
          X.eq (fst p) (fst p') /\ (snd p) = (snd p').
