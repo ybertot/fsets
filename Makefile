@@ -71,20 +71,10 @@ COQLIBS=-I .
 #                                 #
 ###################################
 
-VFILES=Int.v\
-  SomeOrderedType.v\
-  OrderedTypeAlt.v\
-  FSetToFiniteSet.v\
-  FSetRBT.v\
-  FSetAVL.v\
+VFILES=FSetRBT.v\
+  FSetAVL_z.v\
   FSetAVL_dep.v\
-  FSetAVL_int.v\
-  FSetAll.v\
-  FMapAVL.v\
-  FMapAVL_int.v\
-  FMapPositive.v\
-  FMapIntMap.v\
-  FMapAll.v\
+  FMapAVL_z.v\
   extract.v\
   compute.v
 VOFILES=$(VFILES:.v=.vo)
@@ -93,20 +83,10 @@ GFILES=$(VFILES:.v=.g)
 HTMLFILES=$(VFILES:.v=.html)
 GHTMLFILES=$(VFILES:.v=.g.html)
 
-all: Int.vo\
-  SomeOrderedType.vo\
-  OrderedTypeAlt.vo\
-  FSetToFiniteSet.vo\
-  FSetRBT.vo\
-  FSetAVL.vo\
+all: FSetRBT.vo\
+  FSetAVL_z.vo\
   FSetAVL_dep.vo\
-  FSetAVL_int.vo\
-  FSetAll.vo\
-  FMapAVL.vo\
-  FMapAVL_int.vo\
-  FMapPositive.vo\
-  FMapIntMap.vo\
-  FMapAll.vo\
+  FMapAVL_z.vo\
   extract.vo\
   compute.vo\
   PrecedenceGraph\

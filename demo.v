@@ -1,7 +1,6 @@
-Require Import FSetInterface.
+Require Import FSets.
 Require Import FSetAVL.
-Require Import FSetAVL_int.
-Require Import SomeOrderedType.
+Require Import FSetAVL_z.
 Require Import ZArith.
 Require Import Omega.
 Open Scope Z_scope.
@@ -50,7 +49,7 @@ End OrderedType.
 
 (** * [Z] integers seen as orderered types *)
 
-(* excerpt from SomeOrderedType.v *)                                                                                                                 Module Demo2.
+(* excerpt from OrderedTypeEx.v *)                                                                                                                 Module Demo2.
 Module Z_as_OT <: OrderedType.
 
   Definition t := Z.
@@ -95,7 +94,7 @@ Extraction Z_as_OT.
 
 (** * Let's build some sets of [Z] integers ... *)
 
-Module M := FSetAVL.Make(Z_as_OT).
+Module M := FSetAVL_z.Make(Z_as_OT).
 
 Print M.
 
@@ -159,7 +158,7 @@ Extraction M.
 
 (** * Some sets of sets ... *)
 
-Module MM := FSetAVL.Make(M).
+Module MM := FSetAVL_z.Make(M).
 
 Definition eens1 := MM.add ens1 (MM.add ens2 (MM.empty)).
 
@@ -210,9 +209,9 @@ Time Eval vm_compute in (length (R.elements (R.inter bigraw1 bigraw2))).
 
 (** * What about maps ? it's the same ! *)
 
-Require Import FMapAVL.
+Require Import FMapAVL_z.
 
-Module F := FMapAVL.Make(Z_as_OT).
+Module F := FMapAVL_z.Make(Z_as_OT).
 
 (* As in Ocaml, everything is polymorphic with respect to the datas. *)
 
@@ -314,11 +313,11 @@ Module Type Int.
 End Int. 
 (*/excerpt*)                                                                                                                                                              End Demo3.
 
-(* [FSetAVL_int] is then a clone of [FSetAVL] where a 
+(* [FSetAVL] is then a clone of [FSetAVL_z] where a 
    module [Int] is used instead of [Z] for every height.
    Similarly from Map. *)
 
-Module MI := FSetAVL_int.Make(Z_as_OT).
+Module MI := FSetAVL.Make(Z_as_OT).
 
 Eval compute in 
  (MI.elements 

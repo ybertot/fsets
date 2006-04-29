@@ -15,11 +15,12 @@
 
 (* extraction *)
 
-Require Import FSetAll.
-Require Import FSetAVL_int.
+Require Import FSets.
+Require Import FSetAVL.
+Require Import FSetAVL_z.
 Require Import FSetAVL_dep.
+Require Import FSetRBT.
 Require Import ZArith.
-Require Import SomeOrderedType.
 
 Extract Inductive bool => "bool" [ "true" "false" ].
 Extract Inductive sumbool => "bool" [ "true" "false" ].
@@ -35,8 +36,8 @@ Extraction "rbt.ml" NatRBT.empty.
 Module NatAVL := FSetAVL.Make Nat_as_OT.
 Extraction "avl.ml" NatAVL.empty.
 
-Module NatAVL_int := FSetAVL_int.Make Nat_as_OT.
-Extraction "avl_int.ml" NatAVL_int.empty.
+Module NatAVL_z := FSetAVL_z.Make Nat_as_OT.
+Extraction "avl_z.ml" NatAVL_z.empty.
 
 Module NatAVL_dep := FSetAVL_dep.Make Nat_as_OT.
 Extraction "avl_dep.ml" NatAVL_dep.empty.

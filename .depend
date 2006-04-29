@@ -1,56 +1,18 @@
-avl_dep.cmo: avl_dep.ml avl_dep.cmi
-avl_dep.cmx: avl_dep.ml avl_dep.cmi
-avl_int.cmo: avl_int.ml avl_int.cmi
-avl_int.cmx: avl_int.ml avl_int.cmi
-avl.cmo: avl.ml avl.cmi
-avl.cmx: avl.ml avl.cmi
-int.cmo: int.ml
-int.cmx: int.ml
-rbt.cmo: rbt.ml rbt.cmi
-rbt.cmx: rbt.ml rbt.cmi
-avl_dep.cmi: avl_dep.mli
-avl_int.cmi: avl_int.mli
-avl.cmi: avl.mli
-rbt.cmi: rbt.mli
-Int.vo: Int.v
-Int.vi: Int.v
-SomeOrderedType.vo: SomeOrderedType.v
-SomeOrderedType.vi: SomeOrderedType.v
-OrderedTypeAlt.vo: OrderedTypeAlt.v
-OrderedTypeAlt.vi: OrderedTypeAlt.v
 FSetRBT.vo: FSetRBT.v
 FSetRBT.vi: FSetRBT.v
-FSetAVL.vo: FSetAVL.v
-FSetAVL.vi: FSetAVL.v
+FSetAVL_z.vo: FSetAVL_z.v
+FSetAVL_z.vi: FSetAVL_z.v
 FSetAVL_dep.vo: FSetAVL_dep.v
 FSetAVL_dep.vi: FSetAVL_dep.v
-FSetAVL_int.vo: FSetAVL_int.v Int.vo
-FSetAVL_int.vi: FSetAVL_int.v Int.vo
-FSetAll.vo: FSetAll.v FSetRBT.vo FSetAVL.vo
-FSetAll.vi: FSetAll.v FSetRBT.vo FSetAVL.vo
-FMapAVL.vo: FMapAVL.v
-FMapAVL.vi: FMapAVL.v
-FMapAVL_int.vo: FMapAVL_int.v Int.vo
-FMapAVL_int.vi: FMapAVL_int.v Int.vo
-FMapAll.vo: FMapAll.v FMapAVL.vo
-FMapAll.vi: FMapAll.v FMapAVL.vo
-FMapPositive.vo: FMapPositive.v
-FMapPositive.vi: FMapPositive.v
-extract.vo: extract.v FSetAll.vo FSetAVL_int.vo FSetAVL_dep.vo SomeOrderedType.vo
-extract.vi: extract.v FSetAll.vo FSetAVL_int.vo FSetAVL_dep.vo SomeOrderedType.vo
-compute.vo: compute.v FSetAVL.vo FSetAVL_int.vo SomeOrderedType.vo
-compute.vi: compute.v FSetAVL.vo FSetAVL_int.vo SomeOrderedType.vo
-Int.html: Int.v
-SomeOrderedType.html: SomeOrderedType.v
-OrderedTypeAlt.html: OrderedTypeAlt.v
+FMapAVL_z.vo: FMapAVL_z.v
+FMapAVL_z.vi: FMapAVL_z.v
+extract.vo: extract.v FSetAVL_z.vo FSetAVL_dep.vo FSetRBT.vo
+extract.vi: extract.v FSetAVL_z.vo FSetAVL_dep.vo FSetRBT.vo
+compute.vo: compute.v FSetAVL_z.vo
+compute.vi: compute.v FSetAVL_z.vo
 FSetRBT.html: FSetRBT.v
-FSetAVL.html: FSetAVL.v
+FSetAVL_z.html: FSetAVL_z.v
 FSetAVL_dep.html: FSetAVL_dep.v
-FSetAVL_int.html: FSetAVL_int.v Int.html
-FSetAll.html: FSetAll.v FSetRBT.html FSetAVL.html
-FMapAVL.html: FMapAVL.v
-FMapAVL_int.html: FMapAVL_int.v Int.html
-FMapAll.html: FMapAll.v FMapAVL.html
-FMapPositive.html: FMapPositive.v
-extract.html: extract.v FSetAll.html FSetAVL_int.html FSetAVL_dep.html SomeOrderedType.html
-compute.html: compute.v FSetAVL.html FSetAVL_int.html SomeOrderedType.html
+FMapAVL_z.html: FMapAVL_z.v
+extract.html: extract.v FSetAVL_z.html FSetAVL_dep.html FSetRBT.html
+compute.html: compute.v FSetAVL_z.html
