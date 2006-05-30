@@ -1735,20 +1735,20 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma sorted_subset_cardinal :
    forall l' l : list X.t,
-   ME.Sort l ->
-   ME.Sort l' ->
-   (forall x : elt, ME.In x l -> ME.In x l') -> (length l <= length l')%nat.
+   sort X.lt l ->
+   sort X.lt l' ->
+   (forall x : elt, InA E.eq x l -> InA X.eq x l') -> (length l <= length l')%nat.
   Proof.
     simple induction l'; simpl in |- *; intuition.
     destruct l; trivial; intros.
-    absurd (ME.In t0 nil); intuition.
+    absurd (InA X.eq t0 nil); intuition.
     inversion_clear H2.
     inversion_clear H1.
     destruct l0; simpl in |- *; intuition.
     inversion_clear H0.
     apply le_n_S.
     case (X.compare t0 a); intro.
-    absurd (ME.In t0 (a :: l)).
+    absurd (InA E.eq t0 (a :: l)).
     intro.
     inversion_clear H0.
     apply (X.lt_not_eq (x:=t0) (y:=a)); auto.
@@ -1758,7 +1758,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     firstorder.
     apply H; auto.
     intros.
-    assert (ME.In x (a :: l)).
+    assert (InA X.eq x (a :: l)).
     apply H2; auto.
     inversion_clear H6; auto.
     assert (X.lt t0 x).
@@ -1769,7 +1769,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     simpl in |- *; omega.
     apply (H (t0 :: l0)); auto.
     intros.
-    assert (ME.In x (a :: l)); firstorder.
+    assert (InA X.eq x (a :: l)); firstorder.
     inversion_clear H6; auto.
     assert (X.lt a x).
     apply ME.Sort_Inf_In with (t0 :: l0); auto.
@@ -2561,10 +2561,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma sort_app :
    forall l1 l2 : list elt,
-   L.MX.Sort l1 ->
-   L.MX.Sort l2 ->
-   (forall x y : elt, L.MX.In x l1 -> L.MX.In y l2 -> X.lt x y) ->
-   L.MX.Sort (l1 ++ l2).
+   sort X.lt l1 ->
+   sort X.lt l2 ->
+   (forall x y : elt, InA X.eq x l1 -> InA X.eq y l2 -> X.lt x y) ->
+   sort X.lt (l1 ++ l2).
   Proof.
     simple induction l1; simpl in |- *; intuition.
     apply cons_sort; auto.
@@ -2577,7 +2577,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Lemma in_app :
    forall (x : elt) (l1 l2 : list elt),
-   L.MX.In x (l1 ++ l2) -> L.MX.In x l1 \/ L.MX.In x l2.
+   InA X.eq x (l1 ++ l2) -> InA X.eq x l1 \/ InA X.eq x l2.
   Proof.
     simple induction l1; simpl in |- *; intuition.
     inversion_clear H0; auto.
@@ -2585,7 +2585,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma in_flatten :
-   forall (x : elt) (l : list tree), L.MX.In x (flatten l) -> In_tree_l x l.
+   forall (x : elt) (l : list tree), InA X.eq x (flatten l) -> In_tree_l x l.
   Proof.
     simple induction l; simpl in |- *; intuition.
     inversion_clear H.
@@ -2593,7 +2593,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma sorted_flatten :
-   forall l : list tree, sorted_l l -> L.MX.Sort (flatten l).
+   forall l : list tree, sorted_l l -> sort X.lt (flatten l).
   Proof.
     simple induction l; simpl in |- *; intuition.
     apply sort_app; inversion H0; auto.
@@ -3131,7 +3131,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
   Hint Constructors sorted_e.
 
   Lemma in_flatten_e :
-   forall (x : elt) (e : enumeration), L.MX.In x (flatten_e e) -> In_tree_e x e.
+   forall (x : elt) (e : enumeration), InA X.eq x (flatten_e e) -> In_tree_e x e.
   Proof.
     simple induction e; simpl in |- *; intuition.
     inversion_clear H.
@@ -3140,7 +3140,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
   Qed.
 
   Lemma sorted_flatten_e :
-   forall e : enumeration, sorted_e e -> L.MX.Sort (flatten_e e).
+   forall e : enumeration, sorted_e e -> sort X.lt (flatten_e e).
   Proof.
     simple induction e; simpl in |- *; intuition.
     apply cons_sort.
