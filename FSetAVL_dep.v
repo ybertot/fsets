@@ -3148,6 +3148,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     intros; apply H8; auto.
     apply in_flatten_e; auto.
     apply L.MX.ListIn_Inf.
+    unfold E.lt.
     inversion_clear H0.
     intros; elim (in_app_or _ _ _ H0); intuition.
     apply H4; apply in_flatten_e; auto.

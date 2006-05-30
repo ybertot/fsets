@@ -119,7 +119,7 @@ assert (to G m a = true).
  eapply filter_2; eauto.
 apply filter_3; intuition.
 apply remove_2.
-red; intros.
+unfold E.eq; red; intros.
 rewrite H4 in H1; rewrite H3 in H1; discriminate H1.
 eapply filter_1; eauto.
 apply filter_3; intuition.
@@ -255,7 +255,7 @@ assert (S (cardinal (remove current non_visited))  = (S n)).
  inversion H3; auto.
 auto with arith.
 intros; elim (ME.eq_dec current k).
-intros Eq; rewrite <- Eq; auto.
+unfold E.eq; intros Eq; rewrite <- Eq; auto.
 apply chain_i; auto.
 intros; apply chain_t with current; auto; apply chain_i; auto.
 intros _ A. 
@@ -384,7 +384,7 @@ elim (orb_prop _ _ H7); clear H7; intros.
 unfold is_pred in H7.
 rewrite (@Hprec G i x j) in Hj2; auto; discriminate Hj2.
 rewrite (@Hprec G i j x) in H6; auto; discriminate H6.
-unfold compat_bool; intros; rewrite H7; auto.
+unfold E.eq, compat_bool; intros; rewrite H7; auto.
 intros _ A.
 unfold nb_succ in H3; rewrite cardinal_1 in H3; auto.
 inversion H3.
@@ -406,7 +406,7 @@ unfold s; intros x Hx _; generalize (mem_1 (Hx x (refl_equal _))); clear Hx;
 intros Hx; elim (andb_prop _ _ Hx); clear Hx; intros.
 exists x; split; intros; auto.
 generalize H2; case (le_lt_dec (nb_linked G x) p); auto; intros; discriminate H3.
-unfold compat_bool; intros; rewrite H1; auto.
+unfold E.eq, compat_bool; intros; rewrite H1; auto.
 intros _ A; generalize (A (refl_equal _)); clear A; unfold Empty, s; intros A.
 absurd (double (S p)  <= nb_nodes G); auto with arith.
 apply low_arity; auto.
@@ -414,7 +414,7 @@ intros.
 elim (le_lt_dec (nb_linked G n) p); intros; auto.
 elim (A n).
 apply filter_3; auto. 
-unfold compat_bool; intros; rewrite H2; auto.
+unfold E.eq, compat_bool; intros; rewrite H2; auto.
 generalize a; case (le_lt_dec (nb_linked G n) p); auto with arith.
 intros; absurd (nb_linked G n <= p); auto with arith.
 Qed.
