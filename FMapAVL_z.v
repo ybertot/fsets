@@ -639,13 +639,13 @@ Proof.
  intros elt l x e r; functional induction remove_min elt l x e r; simpl in *; intros.
  intuition_in.
  (* l = Node *)
- inversion_clear H1.
- generalize (remove_min_avl H2).
+ inversion_clear H.
+ generalize (remove_min_avl H1).
  rewrite_all H0; simpl; intros.
  rewrite bal_in; auto.
- generalize (IHp lh y H2).
+ generalize (IHp lh y H1).
  intuition.
- inversion_clear H9; intuition.
+ inversion_clear H8; intuition.
 Qed.
 
 Lemma remove_min_mapsto : forall elt (l:t elt) x e r h y e', avl (Node l x e r h) -> 
@@ -672,14 +672,14 @@ Lemma remove_min_bst : forall elt (l:t elt) x e r h,
 Proof.
  intros elt l x e r; functional induction remove_min elt l x e r; simpl in *; intros.
  inv bst; auto.
- inversion_clear H1; inversion_clear H2.
+ inversion_clear H; inversion_clear H1.
  rewrite_all H0;apply bal_bst; auto.
  firstorder.
  intro; intros.
- generalize (remove_min_in y H1).
+ generalize (remove_min_in y H).
  rewrite H0; simpl.
  destruct 1.
- apply H5; intuition.
+ apply H4; intuition.
 Qed.
 
 Lemma remove_min_gt_tree : forall elt (l:t elt) x e r h, 
@@ -688,14 +688,14 @@ Lemma remove_min_gt_tree : forall elt (l:t elt) x e r h,
 Proof.
  intros elt l x e r; functional induction remove_min elt l x e r; simpl in *; intros.
  inv bst; auto.
- rewrite_all H0;inversion_clear H1; inversion_clear H2.
+ rewrite_all H0;inversion_clear H; inversion_clear H1.
  intro; intro.
- generalize (IHp lh H3 H1); clear H9 H8 IHp.
- generalize (remove_min_avl H1).
- generalize (remove_min_in (fst m) H1).
+ generalize (IHp lh H2 H); clear H7 H8 IHp.
+ generalize (remove_min_avl H).
+ generalize (remove_min_in (fst m) H).
  rewrite H0; simpl; intros.
- rewrite (bal_in x e y H9 H7) in H2.
- destruct H.
+ rewrite (bal_in x e y H8 H6) in H1.
+ destruct H7.
  firstorder.
  apply lt_eq with x; auto.
  apply X.lt_trans with x; auto.
@@ -798,18 +798,18 @@ Proof.
  intuition.
  (* LT *)
  inv avl.
- destruct (IHt H2).
+ destruct (IHt H1).
  split. 
  apply bal_avl; auto.
  omega_max.
  omega_bal.
  (* EQ *)
  inv avl. 
- generalize (merge_avl_1 H2 H3 H4).
+ generalize (merge_avl_1 H1 H2 H3).
  intuition omega_max.
  (* GT *)
  inv avl.
- destruct (IHt H3).
+ destruct (IHt H2).
  split. 
  apply bal_avl; auto.
  omega_max.
@@ -991,7 +991,7 @@ Lemma find_2 : forall m x e, find x m = Some e -> MapsTo x e m.
 Proof. 
  intros m x.
  functional induction find x m; firstorder; intros; try discriminate.
- inversion H1; subst; auto.
+ inversion H; subst; auto.
 Qed.
 
 (** An all-in-one spec for [add] used later in the naive [map2] *)
