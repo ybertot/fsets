@@ -430,7 +430,6 @@ intros;cut (le (mult r (4)) (mult (double p) (2)));[intros|unfold double;omega].
 clear H. apply le_n_S.
 cut (forall n q, plus n (mult n q)= mult n (S q));[intros|intros;ring;simpl;auto].
 rewrite <- (H (double p));omega.
-ring.
 Qed.
 
 Lemma Eq2: forall p q r, (le r (S p))->
@@ -441,7 +440,6 @@ Proof.
 intros;cut (le (mult r (4)) (plus (2) (mult (S (double p)) (2))));[intros|unfold double;omega].
 cut (forall n q, plus n (mult n q)=mult n (S q));[intros|intros;ring;simpl;auto].
 rewrite <- (H2 (S (double p)));omega.
-ring.
 Qed.
 
 (** The main theorem *)

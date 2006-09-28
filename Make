@@ -5,5 +5,5 @@ FMapAVL_z.v
 extract.v 
 compute.v
 PrecedenceGraph
--custom "coqc demo.v > /dev/null " "compute.vo demo.v" demo.vo
+-custom "$(COQC) demo.v > /dev/null " "compute.vo demo.v" demo.vo
 

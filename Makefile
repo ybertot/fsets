@@ -46,7 +46,7 @@ OPT=
 COQFLAGS=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 COQC=$(COQBIN)coqc
 GALLINA=gallina
-COQDOC=coqdoc
+COQDOC=$(COQBIN)coqdoc
 CAMLC=ocamlc -c
 CAMLOPTC=ocamlopt -c
 CAMLLINK=ocamlc
@@ -115,7 +115,7 @@ all-gal.ps: $(VFILES)
 ###################
 
 demo.vo: compute.vo demo.v
-	coqc demo.v > /dev/null 
+	$(COQC) demo.v > /dev/null 
 
 ###################
 #                 #
