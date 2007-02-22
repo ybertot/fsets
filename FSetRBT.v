@@ -854,7 +854,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros.
     case (lbalance (Node red t1 t2 t3) t4 t5).
     inversion H; auto.
-    inversion H; unfold gt_tree in |- *; firstorder with In_color.
+    inversion H; unfold gt_tree in |- *; firstorder using In_color.
     inversion H; apply bst_color with black; auto.
     inversion H; auto.
     intros t' Ht'; exists (t', false); intuition.
@@ -865,8 +865,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H8; auto.
     inversion_clear H1; auto.
     generalize (H3 y); clear H3; intuition.
-    constructor 2; firstorder with In_color.
-    inversion_clear H1; firstorder with In_color.
+    constructor 2; firstorder using In_color.
+    inversion_clear H1; firstorder using In_color.
     (* s = Node black t0 t1 t2 *)
     simple destruct t0.
     (* s = Node black Leaf t1 t2 => Absurd *)
@@ -890,7 +890,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s = Node black (Node red t1 t2 (Node black t4 t5 t6)) t7 t8) *)
     intros.
     case (lbalance (Node red t4 t5 t6) t7 t8).
-    inversion H; unfold lt_tree in |- *; firstorder with In_color.
+    inversion H; unfold lt_tree in |- *; firstorder using In_color.
     inversion H; auto.
     inversion H; inversion H4; apply bst_color with black; auto.
     inversion H; auto.
@@ -902,7 +902,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply ME.lt_eq with t7; auto.
     inversion_clear H; apply H9; auto.
     inversion_clear H; inversion_clear H5; apply H13;
-     firstorder with In_color.
+     firstorder using In_color.
     inversion_clear H; apply X.lt_trans with t7; auto.
     constructor; intuition.
     inversion_clear H1; inversion_clear H4; trivial.
@@ -912,7 +912,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H11; trivial.
     inversion_clear H11; trivial.
     generalize (H3 y); clear H3; inversion_clear H1; intuition.
-    firstorder with In_color.
+    firstorder using In_color.
     generalize (H3 y); clear H3; inversion_clear H1; intuition.
     inversion_clear H3; intuition.
     apply InRight; apply H5; apply In_color with black; trivial.
@@ -931,8 +931,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H7; auto.
     inversion_clear H7; auto.
     generalize (H3 y); clear H3; intuition.
-    constructor 2; firstorder with In_color.
-    inversion_clear H1; firstorder with In_color.
+    constructor 2; firstorder using In_color.
+    inversion_clear H1; firstorder using In_color.
   Qed.
 
 
@@ -989,7 +989,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros.
     case (rbalance t0 t1 (Node red t3 t4 t5)).
     inversion H; auto.
-    inversion H; unfold gt_tree in |- *; firstorder with In_color.
+    inversion H; unfold gt_tree in |- *; firstorder using In_color.
     inversion H; auto.
     inversion H; apply bst_color with black; auto.
     intros t' Ht'; exists (t', false); intuition.
@@ -1000,8 +1000,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H9; auto.
     inversion_clear H1; auto.
     generalize (H3 y); clear H3; intuition.
-    constructor 3; firstorder with In_color.
-    inversion_clear H1; firstorder with In_color.
+    constructor 3; firstorder using In_color.
+    inversion_clear H1; firstorder using In_color.
     (* s = Node black t0 t1 t2 *)
     simple destruct t2.
     (* s = Node black t0 t1 Leaf => Absurd *)
@@ -1026,7 +1026,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros.
     case (rbalance t0 t1 (Node red t4 t5 t6)).
     inversion H; auto.
-    inversion H; unfold gt_tree in |- *; firstorder with In_color.
+    inversion H; unfold gt_tree in |- *; firstorder using In_color.
     inversion H; auto.
     inversion H; inversion H5; apply bst_color with black; auto.
     intros t' Ht'; exists (Node black t' t7 t8, false); intuition.
@@ -1037,7 +1037,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H; apply H10; auto.
     inversion_clear H; apply X.lt_trans with t1; auto.
     inversion_clear H; inversion_clear H8; apply H12;
-     firstorder with In_color.
+     firstorder using In_color.
     inversion_clear H; inversion_clear H4; trivial.
     constructor; intuition.
     inversion H1.
@@ -1047,7 +1047,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H10; trivial.
     inversion_clear H1; inversion_clear H5; trivial.
     generalize (H3 y); clear H3; inversion_clear H1; intuition.
-    firstorder with In_color.
+    firstorder using In_color.
     generalize (H3 y); clear H3; inversion_clear H1; intuition.
     inversion_clear H3; intuition.
     apply InLeft; apply H7; apply In_color with black; trivial.
@@ -1055,7 +1055,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros.
     case (rbalance t0 t1 (Node red t3 t4 t5)).
     inversion H; auto.
-    inversion H; unfold gt_tree in |- *; firstorder with In_color.
+    inversion H; unfold gt_tree in |- *; firstorder using In_color.
     inversion H; auto.
     inversion H; apply bst_color with black; auto.
     intros t' Ht'; exists (t', true); intuition.
@@ -1066,8 +1066,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H9; auto.
     inversion_clear H9; auto.
     generalize (H3 y); clear H3; intuition.
-    constructor 3; firstorder with In_color.
-    inversion_clear H1; firstorder with In_color.
+    constructor 3; firstorder using In_color.
+    inversion_clear H1; firstorder using In_color.
   Qed.
 
   (** [remove_min s] extracts the minimum elements of [s] and indicates
