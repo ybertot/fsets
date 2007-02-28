@@ -2133,6 +2133,30 @@ Set Firstorder Depth 5.
   Proof.
     intro s; destruct (min_elt s) as [(x,(H,_))|H]; 
        [ left; exists x | right ]; trivial.
+  Defined.
+
+  Lemma choose_equal : forall s s', Equal s s' -> 
+     match choose s, choose s' with 
+       | inleft (exist x _), inleft (exist x' _) => E.eq x x'
+       | inright _, inright _  => True
+       | _, _                        => False
+     end.
+  Proof.
+  intros; unfold choose.
+  destruct (min_elt s) as [(x,(Hx1,Hx2))|Hx]; 
+    destruct (min_elt s') as [(x',(Hx'1,Hx'2))|Hx']; simpl; auto.
+
+  destruct (E.compare x x'); auto.
+  destruct (Hx'2 x); auto.
+  rewrite <- (H x); auto.
+  destruct (Hx2 x'); auto.
+  rewrite (H x'); auto.
+  
+  destruct (Hx' x).
+  rewrite <- (H x); auto.
+
+  destruct (Hx x').
+  rewrite (H x'); auto.
   Qed.
 
   (** * Comparison *)
