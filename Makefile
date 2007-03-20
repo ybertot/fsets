@@ -74,6 +74,8 @@ COQLIBS=-I .
 VFILES=FSetRBT.v\
   FSetAVL_z.v\
   FSetAVL_dep.v\
+  FSetAVL_prog.v\
+  FSetAVL_prog_test.v\
   FMapAVL_z.v\
   extract.v\
   compute.v
@@ -86,6 +88,8 @@ GHTMLFILES=$(VFILES:.v=.g.html)
 all: FSetRBT.vo\
   FSetAVL_z.vo\
   FSetAVL_dep.vo\
+  FSetAVL_prog.vo\
+  FSetAVL_prog_test.vo\
   FMapAVL_z.vo\
   extract.vo\
   compute.vo\
@@ -158,7 +162,7 @@ PrecedenceGraph:
 	$(COQDOC) -html -g $< -o $@
 
 byte:
-	$(MAKE) all "OPT="
+	$(MAKE) all "OPT=-byte"
 
 opt:
 	$(MAKE) all "OPT=-opt"
