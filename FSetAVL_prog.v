@@ -1881,88 +1881,94 @@ Next Obligation. (* 3: postcondition about s1 *)
 Qed.
 
 Next Obligation. (* 4: postcondition about (add x2 s1) *)
- split.
- apply add_bst; auto.
- split; auto.
- intros.
- rewrite add_in; auto.
- inv avl; inv bst.
- avl_nn l2; avl_nn r2.
- rewrite (height_0 _ H1); [ | omega_max].
- rewrite (height_0 _ H2); [ | omega_max].
- intuition_in.
+  destruct H1 as [H11 [H12 [H13 H14]]].
+  split.
+  apply add_bst; auto.
+  split; auto.
+  intros.
+  rewrite add_in; auto.
+  inv avl; inv bst.
+  avl_nn l2; avl_nn r2.
+  rewrite (height_0 _ H1); [ | omega_max].
+  rewrite (height_0 _ H2); [ | omega_max].
+  intuition_in.
 Qed.
 
 Next Obligation. (* 5: precondition for (union (l1,l2')) *)
- generalize (split_avl _ x1 A2).
- generalize (split_bst _ x1 B2 A2).
- rewrite <- Heq_anonymous; simpl.
- inv avl; inv bst; intuition.
+  destruct H1 as [B1 [A1 [B2 A2]]].
+  generalize (split_avl _ x1 A2).
+  generalize (split_bst _ x1 B2 A2).
+  rewrite <- Heq_anonymous; simpl.
+  inv avl; inv bst; intuition.
 Qed.
 
 Next Obligation. (* 6: decreasing of (union (l1,l2')) *)
- assert (l2' = (split x1 (Node l2 x2 r2 h2))#1).
-   rewrite <- Heq_anonymous; auto.
- clear Heq_anonymous.
- assert (cardinal l2' <= cardinal (Node l2 x2 r2 h2))%nat.
-  subst l2'.
-  apply cardinal_subset; auto.
-  destruct (split_bst _ x1 B2 A2); auto.
-  intros y; rewrite (split_in_1 _ x1 y B2 A2); tauto.
- simpl (cardinal (Node l1 x1 r1 h1)).
+  destruct H1 as [B1 [A1 [B2 A2]]].
+  assert (l2' = (split x1 (Node l2 x2 r2 h2))#1).
+    rewrite <- Heq_anonymous; auto.
+  clear Heq_anonymous.
+  assert (cardinal l2' <= cardinal (Node l2 x2 r2 h2))%nat.
+    subst l2'.
+    apply cardinal_subset; auto.
+    destruct (split_bst _ x1 B2 A2); auto.
+    intros y; rewrite (split_in_1 _ x1 y B2 A2); tauto.
+  simpl (cardinal (Node l1 x1 r1 h1)).
  omega.
 Qed.
 
 Next Obligation. (* 7: precondition for (union (r1,r2')) *)
- generalize (split_avl _ x1 A2).
- generalize (split_bst _ x1 B2 A2).
- rewrite <- Heq_anonymous; simpl.
- inv avl; inv bst; intuition.
+  destruct H1 as [B1 [A1 [B2 A2]]].
+  generalize (split_avl _ x1 A2).
+  generalize (split_bst _ x1 B2 A2).
+  rewrite <- Heq_anonymous; simpl.
+  inv avl; inv bst; intuition.
 Qed.
 
 Next Obligation. (* 8: decreasing of (union (r1,r2')) *)
- assert (r2' = (split x1 (Node l2 x2 r2 h2))#2#2).
-   rewrite <- Heq_anonymous; auto.
- clear Heq_anonymous.
- assert (cardinal r2' <= cardinal (Node l2 x2 r2 h2))%nat.
-  subst r2'.
-  apply cardinal_subset; auto.
-  destruct (split_bst _ x1 B2 A2); auto.
-  intros y; rewrite (split_in_2 _ x1 y B2 A2); tauto.
- simpl (cardinal (Node l1 x1 r1 h1)).
- omega.
+  destruct H1 as [B1 [A1 [B2 A2]]].
+  assert (r2' = (split x1 (Node l2 x2 r2 h2))#2#2).
+    rewrite <- Heq_anonymous; auto.
+  clear Heq_anonymous.
+  assert (cardinal r2' <= cardinal (Node l2 x2 r2 h2))%nat.
+    subst r2'.
+    apply cardinal_subset; auto.
+      destruct (split_bst _ x1 B2 A2); auto.
+      intros y; rewrite (split_in_2 _ x1 y B2 A2); tauto.
+  simpl (cardinal (Node l1 x1 r1 h1)).
+  omega.
 Qed.
 
 Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2'))) *)
- do 2 destruct_call union; simpl in *.
- destruct a as (B1,(A1,(B2,A2))).
- decompose [and] a0; clear a0.
- decompose [and] a1; clear a1.
- subst x; clear union; simpl snd in *; simpl fst in *.
- rename x0 into l; rename x3 into r.
- assert (l2' = (split x1 (Node l2 x2 r2 h2))#1 
-      /\ r2' = (split x1 (Node l2 x2 r2 h2))#2#2).
-   rewrite <- Heq_anonymous; auto.
- destruct H5; subst l2' r2'; clear Heq_anonymous.
- split.
- apply join_bst; auto. 
- red; intro.
- rewrite H4; destruct 1.
- inv bst; auto.
- rewrite (split_in_1 _ x1 y B2 A2) in H5; tauto.
- red; intro.
- rewrite H7; destruct 1.
- inv bst; auto.
- rewrite (split_in_2 _ x1 y B2 A2) in H5; tauto.
- split; auto.
- intro y.
- rewrite join_in; auto.
- rewrite H4; rewrite H7; clear H4 H7.
- rewrite (split_in_1 _ x1 y B2 A2); rewrite (split_in_2 _ x1 y B2 A2).
- case (X.compare y x1); intuition_in.
+  do 2 destruct_call union; simpl in *.
+  destruct H1 as [B1 [A1 [B2 A2]]].
+  decompose [and] a; clear a.
+  decompose [and] a0; clear a0.
+  subst s; clear union; simpl snd in *; simpl fst in *.
+  rename x into l; rename x2 into r. 
+  assert (l2' = (split x1 (Node l2 r r2 h2))#1 
+    /\ r2' = (split x1 (Node l2 r r2 h2))#2#2).
+  rewrite <- Heq_anonymous; auto.
+  destruct H5; subst l2' r2'; clear Heq_anonymous.
+  split.
+  apply join_bst; auto. 
+  red; intro.
+  rewrite H4; destruct 1.
+  inv bst; auto.
+  rewrite (split_in_1 _ x1 y B2 A2) in H5; tauto.
+  red; intro.
+  rewrite H7; destruct 1.
+  inv bst; auto.
+  rewrite (split_in_2 _ x1 y B2 A2) in H5; tauto.
+  split; auto.
+  intro y.
+  rewrite join_in; auto.
+  rewrite H4; rewrite H7; clear H4 H7.
+  rewrite (split_in_1 _ x1 y B2 A2); rewrite (split_in_2 _ x1 y B2 A2).
+  case (X.compare y x1); intuition_in.
 Qed.
 
 Next Obligation. (* 10: postcondition about (add x1 s2) *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
  split.
  apply add_bst; auto.
  split; auto.
@@ -1976,6 +1982,7 @@ Next Obligation. (* 10: postcondition about (add x1 s2) *)
 Qed.
 
 Next Obligation. (* 11: precondition for (union (l1',l2)) *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
  generalize (split_avl _ x2 A1).
  generalize (split_bst _ x2 B1 A1).
  rewrite <- Heq_anonymous; simpl.
@@ -1983,6 +1990,7 @@ Next Obligation. (* 11: precondition for (union (l1',l2)) *)
 Qed.
 
 Next Obligation. (* 12: decreasing of (union (l1',l2)) *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
  assert (l1' = (split x2 (Node l1 x1 r1 h1))#1).
    rewrite <- Heq_anonymous; auto.
  clear Heq_anonymous.
@@ -1996,6 +2004,7 @@ Next Obligation. (* 12: decreasing of (union (l1',l2)) *)
 Qed.
 
 Next Obligation. (* 13: precondition for (union (r1',r2)) *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
  generalize (split_avl _ x2 A1).
  generalize (split_bst _ x2 B1 A1).
  rewrite <- Heq_anonymous; simpl.
@@ -2003,6 +2012,7 @@ Next Obligation. (* 13: precondition for (union (r1',r2)) *)
 Qed.
 
 Next Obligation. (* 14: decreasing of (union (r1',r2)) *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
  assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
    rewrite <- Heq_anonymous; auto.
  clear Heq_anonymous.
@@ -2017,31 +2027,31 @@ Qed.
 
 Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
  do 2 destruct_call union; simpl in *.
- destruct a as (B1,(A1,(B2,A2))).
+ destruct H1 as (B1,(A1,(B2,A2))).
+ decompose [and] a; clear a.
  decompose [and] a0; clear a0.
- decompose [and] a1; clear a1.
- subst x; simpl snd in *; simpl fst in *.
- clear union; rename x0 into l; rename x3 into r.
- assert (l1' = (split x2 (Node l1 x1 r1 h1))#1 
-      /\ r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
+ subst s; simpl snd in *; simpl fst in *.
+ clear union; rename x into l; rename x2 into r.
+ assert (l1' = (split r (Node l1 x1 r1 h1))#1 
+      /\ r1' = (split r (Node l1 x1 r1 h1))#2#2).
    rewrite <- Heq_anonymous; auto.
  destruct H5; subst l1' r1'; clear Heq_anonymous.
  split.
  apply join_bst; auto. 
  red; intro.
  rewrite H4; destruct 1.
- rewrite (split_in_1 _ x2 y B1 A1) in H5; tauto.
+ rewrite (split_in_1 _ r y B1 A1) in H5; tauto.
  inv bst; auto.
  red; intro.
  rewrite H7; destruct 1.
- rewrite (split_in_2 _ x2 y B1 A1) in H5; tauto.
+ rewrite (split_in_2 _ r y B1 A1) in H5; tauto.
  inv bst; auto.
  split; auto.
  intro y.
  rewrite join_in; auto.
  rewrite H4; rewrite H7; clear H4 H7.
- rewrite (split_in_1 _ x2 y B1 A1); rewrite (split_in_2 _ x2 y B1 A1).
- case (X.compare y x2); intuition_in.
+ rewrite (split_in_1 _ r y B1 A1); rewrite (split_in_2 _ r y B1 A1).
+ case (X.compare y r); intuition_in.
 Qed.
 
 (** * Subset *)
@@ -2083,7 +2093,7 @@ Next Obligation. (* post Node,Leaf *)
 Qed.
 
 Next Obligation. (* pre subset (l1,l2) *)
- inv bst; auto.
+ destruct H; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (l1,l2) *)
@@ -2091,7 +2101,7 @@ Next Obligation. (* decr subset (l1,l2) *)
 Qed.
 
 Next Obligation. (* pre subset (r1,r2) *)
- inv bst; auto.
+ destruct H0; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (r1,r2) *)
@@ -2104,19 +2114,21 @@ Next Obligation. (* post EQ + left + left *)
 Qed. 
 
 Next Obligation. (* post EQ + left + right *)
+ destruct H1.
  unfold Subset in *; swap H0; intros.
  assert (In a (Node l2 x2 r2 h2)) by auto.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post EQ + right + _ *)
+ destruct H0.
  unfold Subset in *; swap H; intros.
  assert (In a (Node l2 x2 r2 h2)) by auto.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
- inv bst; auto.
+ destruct H; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
@@ -2124,7 +2136,7 @@ Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
 Qed.
 
 Next Obligation. (* pre subset (r1,s2) *)
- split; auto; inv bst; auto.
+ destruct H0; split; auto; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (r1,s2) *)
@@ -2132,22 +2144,26 @@ Next Obligation. (* decr subset (r1,s2) *)
 Qed.
 
 Next Obligation. (* post LT + left + left *)
+ destruct H1.
  unfold Subset in *; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post LT + left + right *)
+ destruct H1.
  unfold Subset in *; swap H0; intros. 
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post LT + right + _ *)
+ destruct H0.
  unfold Subset in *; swap H; intros. 
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
+ destruct H.
  split; auto; inv bst; auto.
 Qed.
 
@@ -2156,7 +2172,7 @@ Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
 Qed.
 
 Next Obligation. (* pre subset (l1,s2) *)
- split; auto; inv bst; auto.
+ destruct H0; split; auto; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (l1,s2) *)
@@ -2164,17 +2180,17 @@ Next Obligation. (* decr subset (l1,s2) *)
 Qed.
 
 Next Obligation. (* post GT + left + left *)
- unfold Subset in *; intros.
+ destruct H1; unfold Subset in *; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post GT + left + right *)
- unfold Subset in *; swap H0; intros.
+ destruct H1; unfold Subset in *; swap H0; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post GT + right + _ *)
- unfold Subset in *; swap H; intros.
+ destruct H0; unfold Subset in *; swap H; intros.
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
@@ -2399,12 +2415,14 @@ Next Obligation. (* post More,End *)
 Qed.
 
 Next Obligation. (* pre compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
- destruct (cons_1 r1 e1) as (H,_); auto.
- destruct (cons_1 r2 e2) as (H',_); auto.
+  destruct (cons_1 r1 e1) as (H,_); auto.
+  destruct (cons_1 r2 e2) as (H',_); auto.
 Qed.
 
 Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(H,_)); auto.
  destruct (cons_1 r2 e2) as (_,(H0,_)); auto.
@@ -2412,6 +2430,416 @@ Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
 Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = EQ *)
+ assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ clear Heq_anonymous.
+ assert (cardinal r1' <= cardinal (Node l1 x1 r1 h1))%nat.
+  subst r1'.
+  apply cardinal_subset; auto.
+  destruct (split_bst _ x2 B1 A1); auto.
+  intros y; rewrite (split_in_2 _ x2 y B1 A1); tauto.
+ simpl (cardinal (Node l2 x2 r2 h2)).
+ omega.
+Qed.
+
+Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
+ do 2 destruct_call union; simpl in *.
+ destruct H1 as (B1,(A1,(B2,A2))).
+ decompose [and] a; clear a.
+ decompose [and] a0; clear a0.
+ subst s; simpl snd in *; simpl fst in *.
+ clear union; rename x into l; rename x2 into r.
+ assert (l1' = (split r (Node l1 x1 r1 h1))#1 
+      /\ r1' = (split r (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ destruct H5; subst l1' r1'; clear Heq_anonymous.
+ split.
+ apply join_bst; auto. 
+ red; intro.
+ rewrite H4; destruct 1.
+ rewrite (split_in_1 _ r y B1 A1) in H5; tauto.
+ inv bst; auto.
+ red; intro.
+ rewrite H7; destruct 1.
+ rewrite (split_in_2 _ r y B1 A1) in H5; tauto.
+ inv bst; auto.
+ split; auto.
+ intro y.
+ rewrite join_in; auto.
+ rewrite H4; rewrite H7; clear H4 H7.
+ rewrite (split_in_1 _ r y B1 A1); rewrite (split_in_2 _ r y B1 A1).
+ case (X.compare y r); intuition_in.
+Qed.
+
+(** * Subset *)
+
+Notation "a && b" := 
+ (if a then if b then left _ _ else right _ _ else right _ _).
+
+Obligations Tactic := 
+ simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
+ try clear subset; unfold cardinal2; try clear Heq_anonymous;
+ simpl fst in *; simpl snd in *; 
+ try destruct a as (B1,B2).
+
+Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2) 
+ { measure cardinal2 s }
+ : { Subset s#1 s#2 } + {~Subset s#1 s#2 } :=
+ match s with 
+  | (Leaf, Leaf) => left _ _ 
+  | (Leaf, Node _ _ _ _) => left _ _
+  | (Node _ _ _ _, Leaf) => right _ _
+  | (Node l1 x1 r1 h1, Node l2 x2 r2 h2) => 
+     match X.compare x1 x2 with 
+      | EQ _ => subset (l1,l2) && subset (r1,r2)
+      | LT _ => subset (Node l1 x1 Leaf 0, l2) && subset (r1,s#2)
+      | GT _ => subset (Node Leaf x1 r1 0, r2) && subset (l1,s#2)
+     end
+ end.
+           
+Next Obligation. (* post Leaf,Leaf *)
+ red; auto.
+Qed.
+
+Next Obligation. (* post Leaf,Node *)
+ red; intros; inv In.
+Qed.
+
+Next Obligation. (* post Node,Leaf *)
+ intro; assert (In wildcard0 Leaf) by auto; inv In.
+Qed.
+
+Next Obligation. (* pre subset (l1,l2) *)
+ destruct H; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (l1,l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,r2) *)
+ destruct H0; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (r1,r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post EQ + left + left *)
+ unfold Subset in *; intros.
+ intuition_in; constructor; order.
+Qed. 
+
+Next Obligation. (* post EQ + left + right *)
+ destruct H1.
+ unfold Subset in *; swap H0; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post EQ + right + _ *)
+ destruct H0.
+ unfold Subset in *; swap H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
+ destruct H; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,s2) *)
+ destruct H0; split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (r1,s2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post LT + left + left *)
+ destruct H1.
+ unfold Subset in *; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post LT + left + right *)
+ destruct H1.
+ unfold Subset in *; swap H0; intros. 
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post LT + right + _ *)
+ destruct H0.
+ unfold Subset in *; swap H; intros. 
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
+ destruct H.
+ split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (l1,s2) *)
+ destruct H0; split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (l1,s2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post GT + left + left *)
+ destruct H1; unfold Subset in *; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post GT + left + right *)
+ destruct H1; unfold Subset in *; swap H0; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post GT + right + _ *)
+ destruct H0; unfold Subset in *; swap H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+(** * Comparison *)
+
+(** ** Relations [eq] and [lt] over trees *)
+
+Definition eq : t -> t -> Prop := Equal.
+
+Lemma eq_refl : forall s : t, eq s s. 
+Proof.
+ unfold eq, Equal in |- *; intuition.
+Qed.
+
+Lemma eq_sym : forall s s' : t, eq s s' -> eq s' s.
+Proof.
+ unfold eq, Equal in |- *; firstorder.
+Qed.
+
+Lemma eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
+Proof.
+ unfold eq, Equal in |- *; firstorder.
+Qed.
+
+Lemma eq_L_eq :
+ forall s s' : t, eq s s' -> L.eq (elements s) (elements s').
+Proof.
+ unfold eq, Equal, L.eq, L.Equal in |- *; intros.
+ generalize (elements_in s a) (elements_in s' a).
+ firstorder.
+Qed.
+
+Lemma L_eq_eq :
+ forall s s' : t, L.eq (elements s) (elements s') -> eq s s'.
+Proof.
+ unfold eq, Equal, L.eq, L.Equal in |- *; intros.
+ generalize (elements_in s a) (elements_in s' a).
+ firstorder.
+Qed.
+Hint Resolve eq_L_eq L_eq_eq.
+
+Definition lt (s1 s2 : t) : Prop := L.lt (elements s1) (elements s2).
+
+Definition lt_trans (s s' s'' : t) (h : lt s s') 
+  (h' : lt s' s'') : lt s s'' := L.lt_trans h h'.
+
+Lemma lt_not_eq : forall s s' : t, bst s -> bst s' -> lt s s' -> ~ eq s s'.
+Proof.
+ unfold lt in |- *; intros; intro.
+ apply L.lt_not_eq with (s := elements s) (s' := elements s'); auto.
+Qed.
+
+(** * A new comparison algorithm suggested by Xavier Leroy *)
+
+(** ** Enumeration of the elements of a tree *)
+
+Inductive enumeration : Set :=
+ | End : enumeration
+ | More : elt -> tree -> enumeration -> enumeration.
+
+(** [flatten_e e] returns the list of elements of [e] i.e. the list
+    of elements actually compared *)
+ 
+Fixpoint flatten_e (e : enumeration) : list elt := match e with
+  | End => nil
+  | More x t r => x :: elements t ++ flatten_e r
+ end.
+
+(** [sorted_e e] expresses that elements in the enumeration [e] are
+    sorted, and that all trees in [e] are binary search trees. *)
+
+Inductive In_e (x:elt) : enumeration -> Prop :=
+  | InEHd1 :
+      forall (y : elt) (s : tree) (e : enumeration),
+      X.eq x y -> In_e x (More y s e)
+  | InEHd2 :
+      forall (y : elt) (s : tree) (e : enumeration),
+      In x s -> In_e x (More y s e)
+  | InETl :
+      forall (y : elt) (s : tree) (e : enumeration),
+      In_e x e -> In_e x (More y s e).
+
+Inductive sorted_e : enumeration -> Prop :=
+  | SortedEEnd : sorted_e End
+  | SortedEMore :
+      forall (x : elt) (s : tree) (e : enumeration),
+      bst s ->
+      (gt_tree x s) ->
+      sorted_e e ->
+      (forall y : elt, In_e y e -> X.lt x y) ->
+      (forall y : elt,
+       In y s -> forall z : elt, In_e z e -> X.lt y z) ->
+      sorted_e (More x s e).
+
+Hint Constructors In_e sorted_e.
+
+Lemma elements_app :
+ forall (s : tree) (acc : list elt), elements_aux acc s = elements s ++ acc.
+Proof.
+ simple induction s; simpl in |- *; intuition.
+ rewrite H0.
+ rewrite H.
+ unfold elements; simpl.
+ do 2 rewrite H.
+ rewrite H0.
+ repeat rewrite <- app_nil_end.
+ repeat rewrite app_ass; auto.
+Qed.
+
+Lemma compare_flatten_1 :
+ forall (t0 t2 : tree) (t1 : elt) (z : int) (l : list elt),
+ elements t0 ++ t1 :: elements t2 ++ l =
+ elements (Node t0 t1 t2 z) ++ l.
+Proof.
+ simpl in |- *; unfold elements in |- *; simpl in |- *; intuition.
+ repeat rewrite elements_app.
+ repeat rewrite <- app_nil_end.
+ repeat rewrite app_ass; auto.
+Qed.
+
+(** key lemma for correctness *)
+
+Lemma flatten_e_elements :
+ forall (x : elt) (l r : tree) (z : int) (e : enumeration),
+ elements l ++ flatten_e (More x r e) = elements (Node l x r z) ++ flatten_e e.
+Proof.
+ intros; simpl.
+ apply compare_flatten_1.
+Qed.
+
+(** termination of [compare_aux] *)
+
+Open Scope nat_scope.
+ 
+Fixpoint measure_e_t (s : tree) : nat := match s with
+  | Leaf => 0
+  | Node l _ r _ => 1 + measure_e_t l + measure_e_t r
+ end.
+
+Fixpoint measure_e (e : enumeration) : nat := match e with
+  | End => 0
+  | More _ s r => 1 + measure_e_t s + measure_e r
+ end.
+
+(** [cons t e] adds the elements of tree [t] on the head of 
+    enumeration [e]. *)
+
+Fixpoint cons s e {struct s} : enumeration := 
+ match s with 
+  | Leaf => e
+  | Node l x r h => cons l (More x r e)
+ end.
+
+Lemma cons_1 : forall s e, 
+  bst s -> sorted_e e ->
+  (forall (x y : elt), In x s -> In_e y e -> X.lt x y) ->
+  sorted_e (cons s e) /\ 
+  measure_e (cons s e) = measure_e_t s + measure_e e /\
+  flatten_e (cons s e) = elements s ++ flatten_e e.
+Proof.
+ induction s; simpl; auto.
+ clear IHs2; intros.
+ inv bst.
+ destruct (IHs1 (More t s2 e)); clear IHs1; intuition.
+ inversion_clear H6; subst; auto; order.
+ simpl in *; omega.
+ rewrite H8.
+ apply flatten_e_elements.
+Qed.
+
+Lemma l_eq_cons :
+ forall (l1 l2 : list elt) (x y : elt),
+ X.eq x y -> L.eq l1 l2 -> L.eq (x :: l1) (y :: l2).
+Proof.
+ unfold L.eq, L.Equal in |- *; intuition.
+ inversion_clear H1; generalize (H0 a); clear H0; intuition.
+ apply InA_eqA with x; eauto.
+ inversion_clear H1; generalize (H0 a); clear H0; intuition.
+ apply InA_eqA with y; eauto.
+Qed.
+
+Definition measure2 e := measure_e e#1 + measure_e e#2.
+
+Obligations Tactic := 
+ simpl ; intros ; destruct_exists ;  
+ try clear Heq_anonymous0; try clear Heq_anonymous compare_aux; 
+ unfold measure2; simpl in *; 
+ try destruct a as (S1,S2); try subst; simpl in *.
+
+Program Fixpoint compare_aux 
+ (e:enumeration*enumeration|sorted_e e#1 /\ sorted_e e#2)
+ { measure measure2 e } : 
+ Compare L.lt L.eq (flatten_e e#1) (flatten_e e#2) 
+ :=
+ match e with 
+ | (End,End) => EQ _ _
+ | (End,More _ _ _) => LT _ _ 
+ | (More _ _ _, End) => GT _ _ 
+ | (More x1 r1 e1, More x2 r2 e2) => 
+       match X.compare x1 x2 with 
+        | EQ _ => match compare_aux (cons r1 e1, cons r2 e2) with 
+             | EQ _ => EQ _ _
+             | LT _ => LT _ _
+             | GT _ => GT _ _
+             end
+        | LT _ => LT _ _ 
+        | GT _ => GT _ _ 
+       end
+ end.
+
+Next Obligation. (* post End,End *)
+ unfold L.eq, L.Equal; intuition.
+Qed.
+
+Next Obligation. (* post End,More *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* post More,End *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* pre compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
+ inversion S1; inversion S2; subst.
+  destruct (cons_1 r1 e1) as (H,_); auto.
+  destruct (cons_1 r2 e2) as (H',_); auto.
+Qed.
+
+Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
@@ -2420,6 +2848,417 @@ Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = EQ *)
 Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
+ assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ clear Heq_anonymous.
+ assert (cardinal r1' <= cardinal (Node l1 x1 r1 h1))%nat.
+  subst r1'.
+  apply cardinal_subset; auto.
+  destruct (split_bst _ x2 B1 A1); auto.
+  intros y; rewrite (split_in_2 _ x2 y B1 A1); tauto.
+ simpl (cardinal (Node l2 x2 r2 h2)).
+ omega.
+Qed.
+
+Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
+ do 2 destruct_call union; simpl in *.
+ destruct H1 as (B1,(A1,(B2,A2))).
+ decompose [and] a; clear a.
+ decompose [and] a0; clear a0.
+ subst s; simpl snd in *; simpl fst in *.
+ clear union; rename x into l; rename x2 into r.
+ assert (l1' = (split r (Node l1 x1 r1 h1))#1 
+      /\ r1' = (split r (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ destruct H5; subst l1' r1'; clear Heq_anonymous.
+ split.
+ apply join_bst; auto. 
+ red; intro.
+ rewrite H4; destruct 1.
+ rewrite (split_in_1 _ r y B1 A1) in H5; tauto.
+ inv bst; auto.
+ red; intro.
+ rewrite H7; destruct 1.
+ rewrite (split_in_2 _ r y B1 A1) in H5; tauto.
+ inv bst; auto.
+ split; auto.
+ intro y.
+ rewrite join_in; auto.
+ rewrite H4; rewrite H7; clear H4 H7.
+ rewrite (split_in_1 _ r y B1 A1); rewrite (split_in_2 _ r y B1 A1).
+ case (X.compare y r); intuition_in.
+Qed.
+
+(** * Subset *)
+
+Notation "a && b" := 
+ (if a then if b then left _ _ else right _ _ else right _ _).
+
+Obligations Tactic := 
+ simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
+ try clear subset; unfold cardinal2; try clear Heq_anonymous;
+ simpl fst in *; simpl snd in *; 
+ try destruct a as (B1,B2).
+
+Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2) 
+ { measure cardinal2 s }
+ : { Subset s#1 s#2 } + {~Subset s#1 s#2 } :=
+ match s with 
+  | (Leaf, Leaf) => left _ _ 
+  | (Leaf, Node _ _ _ _) => left _ _
+  | (Node _ _ _ _, Leaf) => right _ _
+  | (Node l1 x1 r1 h1, Node l2 x2 r2 h2) => 
+     match X.compare x1 x2 with 
+      | EQ _ => subset (l1,l2) && subset (r1,r2)
+      | LT _ => subset (Node l1 x1 Leaf 0, l2) && subset (r1,s#2)
+      | GT _ => subset (Node Leaf x1 r1 0, r2) && subset (l1,s#2)
+     end
+ end.
+           
+Next Obligation. (* post Leaf,Leaf *)
+ red; auto.
+Qed.
+
+Next Obligation. (* post Leaf,Node *)
+ red; intros; inv In.
+Qed.
+
+Next Obligation. (* post Node,Leaf *)
+ intro; assert (In wildcard0 Leaf) by auto; inv In.
+Qed.
+
+Next Obligation. (* pre subset (l1,l2) *)
+ destruct H; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (l1,l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,r2) *)
+ destruct H0; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (r1,r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post EQ + left + left *)
+ unfold Subset in *; intros.
+ intuition_in; constructor; order.
+Qed. 
+
+Next Obligation. (* post EQ + left + right *)
+ destruct H1.
+ unfold Subset in *; swap H0; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post EQ + right + _ *)
+ destruct H0.
+ unfold Subset in *; swap H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
+ destruct H; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,s2) *)
+ destruct H0; split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (r1,s2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post LT + left + left *)
+ destruct H1.
+ unfold Subset in *; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post LT + left + right *)
+ destruct H1.
+ unfold Subset in *; swap H0; intros. 
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post LT + right + _ *)
+ destruct H0.
+ unfold Subset in *; swap H; intros. 
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
+ destruct H.
+ split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (l1,s2) *)
+ destruct H0; split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (l1,s2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post GT + left + left *)
+ destruct H1; unfold Subset in *; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post GT + left + right *)
+ destruct H1; unfold Subset in *; swap H0; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post GT + right + _ *)
+ destruct H0; unfold Subset in *; swap H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+(** * Comparison *)
+
+(** ** Relations [eq] and [lt] over trees *)
+
+Definition eq : t -> t -> Prop := Equal.
+
+Lemma eq_refl : forall s : t, eq s s. 
+Proof.
+ unfold eq, Equal in |- *; intuition.
+Qed.
+
+Lemma eq_sym : forall s s' : t, eq s s' -> eq s' s.
+Proof.
+ unfold eq, Equal in |- *; firstorder.
+Qed.
+
+Lemma eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
+Proof.
+ unfold eq, Equal in |- *; firstorder.
+Qed.
+
+Lemma eq_L_eq :
+ forall s s' : t, eq s s' -> L.eq (elements s) (elements s').
+Proof.
+ unfold eq, Equal, L.eq, L.Equal in |- *; intros.
+ generalize (elements_in s a) (elements_in s' a).
+ firstorder.
+Qed.
+
+Lemma L_eq_eq :
+ forall s s' : t, L.eq (elements s) (elements s') -> eq s s'.
+Proof.
+ unfold eq, Equal, L.eq, L.Equal in |- *; intros.
+ generalize (elements_in s a) (elements_in s' a).
+ firstorder.
+Qed.
+Hint Resolve eq_L_eq L_eq_eq.
+
+Definition lt (s1 s2 : t) : Prop := L.lt (elements s1) (elements s2).
+
+Definition lt_trans (s s' s'' : t) (h : lt s s') 
+  (h' : lt s' s'') : lt s s'' := L.lt_trans h h'.
+
+Lemma lt_not_eq : forall s s' : t, bst s -> bst s' -> lt s s' -> ~ eq s s'.
+Proof.
+ unfold lt in |- *; intros; intro.
+ apply L.lt_not_eq with (s := elements s) (s' := elements s'); auto.
+Qed.
+
+(** * A new comparison algorithm suggested by Xavier Leroy *)
+
+(** ** Enumeration of the elements of a tree *)
+
+Inductive enumeration : Set :=
+ | End : enumeration
+ | More : elt -> tree -> enumeration -> enumeration.
+
+(** [flatten_e e] returns the list of elements of [e] i.e. the list
+    of elements actually compared *)
+ 
+Fixpoint flatten_e (e : enumeration) : list elt := match e with
+  | End => nil
+  | More x t r => x :: elements t ++ flatten_e r
+ end.
+
+(** [sorted_e e] expresses that elements in the enumeration [e] are
+    sorted, and that all trees in [e] are binary search trees. *)
+
+Inductive In_e (x:elt) : enumeration -> Prop :=
+  | InEHd1 :
+      forall (y : elt) (s : tree) (e : enumeration),
+      X.eq x y -> In_e x (More y s e)
+  | InEHd2 :
+      forall (y : elt) (s : tree) (e : enumeration),
+      In x s -> In_e x (More y s e)
+  | InETl :
+      forall (y : elt) (s : tree) (e : enumeration),
+      In_e x e -> In_e x (More y s e).
+
+Inductive sorted_e : enumeration -> Prop :=
+  | SortedEEnd : sorted_e End
+  | SortedEMore :
+      forall (x : elt) (s : tree) (e : enumeration),
+      bst s ->
+      (gt_tree x s) ->
+      sorted_e e ->
+      (forall y : elt, In_e y e -> X.lt x y) ->
+      (forall y : elt,
+       In y s -> forall z : elt, In_e z e -> X.lt y z) ->
+      sorted_e (More x s e).
+
+Hint Constructors In_e sorted_e.
+
+Lemma elements_app :
+ forall (s : tree) (acc : list elt), elements_aux acc s = elements s ++ acc.
+Proof.
+ simple induction s; simpl in |- *; intuition.
+ rewrite H0.
+ rewrite H.
+ unfold elements; simpl.
+ do 2 rewrite H.
+ rewrite H0.
+ repeat rewrite <- app_nil_end.
+ repeat rewrite app_ass; auto.
+Qed.
+
+Lemma compare_flatten_1 :
+ forall (t0 t2 : tree) (t1 : elt) (z : int) (l : list elt),
+ elements t0 ++ t1 :: elements t2 ++ l =
+ elements (Node t0 t1 t2 z) ++ l.
+Proof.
+ simpl in |- *; unfold elements in |- *; simpl in |- *; intuition.
+ repeat rewrite elements_app.
+ repeat rewrite <- app_nil_end.
+ repeat rewrite app_ass; auto.
+Qed.
+
+(** key lemma for correctness *)
+
+Lemma flatten_e_elements :
+ forall (x : elt) (l r : tree) (z : int) (e : enumeration),
+ elements l ++ flatten_e (More x r e) = elements (Node l x r z) ++ flatten_e e.
+Proof.
+ intros; simpl.
+ apply compare_flatten_1.
+Qed.
+
+(** termination of [compare_aux] *)
+
+Open Scope nat_scope.
+ 
+Fixpoint measure_e_t (s : tree) : nat := match s with
+  | Leaf => 0
+  | Node l _ r _ => 1 + measure_e_t l + measure_e_t r
+ end.
+
+Fixpoint measure_e (e : enumeration) : nat := match e with
+  | End => 0
+  | More _ s r => 1 + measure_e_t s + measure_e r
+ end.
+
+(** [cons t e] adds the elements of tree [t] on the head of 
+    enumeration [e]. *)
+
+Fixpoint cons s e {struct s} : enumeration := 
+ match s with 
+  | Leaf => e
+  | Node l x r h => cons l (More x r e)
+ end.
+
+Lemma cons_1 : forall s e, 
+  bst s -> sorted_e e ->
+  (forall (x y : elt), In x s -> In_e y e -> X.lt x y) ->
+  sorted_e (cons s e) /\ 
+  measure_e (cons s e) = measure_e_t s + measure_e e /\
+  flatten_e (cons s e) = elements s ++ flatten_e e.
+Proof.
+ induction s; simpl; auto.
+ clear IHs2; intros.
+ inv bst.
+ destruct (IHs1 (More t s2 e)); clear IHs1; intuition.
+ inversion_clear H6; subst; auto; order.
+ simpl in *; omega.
+ rewrite H8.
+ apply flatten_e_elements.
+Qed.
+
+Lemma l_eq_cons :
+ forall (l1 l2 : list elt) (x y : elt),
+ X.eq x y -> L.eq l1 l2 -> L.eq (x :: l1) (y :: l2).
+Proof.
+ unfold L.eq, L.Equal in |- *; intuition.
+ inversion_clear H1; generalize (H0 a); clear H0; intuition.
+ apply InA_eqA with x; eauto.
+ inversion_clear H1; generalize (H0 a); clear H0; intuition.
+ apply InA_eqA with y; eauto.
+Qed.
+
+Definition measure2 e := measure_e e#1 + measure_e e#2.
+
+Obligations Tactic := 
+ simpl ; intros ; destruct_exists ;  
+ try clear Heq_anonymous0; try clear Heq_anonymous compare_aux; 
+ unfold measure2; simpl in *; 
+ try destruct a as (S1,S2); try subst; simpl in *.
+
+Program Fixpoint compare_aux 
+ (e:enumeration*enumeration|sorted_e e#1 /\ sorted_e e#2)
+ { measure measure2 e } : 
+ Compare L.lt L.eq (flatten_e e#1) (flatten_e e#2) 
+ :=
+ match e with 
+ | (End,End) => EQ _ _
+ | (End,More _ _ _) => LT _ _ 
+ | (More _ _ _, End) => GT _ _ 
+ | (More x1 r1 e1, More x2 r2 e2) => 
+       match X.compare x1 x2 with 
+        | EQ _ => match compare_aux (cons r1 e1, cons r2 e2) with 
+             | EQ _ => EQ _ _
+             | LT _ => LT _ _
+             | GT _ => GT _ _
+             end
+        | LT _ => LT _ _ 
+        | GT _ => GT _ _ 
+       end
+ end.
+
+Next Obligation. (* post End,End *)
+ unfold L.eq, L.Equal; intuition.
+Qed.
+
+Next Obligation. (* post End,More *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* post More,End *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* pre compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
+ inversion S1; inversion S2; subst.
+  destruct (cons_1 r1 e1) as (H,_); auto.
+  destruct (cons_1 r2 e2) as (H',_); auto.
+Qed.
+
+Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
@@ -2428,6 +3267,417 @@ Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
 Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = GT *)
+ destruct H1 as [B1 [A1 [B2 A2]]].
+ assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ clear Heq_anonymous.
+ assert (cardinal r1' <= cardinal (Node l1 x1 r1 h1))%nat.
+  subst r1'.
+  apply cardinal_subset; auto.
+  destruct (split_bst _ x2 B1 A1); auto.
+  intros y; rewrite (split_in_2 _ x2 y B1 A1); tauto.
+ simpl (cardinal (Node l2 x2 r2 h2)).
+ omega.
+Qed.
+
+Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
+ do 2 destruct_call union; simpl in *.
+ destruct H1 as (B1,(A1,(B2,A2))).
+ decompose [and] a; clear a.
+ decompose [and] a0; clear a0.
+ subst s; simpl snd in *; simpl fst in *.
+ clear union; rename x into l; rename x2 into r.
+ assert (l1' = (split r (Node l1 x1 r1 h1))#1 
+      /\ r1' = (split r (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ destruct H5; subst l1' r1'; clear Heq_anonymous.
+ split.
+ apply join_bst; auto. 
+ red; intro.
+ rewrite H4; destruct 1.
+ rewrite (split_in_1 _ r y B1 A1) in H5; tauto.
+ inv bst; auto.
+ red; intro.
+ rewrite H7; destruct 1.
+ rewrite (split_in_2 _ r y B1 A1) in H5; tauto.
+ inv bst; auto.
+ split; auto.
+ intro y.
+ rewrite join_in; auto.
+ rewrite H4; rewrite H7; clear H4 H7.
+ rewrite (split_in_1 _ r y B1 A1); rewrite (split_in_2 _ r y B1 A1).
+ case (X.compare y r); intuition_in.
+Qed.
+
+(** * Subset *)
+
+Notation "a && b" := 
+ (if a then if b then left _ _ else right _ _ else right _ _).
+
+Obligations Tactic := 
+ simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
+ try clear subset; unfold cardinal2; try clear Heq_anonymous;
+ simpl fst in *; simpl snd in *; 
+ try destruct a as (B1,B2).
+
+Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2) 
+ { measure cardinal2 s }
+ : { Subset s#1 s#2 } + {~Subset s#1 s#2 } :=
+ match s with 
+  | (Leaf, Leaf) => left _ _ 
+  | (Leaf, Node _ _ _ _) => left _ _
+  | (Node _ _ _ _, Leaf) => right _ _
+  | (Node l1 x1 r1 h1, Node l2 x2 r2 h2) => 
+     match X.compare x1 x2 with 
+      | EQ _ => subset (l1,l2) && subset (r1,r2)
+      | LT _ => subset (Node l1 x1 Leaf 0, l2) && subset (r1,s#2)
+      | GT _ => subset (Node Leaf x1 r1 0, r2) && subset (l1,s#2)
+     end
+ end.
+           
+Next Obligation. (* post Leaf,Leaf *)
+ red; auto.
+Qed.
+
+Next Obligation. (* post Leaf,Node *)
+ red; intros; inv In.
+Qed.
+
+Next Obligation. (* post Node,Leaf *)
+ intro; assert (In wildcard0 Leaf) by auto; inv In.
+Qed.
+
+Next Obligation. (* pre subset (l1,l2) *)
+ destruct H; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (l1,l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,r2) *)
+ destruct H0; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (r1,r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post EQ + left + left *)
+ unfold Subset in *; intros.
+ intuition_in; constructor; order.
+Qed. 
+
+Next Obligation. (* post EQ + left + right *)
+ destruct H1.
+ unfold Subset in *; swap H0; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post EQ + right + _ *)
+ destruct H0.
+ unfold Subset in *; swap H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
+ destruct H; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,s2) *)
+ destruct H0; split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (r1,s2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post LT + left + left *)
+ destruct H1.
+ unfold Subset in *; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post LT + left + right *)
+ destruct H1.
+ unfold Subset in *; swap H0; intros. 
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post LT + right + _ *)
+ destruct H0.
+ unfold Subset in *; swap H; intros. 
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
+ destruct H.
+ split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (l1,s2) *)
+ destruct H0; split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (l1,s2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* post GT + left + left *)
+ destruct H1; unfold Subset in *; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post GT + left + right *)
+ destruct H1; unfold Subset in *; swap H0; intros.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* post GT + right + _ *)
+ destruct H0; unfold Subset in *; swap H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+(** * Comparison *)
+
+(** ** Relations [eq] and [lt] over trees *)
+
+Definition eq : t -> t -> Prop := Equal.
+
+Lemma eq_refl : forall s : t, eq s s. 
+Proof.
+ unfold eq, Equal in |- *; intuition.
+Qed.
+
+Lemma eq_sym : forall s s' : t, eq s s' -> eq s' s.
+Proof.
+ unfold eq, Equal in |- *; firstorder.
+Qed.
+
+Lemma eq_trans : forall s s' s'' : t, eq s s' -> eq s' s'' -> eq s s''.
+Proof.
+ unfold eq, Equal in |- *; firstorder.
+Qed.
+
+Lemma eq_L_eq :
+ forall s s' : t, eq s s' -> L.eq (elements s) (elements s').
+Proof.
+ unfold eq, Equal, L.eq, L.Equal in |- *; intros.
+ generalize (elements_in s a) (elements_in s' a).
+ firstorder.
+Qed.
+
+Lemma L_eq_eq :
+ forall s s' : t, L.eq (elements s) (elements s') -> eq s s'.
+Proof.
+ unfold eq, Equal, L.eq, L.Equal in |- *; intros.
+ generalize (elements_in s a) (elements_in s' a).
+ firstorder.
+Qed.
+Hint Resolve eq_L_eq L_eq_eq.
+
+Definition lt (s1 s2 : t) : Prop := L.lt (elements s1) (elements s2).
+
+Definition lt_trans (s s' s'' : t) (h : lt s s') 
+  (h' : lt s' s'') : lt s s'' := L.lt_trans h h'.
+
+Lemma lt_not_eq : forall s s' : t, bst s -> bst s' -> lt s s' -> ~ eq s s'.
+Proof.
+ unfold lt in |- *; intros; intro.
+ apply L.lt_not_eq with (s := elements s) (s' := elements s'); auto.
+Qed.
+
+(** * A new comparison algorithm suggested by Xavier Leroy *)
+
+(** ** Enumeration of the elements of a tree *)
+
+Inductive enumeration : Set :=
+ | End : enumeration
+ | More : elt -> tree -> enumeration -> enumeration.
+
+(** [flatten_e e] returns the list of elements of [e] i.e. the list
+    of elements actually compared *)
+ 
+Fixpoint flatten_e (e : enumeration) : list elt := match e with
+  | End => nil
+  | More x t r => x :: elements t ++ flatten_e r
+ end.
+
+(** [sorted_e e] expresses that elements in the enumeration [e] are
+    sorted, and that all trees in [e] are binary search trees. *)
+
+Inductive In_e (x:elt) : enumeration -> Prop :=
+  | InEHd1 :
+      forall (y : elt) (s : tree) (e : enumeration),
+      X.eq x y -> In_e x (More y s e)
+  | InEHd2 :
+      forall (y : elt) (s : tree) (e : enumeration),
+      In x s -> In_e x (More y s e)
+  | InETl :
+      forall (y : elt) (s : tree) (e : enumeration),
+      In_e x e -> In_e x (More y s e).
+
+Inductive sorted_e : enumeration -> Prop :=
+  | SortedEEnd : sorted_e End
+  | SortedEMore :
+      forall (x : elt) (s : tree) (e : enumeration),
+      bst s ->
+      (gt_tree x s) ->
+      sorted_e e ->
+      (forall y : elt, In_e y e -> X.lt x y) ->
+      (forall y : elt,
+       In y s -> forall z : elt, In_e z e -> X.lt y z) ->
+      sorted_e (More x s e).
+
+Hint Constructors In_e sorted_e.
+
+Lemma elements_app :
+ forall (s : tree) (acc : list elt), elements_aux acc s = elements s ++ acc.
+Proof.
+ simple induction s; simpl in |- *; intuition.
+ rewrite H0.
+ rewrite H.
+ unfold elements; simpl.
+ do 2 rewrite H.
+ rewrite H0.
+ repeat rewrite <- app_nil_end.
+ repeat rewrite app_ass; auto.
+Qed.
+
+Lemma compare_flatten_1 :
+ forall (t0 t2 : tree) (t1 : elt) (z : int) (l : list elt),
+ elements t0 ++ t1 :: elements t2 ++ l =
+ elements (Node t0 t1 t2 z) ++ l.
+Proof.
+ simpl in |- *; unfold elements in |- *; simpl in |- *; intuition.
+ repeat rewrite elements_app.
+ repeat rewrite <- app_nil_end.
+ repeat rewrite app_ass; auto.
+Qed.
+
+(** key lemma for correctness *)
+
+Lemma flatten_e_elements :
+ forall (x : elt) (l r : tree) (z : int) (e : enumeration),
+ elements l ++ flatten_e (More x r e) = elements (Node l x r z) ++ flatten_e e.
+Proof.
+ intros; simpl.
+ apply compare_flatten_1.
+Qed.
+
+(** termination of [compare_aux] *)
+
+Open Scope nat_scope.
+ 
+Fixpoint measure_e_t (s : tree) : nat := match s with
+  | Leaf => 0
+  | Node l _ r _ => 1 + measure_e_t l + measure_e_t r
+ end.
+
+Fixpoint measure_e (e : enumeration) : nat := match e with
+  | End => 0
+  | More _ s r => 1 + measure_e_t s + measure_e r
+ end.
+
+(** [cons t e] adds the elements of tree [t] on the head of 
+    enumeration [e]. *)
+
+Fixpoint cons s e {struct s} : enumeration := 
+ match s with 
+  | Leaf => e
+  | Node l x r h => cons l (More x r e)
+ end.
+
+Lemma cons_1 : forall s e, 
+  bst s -> sorted_e e ->
+  (forall (x y : elt), In x s -> In_e y e -> X.lt x y) ->
+  sorted_e (cons s e) /\ 
+  measure_e (cons s e) = measure_e_t s + measure_e e /\
+  flatten_e (cons s e) = elements s ++ flatten_e e.
+Proof.
+ induction s; simpl; auto.
+ clear IHs2; intros.
+ inv bst.
+ destruct (IHs1 (More t s2 e)); clear IHs1; intuition.
+ inversion_clear H6; subst; auto; order.
+ simpl in *; omega.
+ rewrite H8.
+ apply flatten_e_elements.
+Qed.
+
+Lemma l_eq_cons :
+ forall (l1 l2 : list elt) (x y : elt),
+ X.eq x y -> L.eq l1 l2 -> L.eq (x :: l1) (y :: l2).
+Proof.
+ unfold L.eq, L.Equal in |- *; intuition.
+ inversion_clear H1; generalize (H0 a); clear H0; intuition.
+ apply InA_eqA with x; eauto.
+ inversion_clear H1; generalize (H0 a); clear H0; intuition.
+ apply InA_eqA with y; eauto.
+Qed.
+
+Definition measure2 e := measure_e e#1 + measure_e e#2.
+
+Obligations Tactic := 
+ simpl ; intros ; destruct_exists ;  
+ try clear Heq_anonymous0; try clear Heq_anonymous compare_aux; 
+ unfold measure2; simpl in *; 
+ try destruct a as (S1,S2); try subst; simpl in *.
+
+Program Fixpoint compare_aux 
+ (e:enumeration*enumeration|sorted_e e#1 /\ sorted_e e#2)
+ { measure measure2 e } : 
+ Compare L.lt L.eq (flatten_e e#1) (flatten_e e#2) 
+ :=
+ match e with 
+ | (End,End) => EQ _ _
+ | (End,More _ _ _) => LT _ _ 
+ | (More _ _ _, End) => GT _ _ 
+ | (More x1 r1 e1, More x2 r2 e2) => 
+       match X.compare x1 x2 with 
+        | EQ _ => match compare_aux (cons r1 e1, cons r2 e2) with 
+             | EQ _ => EQ _ _
+             | LT _ => LT _ _
+             | GT _ => GT _ _
+             end
+        | LT _ => LT _ _ 
+        | GT _ => GT _ _ 
+       end
+ end.
+
+Next Obligation. (* post End,End *)
+ unfold L.eq, L.Equal; intuition.
+Qed.
+
+Next Obligation. (* post End,More *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* post More,End *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* pre compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
+ inversion S1; inversion S2; subst.
+  destruct (cons_1 r1 e1) as (H,_); auto.
+  destruct (cons_1 r2 e2) as (H',_); auto.
+Qed.
+
+Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
+ destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
