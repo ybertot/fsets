@@ -2411,7 +2411,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   Module L := Raw E.
 
-  Fixpoint fold_tree (A : Set) (f : elt -> A -> A) 
+  Fixpoint fold_tree (A : Type) (f : elt -> A -> A) 
    (s : tree) {struct s} : A -> A := fun a => 
     match s with
     | Leaf => a
@@ -2419,12 +2419,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     end.
   Implicit Arguments fold_tree [A].
 
-  Definition fold_tree' (A : Set) (f : elt -> A -> A) 
+  Definition fold_tree' (A : Type) (f : elt -> A -> A) 
     (s : tree) := L.fold f (elements_tree s).
   Implicit Arguments fold_tree' [A].
 
   Lemma fold_tree_equiv_aux :
-   forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
+   forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
    L.fold f (elements_tree_aux acc s) a = 
    L.fold f acc (fold_tree f s a).
   Proof.
@@ -2437,7 +2437,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Lemma fold_tree_equiv :
-   forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A),
+   forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A),
    fold_tree f s a = fold_tree' f s a.
   Proof.
   unfold fold_tree', elements_tree in |- *. 
@@ -2448,7 +2448,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Definition fold :
-    forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
+    forall (A : Type) (f : elt -> A -> A) (s : t) (i : A),
     {r : A | let (l,_) := elements s in 
                   r = fold_left (fun a e => f e a) l i}. 
   Proof.

@@ -1926,7 +1926,7 @@ Set Firstorder Depth 5.
 
   (** * Fold *)
 
-  Fixpoint fold_tree (A : Set) (f : elt -> A -> A) 
+  Fixpoint fold_tree (A : Type) (f : elt -> A -> A) 
    (s : tree) {struct s} : A -> A := fun a => 
     match s with
     | Leaf => a
@@ -1934,12 +1934,12 @@ Set Firstorder Depth 5.
     end.
   Implicit Arguments fold_tree [A].
 
-  Definition fold_tree' (A : Set) (f : elt -> A -> A) 
+  Definition fold_tree' (A : Type) (f : elt -> A -> A) 
     (s : tree) := Lists.Raw.fold f (elements_tree s).
   Implicit Arguments fold_tree' [A].
 
   Lemma fold_tree_equiv_aux :
-   forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
+   forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
    Lists.Raw.fold f (elements_tree_aux acc s) a =
    Lists.Raw.fold f acc (fold_tree f s a).
   Proof.
@@ -1953,7 +1953,7 @@ Set Firstorder Depth 5.
   Qed.
 
   Lemma fold_tree_equiv :
-   forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A),
+   forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A),
    fold_tree f s a = fold_tree' f s a.
   Proof.
   unfold fold_tree', elements_tree in |- *. 
@@ -1962,7 +1962,7 @@ Set Firstorder Depth 5.
   Qed.
 
   Definition fold :
-    forall (A : Set) (f : elt -> A -> A) (s : t) (i : A),
+    forall (A : Type) (f : elt -> A -> A) (s : t) (i : A),
     {r : A | let (l,_) := elements s in 
                   r = fold_left (fun a e => f e a) l i}.
   Proof.

@@ -1734,19 +1734,19 @@ End F.
 
 Module L := FSetList.Raw X.
 
-Fixpoint fold (A : Set) (f : elt -> A -> A)(s : tree) {struct s} : A -> A := 
+Fixpoint fold (A : Type) (f : elt -> A -> A)(s : tree) {struct s} : A -> A := 
  fun a => match s with
   | Leaf => a
   | Node l x r _ => fold A f r (f x (fold A f l a))
  end.
 Implicit Arguments fold [A].
 
-Definition fold' (A : Set) (f : elt -> A -> A)(s : tree) := 
+Definition fold' (A : Type) (f : elt -> A -> A)(s : tree) := 
   L.fold f (elements s).
 Implicit Arguments fold' [A].
 
 Lemma fold_equiv_aux :
- forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
+ forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
  L.fold f (elements_aux acc s) a = L.fold f acc (fold f s a).
 Proof.
  simple induction s.
@@ -1758,7 +1758,7 @@ Proof.
 Qed.
 
 Lemma fold_equiv :
- forall (A : Set) (s : tree) (f : elt -> A -> A) (a : A),
+ forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A),
  fold f s a = fold' f s a.
 Proof.
  unfold fold', elements in |- *. 
@@ -1769,7 +1769,7 @@ Proof.
 Qed.
 
 Lemma fold_1 : 
- forall (s:t)(Hs:bst s)(A : Set)(f : elt -> A -> A)(i : A),
+ forall (s:t)(Hs:bst s)(A : Type)(f : elt -> A -> A)(i : A),
  fold f s i = fold_left (fun a e => f e a) (elements s) i.
 Proof.
  intros.
@@ -2650,7 +2650,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Definition min_elt s := min_elt s.
  Definition max_elt s := max_elt s.
  Definition choose s := choose s.
- Definition fold (B : Set) (f : elt -> B -> B) s := fold f s. 
+ Definition fold (B : Type) (f : elt -> B -> B) s := fold f s. 
  Definition cardinal s := cardinal s.
  Definition filter (f : elt -> bool) s := 
    Bbst _ (filter_bst f _ (is_bst s) (is_avl s))
@@ -2838,7 +2838,7 @@ Module Make (X: OrderedType) <: S with Module E := X.
  unfold diff, In; simpl; rewrite diff_in; intuition.
  Qed.
  
- Lemma fold_1 : forall (A : Set) (i : A) (f : elt -> A -> A),
+ Lemma fold_1 : forall (A : Type) (i : A) (f : elt -> A -> A),
       fold A f s i = fold_left (fun a e => f e a) (elements s) i.
  Proof. 
  unfold fold, elements; intros; apply fold_1; auto.
