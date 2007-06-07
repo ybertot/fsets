@@ -1,18 +1,48 @@
+avl_dep.cmo: avl_dep.ml avl_dep.cmi
+avl_dep.cmx: avl_dep.ml avl_dep.cmi
+avl_int.cmo: avl_int.ml avl_int.cmi
+avl_int.cmx: avl_int.ml avl_int.cmi
+avl.cmo: avl.ml avl.cmi
+avl.cmx: avl.ml avl.cmi
+avl_z.cmo: avl_z.ml avl_z.cmi
+avl_z.cmx: avl_z.ml avl_z.cmi
+rbt.cmo: rbt.ml rbt.cmi
+rbt.cmx: rbt.ml rbt.cmi
+avl_dep.cmi: avl_dep.mli
+avl_int.cmi: avl_int.mli
+avl.cmi: avl.mli
+avl_z.cmi: avl_z.mli
+rbt.cmi: rbt.mli
 FSetRBT.vo: FSetRBT.v
 FSetRBT.vi: FSetRBT.v
 FSetAVL_z.vo: FSetAVL_z.v
 FSetAVL_z.vi: FSetAVL_z.v
 FSetAVL_dep.vo: FSetAVL_dep.v
 FSetAVL_dep.vi: FSetAVL_dep.v
+FSetAVL_prog.vo: FSetAVL_prog.v
+FSetAVL_prog.vi: FSetAVL_prog.v
+FSetAVL_prog_test.vo: FSetAVL_prog_test.v FSetAVL_prog.vo
+FSetAVL_prog_test.vi: FSetAVL_prog_test.v FSetAVL_prog.vo
 FMapAVL_z.vo: FMapAVL_z.v
 FMapAVL_z.vi: FMapAVL_z.v
 extract.vo: extract.v FSetAVL_z.vo FSetAVL_dep.vo FSetRBT.vo
 extract.vi: extract.v FSetAVL_z.vo FSetAVL_dep.vo FSetRBT.vo
 compute.vo: compute.v FSetAVL_z.vo
 compute.vi: compute.v FSetAVL_z.vo
+UsualFacts.vo: UsualFacts.v
+UsualFacts.vi: UsualFacts.v
+MapFunction.vo: MapFunction.v
+MapFunction.vi: MapFunction.v
+PowerSet.vo: PowerSet.v UsualFacts.vo MapFunction.vo
+PowerSet.vi: PowerSet.v UsualFacts.vo MapFunction.vo
 FSetRBT.html: FSetRBT.v
 FSetAVL_z.html: FSetAVL_z.v
 FSetAVL_dep.html: FSetAVL_dep.v
+FSetAVL_prog.html: FSetAVL_prog.v
+FSetAVL_prog_test.html: FSetAVL_prog_test.v FSetAVL_prog.html
 FMapAVL_z.html: FMapAVL_z.v
 extract.html: extract.v FSetAVL_z.html FSetAVL_dep.html FSetRBT.html
 compute.html: compute.v FSetAVL_z.html
+UsualFacts.html: UsualFacts.v
+MapFunction.html: MapFunction.v
+PowerSet.html: PowerSet.v UsualFacts.html MapFunction.html

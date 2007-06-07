@@ -7,5 +7,8 @@ FMapAVL_z.v
 extract.v 
 compute.v
 PrecedenceGraph
+UsualFacts.v
+MapFunction.v
+PowerSet.v
 -custom "$(COQC) demo.v > /dev/null " "compute.vo demo.v" demo.vo
 
