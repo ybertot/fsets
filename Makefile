@@ -75,7 +75,8 @@ VFILES=FSetRBT.v\
   compute.v\
   UsualFacts.v\
   MapFunction.v\
-  PowerSet.v
+  PowerSet.v\
+  MultiSets.v
 VOFILES=$(VFILES:.v=.vo)
 VIFILES=$(VFILES:.v=.vi)
 GFILES=$(VFILES:.v=.g)
@@ -94,6 +95,7 @@ all: FSetRBT.vo\
   UsualFacts.vo\
   MapFunction.vo\
   PowerSet.vo\
+  MultiSets.vo\
   demo.vo
 
 spec: $(VIFILES)
