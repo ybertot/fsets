@@ -121,4 +121,29 @@ Proof.
 Qed.
 
 End Map.
+
+Lemma map_filter : forall f g s, 
+ compat_bool E.eq f -> 
+ (forall x y, E.eq x y -> E.eq (g x) (g y)) ->
+ filter f (map g s) [=] map g (filter (fun x => f (g x)) s).
+Proof.
+intros.
+red; intros.
+rewrite FM.filter_iff; auto.
+rewrite map_In; auto.
+rewrite map_In; auto.
+intuition.
+destruct H2 as (b,(H2,H4)).
+exists b; split; auto.
+rewrite FM.filter_iff; auto.
+split; auto.
+rewrite <- H3; auto.
+destruct H1 as (b,(H2,H4)).
+exists b; split; auto.
+rewrite FM.filter_iff in H2; intuition.
+destruct H1 as (b,(H2,H4)).
+rewrite FM.filter_iff in H2; intuition.
+rewrite <- H3; auto.
+Qed.
+
 End MapFunction.
