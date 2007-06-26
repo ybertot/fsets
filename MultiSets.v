@@ -324,36 +324,416 @@ End Multi.
 
 
 (* Example : A multiset on elements in type N *)
-Module NMap := FMapList.Make N_as_OT.
-Module NMulti := Multi N_as_OT NMap.
 
-Definition mens1 := NMulti.update 2 7 (NMulti.update 3 5 (NMulti.empty)).
-Definition mens2 := NMulti.update 1 4 (NMulti.update 3 6 (NMulti.empty)).
+Module Ma := FMapList.Make N_as_OT.
+Module Mu := Multi N_as_OT Ma.
 
-Eval compute in NMulti.elements (NMulti.union mens1 mens2). 
+Definition mens1 := Mu.update 2 7 (Mu.update 3 5 (Mu.empty)).
+Definition mens2 := Mu.update 1 4 (Mu.update 3 6 (Mu.empty)).
+
+Eval compute in Mu.elements (Mu.union mens1 mens2). 
 
 (* Example: total multiplicity *)
 
-Definition total_multi s := NMulti.fold (fun _ p s => (Npos p+s)) s 0.
+Definition fmu := fun (_:Ma.key) p s => (Npos p) + s.
+
+Definition total_multi s := Mu.fold fmu s 0.
+
+Module NP := FMapFacts.Properties Ma.
+Import NP.
+Import NP.F.
+
+Lemma fmu_compat : compat_op (@O.eqke _) (@eq _) (fun y => fmu (fst y) (snd y)).
+Proof.
+ red; intros.
+ destruct x; destruct x'; compute in H; destruct H; subst; auto.
+Qed.
+Lemma fmu_transp : transpose (@eq _) (fun y => fmu (fst y) (snd y)).
+Proof.
+ red; intros.
+ unfold fmu; do 2 rewrite Nplus_assoc; f_equal; apply Nplus_comm; auto.
+Qed.
+Hint Resolve fmu_compat fmu_transp.
 
 (*
-Lemma total_multi_update: forall x n s, 
- total_multi (NMulti.update x n s) = total_multi s - NMulti.multi x s + n.
-Proof.
-unfold total_multi; intros.
-do 2 rewrite NMulti.fold_1.
-Admitted.
+Notation " m [ x ]:= e " := (Ma.MapsTo x e m) (at level 10).
 
-Lemma total_multi_union: 
- forall s s', total_multi (NMulti.union s s') = total_multi s + total_multi s'.
+Ltac clean_eq := unfold Ma.E.eq, N_as_OT.eq in *. 
+
+Lemma Above_not_In : forall (s:Ma.t positive) x, Above x s -> ~Ma.In x s.
 Proof.
-Admitted.
+intros.
+intro.
+generalize (H _ H0).
+ME.order.
+Qed.
+
+Hint Resolve Above_not_In.
+
+Lemma eq_eqlistA : forall l l', eqlistA (@O.eqke positive) l l' -> l=l'.
+ induction 1; auto.
+ destruct x; destruct x'; compute in H; destruct H; subst; auto.
+Qed.
+
+Lemma fold_max :
+ forall m m' x e (i : N)(f : N -> positive -> N -> N), 
+ Above x m -> Add x e m m' -> 
+ Ma.fold f m' i = f x e (Ma.fold f m i).
+Proof.
+  intros.
+  do 2 rewrite Ma.fold_1.
+  do 2 rewrite <- fold_left_rev_right.
+  set (f':= fun (y : Ma.key * positive) (x0 : N) => f (fst y) (snd y) x0) in *.
+  change (f x e (fold_right f' i (rev (Ma.elements m)))) with 
+    (fold_right f' i (rev ((x,e)::nil)++rev (Ma.elements m))).
+  apply (@fold_right_eqlistA _ (@O.eqke positive) N (@eq N)); auto.
+  red; intros.
+  destruct x0; destruct x'; compute in H1; destruct H1; subst; auto.
+  rewrite <- distr_rev.
+  apply eqlistA_rev.
+  apply elements_eqlistA_max; auto.
+Qed.
+
+Ltac simpl_fold := 
+ try (rewrite <- fold_left_rev_right; rewrite distr_rev; simpl; rewrite fold_left_rev_right).
+
+Hint Rewrite nat_of_Nplus nat_of_Nminus : N.
+
+Ltac nat_of_N := match goal with 
+  | |- ?a = ?b => 
+    cut (N_of_nat (nat_of_N a) = N_of_nat (nat_of_N b)); 
+     [ rewrite (N_of_nat_of_N a); rewrite (N_of_nat_of_N b); trivial
+     | f_equal; autorewrite with N
+     ]
+ end.
+
+Hint Resolve Ma.elements_3.
+
+Lemma elements_empty_remove : forall (s:Ma.t positive) x, 
+ Ma.elements s = nil -> Ma.elements (Ma.remove x s) = nil.
+Proof.
+ intros; apply eq_eqlistA; apply sort_equivlistA_eqlistA; auto.
+ intros a; destruct a.
+ rewrite <- elements_mapsto_iff; rewrite remove_mapsto_iff; rewrite elements_mapsto_iff.
+ rewrite H.
+ do 2 rewrite InA_nil; intuition.
+Qed.
+
+Lemma elements_empty_add : forall s x (e:positive), 
+ Ma.elements s = nil -> Ma.elements (Ma.add x e s) = (x,e)::nil.
+Proof.
+ intros; apply eq_eqlistA; apply sort_equivlistA_eqlistA; auto.
+ intros a; destruct a.
+ rewrite <- elements_mapsto_iff; rewrite add_mapsto_iff; rewrite elements_mapsto_iff.
+ rewrite H.
+ rewrite InA_cons; do 2 rewrite InA_nil; compute; intuition.
+Qed.
+
+Lemma elements_remove_above : forall s1 s2 x y (e:positive), 
+  Above x s1 -> Add x e s1 s2 -> 
+  Ma.E.lt x y -> Ma.elements (Ma.remove y s2) = Ma.elements s2.
+Proof.
+ intros; apply eq_eqlistA; apply sort_equivlistA_eqlistA; auto.
+ intros a; destruct a.
+ do 2 rewrite <- elements_mapsto_iff; rewrite remove_mapsto_iff.
+ rewrite (Add_MapsTo (Above_not_In H) H0).
+ clean_eq; intuition; subst.
+ ME.order.
+ assert (Ma.In t s1) by (exists p; auto).
+ generalize (H _ H2); ME.order.
+Qed.
+
+Lemma elements_add_above : forall s1 s2 x y (e d:positive), 
+  Above x s1 -> Add x e s1 s2 -> 
+  Ma.E.lt x y -> Ma.elements (Ma.add y d s2) = Ma.elements s2 ++ (y,d)::nil.
+Proof.
+ intros; apply eq_eqlistA; apply elements_eqlistA_max; red; auto; intros.
+ rewrite (Add_In (Above_not_In H) H0) in H2; destruct H2; 
+  [compute in H2; subst| ]; auto.
+ generalize (H _ H2); ME.order.
+Qed.
+
+Lemma elements_remove_top : forall s1 s2 x (e:positive), 
+ Above x s1 -> Add x e s1 s2 -> 
+ Ma.elements (Ma.remove x s2) = Ma.elements s1.
+Proof.
+ intros; apply eq_eqlistA; apply sort_equivlistA_eqlistA; auto.
+ intros a; destruct a.
+ do 2 rewrite <- elements_mapsto_iff; rewrite remove_mapsto_iff.
+ rewrite (Add_MapsTo (Above_not_In H) H0).
+ clean_eq; intuition; subst.
+ assert (Ma.In t s1) by (exists p; auto).
+ generalize (H _ H2); ME.order.
+Qed.
+
+Lemma elements_add_top : forall s1 s2 x (e d:positive), 
+ Above x s1 -> Add x e s1 s2 -> 
+ Ma.elements (Ma.add x d s2) = Ma.elements s1++(x,d)::nil.
+Proof.
+ intros; apply eq_eqlistA; apply elements_eqlistA_max; auto.
+ red; intros.
+ do 2 rewrite add_o.
+ rewrite H0.
+ rewrite add_o.
+ destruct (ME.eq_dec x y); auto.
+Qed.
+
+Lemma elements_remove_internal : forall s1 s2 x y (e:positive), 
+ Above x s1 -> Add x e s1 s2 -> Ma.E.lt y x ->
+ Ma.elements (Ma.remove y s2) = Ma.elements (Ma.remove y s1) ++ (x,e)::nil.
+Proof.
+ intros; apply eq_eqlistA; apply elements_eqlistA_max; auto.
+ red; intros.
+ rewrite remove_in_iff in H2; destruct H2.
+ apply H; auto.
+ red; intros.
+ rewrite add_o.
+ do 2 rewrite remove_o.
+ rewrite H0.
+ rewrite add_o.
+ destruct (ME.eq_dec y y0); destruct (ME.eq_dec x y0); auto.
+ ME.order.
+Qed.
+
+Lemma elements_add_internal : forall s1 s2 x y (e d:positive), 
+ Above x s1 -> Add x e s1 s2 -> Ma.E.lt y x ->
+ Ma.elements (Ma.add y d s2) = Ma.elements (Ma.add y d s1) ++ (x,e)::nil.
+Proof.
+ intros; apply eq_eqlistA; apply elements_eqlistA_max; auto.
+ red; intros.
+ rewrite add_in_iff in H2; destruct H2.
+ compute in H2; subst y0; auto.
+ apply H; auto.
+ red; intros.
+ do 3 rewrite add_o.
+ rewrite H0.
+ rewrite add_o.
+ destruct (ME.eq_dec y y0); destruct (ME.eq_dec x y0); auto.
+ ME.order.
+Qed.
+
+Lemma total_multi_update: forall s x n, 
+ total_multi (Mu.update x n s) + Mu.multi x s  = total_multi s + n.
+Proof.
+unfold total_multi, Mu.fold.
+induction s using map_induction_max; intros.
+do 2 rewrite Ma.fold_1.
+set (f:=fun a (p:Ma.key*positive) => Npos (snd p) + a).
+unfold Mu.multi.
+rewrite elements_Empty in H.
+rewrite elements_o.
+rewrite H; simpl.
+unfold Mu.elements, Mu.update.
+destruct n; [rewrite elements_empty_remove | 
+             rewrite elements_empty_add ]; simpl; auto.
+
+rename x0 into y; rename H into A1; rename H0 into A2.
+set (f:=fun (_ : Ma.key) (p : positive) (s : N) => Npos p + s) in *.
+destruct (Ma.E.compare x y).
+(* x<y *)
+unfold Mu.multi.
+replace (Ma.find y s2) with (@None positive).
+destruct n; unfold Mu.update; rewrite Ma.fold_1.
+rewrite (elements_remove_above A1 A2 l); rewrite <- Ma.fold_1; auto.
+rewrite (elements_add_above p A1 A2 l); simpl_fold; rewrite <- Ma.fold_1.
+unfold f at 1; nat_of_N; simpl; omega.
+(* proof of the replace: *)
+ symmetry; rewrite <- not_find_mapsto_iff.
+ rewrite (Add_In (Above_not_In A1) A2).
+ red; destruct 1.
+ subst; ME.order.
+ generalize (A1 _ H); ME.order.
+(* x=y *)
+compute in e0; subst y.
+unfold Mu.multi.
+replace (Ma.find x s2) with (Some e).
+destruct n; unfold Mu.update; rewrite Ma.fold_1.
+rewrite (elements_remove_top A1 A2); rewrite <- Ma.fold_1.
+rewrite (fold_max 0 f A1 A2).
+unfold f at 2; nat_of_N; simpl; omega.
+rewrite (elements_add_top p A1 A2); simpl_fold; rewrite <- Ma.fold_1.
+rewrite (fold_max 0 f A1 A2).
+unfold f at 1 3; nat_of_N; simpl; omega.
+(* proof of the replace *) 
+ rewrite A2.
+ rewrite add_o.
+ destruct (ME.eq_dec x x); auto; elim n0; auto.
+(* x>y *) 
+replace (Mu.multi y s2) with (Mu.multi y s1).
+rewrite Ma.fold_1.
+replace (Ma.elements (Mu.update y n s2)) with 
+ (Ma.elements (Mu.update y n s1) ++ (x,e)::nil).
+simpl_fold; rewrite <- Ma.fold_1.
+rewrite (fold_max 0 f A1 A2).
+unfold f at 1 3.
+do 2 rewrite <- Nplus_assoc; f_equal; apply IHs1; auto.
+(* proofs of the two replace *)
+unfold Mu.update; destruct n; symmetry;
+ [apply elements_remove_internal | apply elements_add_internal ]; auto.
+unfold Mu.multi.
+rewrite A2.
+rewrite add_o.
+destruct (ME.eq_dec x y); auto.
+ME.order.
+Qed.
 *)
 
-(* Well, these two last statements are certainly provable, but not without a 
- good deal of sweat. See the end of FSetProperties for something similar about 
- cardinals of (simple) sets. *)
+Lemma total_multi_union: 
+ forall s s', total_multi (Mu.union s s') = total_multi s + total_multi s'.
+Proof.
+unfold total_multi, Mu.fold.
+induction s using map_induction; intros.
+rewrite elements_Empty in H.
+rewrite (@fold_Equal _ (Mu.union s s') s' _ (@eq N)); auto.
+rewrite (Ma.fold_1 s); rewrite H; auto.
+ red; intros; unfold Mu.union; rewrite map2_1bis; auto.
+ rewrite (elements_o s); rewrite H; simpl.
+ destruct (Ma.find y s'); auto.
 
+replace (Ma.fold fmu s2 0) with (fmu x e (Ma.fold fmu s1 0)) 
+ by (symmetry; apply fold_Add; auto).
+unfold fmu at 2; simpl snd.
+rewrite <- Nplus_assoc.
+rewrite <- IHs1.
+case_eq (Ma.find x s'); intros.
+(* x may appear in s' hence in (Mu.union s1 s'). In this case we introduce 
+   artificially (Ma.remove x (Mu.union s1 s')) and reason in two steps. *)
+set (u:=Ma.remove x (Mu.union s1 s')).
+replace (Ma.fold fmu (Mu.union s2 s') 0) with (fmu x (Pplus e p) (Ma.fold fmu u 0)); 
+ [ | symmetry; apply fold_Add; auto ].
+replace (Ma.fold fmu (Mu.union s1 s') 0) with (fmu x p (Ma.fold fmu u 0)); 
+ [ | symmetry; apply fold_Add; auto ].
+unfold fmu at 1 3; rewrite Nplus_assoc; f_equal.
+unfold u; apply Ma.remove_1; auto.
+unfold u, Mu.union; red; intros; rewrite add_o; rewrite remove_o.
+rewrite map2_1bis; auto.
+destruct (ME.eq_dec x y); auto.
+compute in e0; subst; rewrite H1; auto.
+rewrite not_find_mapsto_iff in H; rewrite H; auto.
+unfold u; apply Ma.remove_1; auto.
+unfold u, Mu.union; red; intros; rewrite add_o; rewrite remove_o.
+do 2 (rewrite map2_1bis; auto).
+rewrite H0; rewrite add_o.
+destruct (ME.eq_dec x y); auto.
+compute in e0; subst; rewrite H1; auto.
+(* simple situation where x isn't in s' *)
+change (Nplus (Npos e)) with (fmu x e).
+apply fold_Add; auto.
+rewrite not_find_mapsto_iff; rewrite not_find_mapsto_iff in H.
+unfold Mu.union; rewrite map2_1bis; auto; rewrite H1; rewrite H; auto.
+red; intros; unfold Mu.union; rewrite add_o.
+do 2 (rewrite map2_1bis; auto).
+rewrite H0; rewrite add_o.
+destruct (ME.eq_dec x y); auto.
+compute in e0; subst; rewrite H1; auto.
+Qed.
+
+Lemma total_multi_update: forall s x n, 
+ total_multi (Mu.update x n s) + Mu.multi x s  = total_multi s + n.
+Proof.
+unfold total_multi, Mu.fold.
+induction s using map_induction; intros.
+
+rewrite elements_Empty in H.
+unfold Mu.multi.
+rewrite elements_o; rewrite H; simpl.
+unfold Mu.update; destruct n.
+do 2 rewrite Nplus_0_r.
+apply fold_Equal with (eqA:=@eq _); auto.
+ red; intros; rewrite remove_o; rewrite elements_o; rewrite H; simpl.
+ destruct (ME.eq_dec x y); auto.
+rewrite Nplus_0_r; rewrite Nplus_comm.
+change (Nplus (Npos p)) with (fmu x p).
+apply fold_Add with (eqA:=@eq _); auto.
+ rewrite not_find_mapsto_iff; rewrite elements_o; rewrite H; auto.
+ red; auto.
+
+rename x0 into y; rename H into A1; rename H0 into A2.
+replace (Ma.fold fmu s2 0) with (fmu x e (Ma.fold fmu s1 0)) 
+ by (symmetry; apply fold_Add; auto).
+unfold fmu at 2; rewrite <- Nplus_assoc. 
+rewrite <- (IHs1 y n); clear IHs1; rewrite Nplus_assoc.
+destruct (ME.eq_dec x y) as [E|E].
+(* x=y *)
+compute in E; subst y.
+replace (Mu.multi x s2) with (Npos e).
+replace (Mu.multi x s1) with 0.
+rewrite Nplus_0_r; rewrite Nplus_comm; f_equal.
+apply fold_Equal with (eqA:=@eq _); eauto.
+red; intros; unfold Mu.update; destruct n.
+do 2 rewrite remove_o; rewrite A2; rewrite add_o.
+destruct (ME.eq_dec x y); auto.
+do 2 rewrite add_o; rewrite A2; rewrite add_o.
+destruct (ME.eq_dec x y); auto.
+unfold Mu.multi; rewrite not_find_mapsto_iff in A1; rewrite A1; auto.
+unfold Mu.multi.
+rewrite A2; rewrite add_o.
+destruct (ME.eq_dec x x) as [_|H]; [ auto | elim H; ME.order ].
+(* x<>y *)
+replace (Mu.multi y s2) with (Mu.multi y s1).
+f_equal.
+change (Nplus (Npos e)) with (fmu x e).
+apply fold_Add; auto.
+rewrite not_find_mapsto_iff; rewrite not_find_mapsto_iff in A1.
+assert (y<>x) by (swap E; auto).
+generalize (Mu.update_2 s1 n H).
+unfold Mu.multi; rewrite A1.
+destruct (Ma.find x (Mu.update y n s1)); intros; discriminate || auto.
+red; intros; rewrite add_o.
+unfold Mu.update; destruct n; try rewrite remove_o; try rewrite add_o; 
+ rewrite A2; repeat rewrite add_o; repeat rewrite remove_o; 
+ destruct (ME.eq_dec y y0); destruct (ME.eq_dec x y0); auto; ME.order. 
+unfold Mu.multi; rewrite A2; rewrite add_o.
+destruct (ME.eq_dec x y) as [H|_]; [ elim E; auto | auto ].
+Qed.
+
+(*
+
+  Section Useless_Stuff.
+ 
+  Lemma Add_MapsTo : forall s1 s2 x (e:elt), 
+   ~In x s1 -> Add x e s1 s2 -> 
+   forall y e', MapsTo y e' s2 <-> E.eq x y /\ e=e' \/ MapsTo y e' s1.
+  Proof.
+  split; intros.
+  rewrite find_mapsto_iff in H1; rewrite H0 in H1; 
+   rewrite <- find_mapsto_iff in H1; rewrite add_mapsto_iff in H1.
+  intuition.
+  rewrite find_mapsto_iff; rewrite H0; 
+   rewrite <- find_mapsto_iff; rewrite add_mapsto_iff. 
+  intuition. 
+  right; split; auto.
+  swap H.
+  exists e'; apply MapsTo_1 with y; auto.
+  Qed.
+
+  Lemma Add_In : forall s1 s2 x (e:elt), 
+   ~In x s1 -> Add x e s1 s2 -> 
+   forall y, In y s2 <-> E.eq x y \/ In y s1.
+  Proof.
+  split; intros.
+  destruct H1 as (a,H1).
+  rewrite (Add_MapsTo H H0) in H1; firstorder.
+  destruct H1.
+  exists e.
+  apply MapsTo_1 with x; auto.
+  rewrite (Add_MapsTo H H0); auto.
+  destruct H1 as (a,H1).
+  exists a; rewrite (Add_MapsTo H H0); auto.
+  Qed.
+  
+  Lemma InA_rev : forall p m, 
+   InA (@O.eqke elt) p (rev m) <-> InA (@O.eqke elt) p m.
+  Proof.
+  intros; do 2 rewrite InA_alt.
+  split; intros (y,H); exists y; intuition.
+  rewrite In_rev; auto.
+  rewrite <- In_rev; auto.
+  Qed.
+
+  End Useless_Stuff.
+
+*)
 
 
 
