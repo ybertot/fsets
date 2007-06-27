@@ -1,14 +1,17 @@
 Require Import FSets.
 Require Import FSetAVL.
-Require Import FSetAVL_z.
 Require Import ZArith.
 Require Import Omega.
 Open Scope Z_scope.
 Set Implicit Arguments.
 
+(** For the purpose of the demo, let's show how basic things are defined, 
+    without interfering with Coq's stdlib, thanks to the following module. *)
+Module THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
+
 (** * Ordered types *)
 
-(* starting point: the OrderedType interface of Ocaml: 
+(* Starting point: the OrderedType interface of Ocaml: 
 
 module type OrderedType =
   sig
@@ -17,8 +20,9 @@ module type OrderedType =
   end
 *)
 
+(* The corresponding OrderedType in Coq: *)
 
-(*excerpt from OrderedType.v *)                                                                                                                                                            Module Demo1.
+(*excerpt from OrderedType.v *)
 Inductive Compare (X : Set) (lt eq : X -> X -> Prop) (x y : X) : Set :=
   | LT : lt x y -> Compare lt eq x y
   | EQ : eq x y -> Compare lt eq x y
@@ -42,14 +46,14 @@ Module Type OrderedType.
   Parameter compare : forall x y : t, Compare lt eq x y.
 
 End OrderedType.
-(*/excerpt*)                                                                                                                                                            End Demo1.
+(*/excerpt*)
 
 
 
+(** * An example of OrderedType : *)
+(** [Z] integers seen as Orderered Types : Z_as_OT *)
 
-(** * [Z] integers seen as orderered types *)
-
-(* excerpt from OrderedTypeEx.v *)                                                                                                                 Module Demo2.
+(* excerpt from OrderedTypeEx.v *)
 Module Z_as_OT <: OrderedType.
 
   Definition t := Z.
@@ -84,37 +88,48 @@ Module Z_as_OT <: OrderedType.
 
   End xyz.
 End Z_as_OT.
-(* /excerpt *)                                                                                                                                                                            End Demo2.
+(* /excerpt *)
 
 Extraction Z_as_OT.
 
+End THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
 
 
 
 
-(** * Let's build some sets of [Z] integers ... *)
 
-Module M := FSetAVL_z.Make(Z_as_OT).
+(** * Let's now build some sets of [Z] integers ... *)
 
+Module M := FSetAVL.Make(Z_as_OT).
+
+(* This module M provides plenty of functions on Z-sets *)
 Print M.
 
+(* Let's play with them : *)
 Definition ens1 := M.add 3 (M.add 0 (M.add 2 (M.empty))).
 Definition ens2 := M.add 0 (M.add 2 (M.add 4 (M.empty))).
 Definition ens3 := M.inter ens1 ens2.
-
 Eval compute in (M.mem 2 ens3).
 Eval compute in (M.elements ens3).
 
-Check (M.elements_3 ens3).
-Eval red in M.Raw.E.lt.
+(* M also provides some basic properties, for instance: *)
+Check (M.elements_3 ens3). (* elements always returns a sorted list ... *)
+Eval red in M.E.lt. (* ... with respect to the underlying order. *)
 
+(* The M.t type for sets is meant to be used as an abstract type 
+   since it will vary amongst the different implementations of FSets. 
+   An M.t can and should always be inspected by using [mem], [elements], etc.
+   But for once, let's have a look at the raw aspect of a set: *)
+Set Printing Implicit.
 Import M.Raw.
-Eval compute in ens1.
-Eval compute in ens3.
+Eval compute in ens1. 
+(* Here for FSetAVL, a set is a pair of a tree (see 1st line) and some proofs *)
+Eval compute in ens3. (* The proofs parts can grow quite fast *)
+Unset Printing Implicit.
 
-(* In order to avoid the continuous expansion of proofs parts, we can work on 
-    "pure" or "raw" datatypes (i.e. without built-in invariants). *)
-
+(* Here, in order to avoid the continuous expansion of proofs parts, 
+   we can work on "pure" or "raw" datatypes 
+   (i.e. without built-in invariants). *)
 Module R:=M.Raw.
 
 Definition raw1 := R.add 3 (R.add 0 (R.add 2 R.empty)).
@@ -158,7 +173,7 @@ Extraction M.
 
 (** * Some sets of sets ... *)
 
-Module MM := FSetAVL_z.Make(M).
+Module MM := FSetAVL.Make(M).
 
 Definition eens1 := MM.add ens1 (MM.add ens2 (MM.empty)).
 
@@ -170,7 +185,7 @@ Eval compute in (MM.elements eens1).
 
 
 
-(** Some more intense tests. *)
+(** * Some more intense tests. *)
 
 Fixpoint multiples (m:Z)(start:Z)(n:nat) {struct n} : list Z := 
   match n with 
@@ -195,28 +210,55 @@ Time Eval vm_compute in (M.elements (M.inter bigens3 bigens4)).
 *)
 
 
-(* You can also use "pure" sets. *)
 
-(*
-Definition bigraw1 := fold_right R.add R.empty (multiples 2 0 10000%nat).
-Definition bigraw2 := fold_right R.add R.empty (multiples 3 0 10000%nat).
-Time Eval vm_compute in (length (R.elements (R.inter bigraw1 bigraw2))).
-(* 11s for computing the result 3334 *)
-*)
+
+
+(** * Proving with FSets : the facts/properties functors *)
+
+(* The properties provided by FSetAVL are deliberately minimalistic. 
+   They correspond to the minimal specifications present in FSetInterface. 
+   This way, building new implementations is fairly simple.
+   Now, lots of additional facts can be derived from this common interface. *) 
+
+(* Simple ones are locating in the functor FSetFacts.Facts *)
+Module MF := FSetFacts.Facts M.
+
+(* It contains mainly rephrasing of the specifications in alternative styles 
+  like equivalences or boolean *)
+Check MF.add_iff.
+Check MF.add_b.
+
+(* More complex properties are located in the functors FSetProperties.Properties *)
+Module MP := FSetProperties.Properties M.
+
+(* For instance: usual stuff about set operations: *)
+Check MP.union_inter_1.
+
+(* Also useful: one induction principle (in fact several) *)
+Check MP.set_induction.
+
+(* And lot of stuff concerning the hard-to-handle [fold] function *)
+Check MP.fold_add.
+
+(* Most advance property: the law on cardinal of unions *)
+Check MP.union_inter_cardinal.
+
+
 
 
 
 
 (** * What about maps ? it's the same ! *)
 
-Require Import FMapAVL_z.
+Require Import FMapAVL.
 
-Module F := FMapAVL_z.Make(Z_as_OT).
+(* Now, the elements of the OrderedType will serve as keys for the maps. *)
+Module F := FMapAVL.Make(Z_as_OT).
 
-(* As in Ocaml, everything is polymorphic with respect to the datas. *)
-
+(* And as in Ocaml, maps contains data whose type is polymorphic: *) 
 Check F.add.
 
+(* Let's for instance define a map with Z keys and lists as data *)
 Definition map1 := 
   F.add 2 (1::2::nil) 
    (F.add 3 nil 
@@ -226,7 +268,7 @@ Definition map1 :=
 Eval compute in (F.find 1 map1).
 Eval compute in (F.mem 1 map1).
 
-Eval compute in ((F.map (@length _) map1).(F.this)).
+Eval compute in (F.map (@length _) map1).(F.this).
 
 (* Not in Ocaml's map: [elements] *)
 
@@ -244,8 +286,10 @@ Check F.equal.
 (* Concerning [compare], we need a ternary decidable comparison  
  over datas. We hence diverge slightly apart from Ocaml, by placing 
  this [compare] in a separate functor requiring 2 [OrderedType], 
- one for the keys and one for the datas. *)
+ one for the keys and one for the datas, see FMapAVL.Make_ord *)
 
+(* FMaps also come with additional properties in the same spirit as for 
+   FSets, see file FMapFacts.v *)
 
 
 
@@ -256,10 +300,19 @@ Check F.equal.
 (** How to get more efficient AVL trees after extraction : 
      the [Int] module to get rid of [Z] not-so-fast integers. *)
 
-Print R.tree.
-Eval compute in (Zpos (xO (xI xH))).
+(* [FSetAVL] now uses an abstract [Int] structure for every height of trees. 
+   This gives a first [FSetAVL.IntMake(I:Int)(X:OrderedType)]. 
+   Then the [Int] part can either be filled with [Z_as_Int] for computing 
+   in Coq, giving the above [FSetAVL.Make], or instead extracted as is, 
+   and filled after extraction by some fast ocaml code based on machine 
+   integers. 
+*)
 
-(*excerpt from Int.v*)                                                                                                                                                     Module Demo3.
+Print R.tree.
+Eval compute in Int.Z_as_Int.int.
+
+
+(*excerpt from Int.v*)
 Module Type Int.
 
  Parameter int : Set. 
@@ -311,21 +364,34 @@ Module Type Int.
  Axiom i2z_max : forall n p, i2z (max n p) = Zmax (i2z n) (i2z p).
 
 End Int. 
-(*/excerpt*)                                                                                                                                                              End Demo3.
+(*/excerpt*)
 
-(* [FSetAVL] is then a clone of [FSetAVL_z] where a 
-   module [Int] is used instead of [Z] for every height.
-   Similarly from Map. *)
 
-Module MI := FSetAVL.Make(Z_as_OT).
 
-Eval compute in 
- (MI.elements 
-   (MI.union'  
-     (MI.add 3 (MI.add 0 (MI.empty))) 
-     (MI.add 1 (MI.add 2 (MI.empty))))).
 
-Extraction MI.
-(* We can then easily write a module [Int] in Ocaml
-    based on Bigint or native int. *)
+
+
+(** * The Weak Sets and Maps *) 
+
+(* Sometimes, one may need finite sets and maps over a base type 
+   that does not come with a decidable order. As long as this type
+   can still be equipped with a decidable equality, the FSetWeak and 
+   FMapWeak counterparts of FSets and FMap provides such structures. 
+*)
+  
+Require Import FSetWeak.
+
+Module W := FSetWeakList.Make (Z_as_DT).
+
+(* Of course, we cannot provide efficient functions anymore : the 
+   underlying structure is unsorted lists (but without redundancies). *)
+
+Eval compute in (W.elements (W.add 1 (W.add 3 (W.add 2 W.empty)))).
+
+(* Apart from efficiency questions and the lack of order-related functions
+   like [min_elt], FSetWeak/FMapWeak are as close as possible
+   to FSet/FMap (same function signatures, same properties, etc). 
+*)
+
+
 
