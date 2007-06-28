@@ -2089,7 +2089,7 @@ Next Obligation. (* post Leaf,Node *)
 Qed.
 
 Next Obligation. (* post Node,Leaf *)
- intro; assert (In wildcard0 Leaf) by auto; inv In.
+ intro; assert (In wildcard'0 Leaf) by auto; inv In.
 Qed.
 
 Next Obligation. (* pre subset (l1,l2) *)
