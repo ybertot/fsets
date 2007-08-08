@@ -17,7 +17,7 @@
 (** This module implements sets using AVL trees.
     It follows the implementation from Ocaml's standard library. *)
 
-Require Import Coq.subtac.Utils.
+Require Import Coq.Program.Program.
 Require Import FSetInterface.
 Require Import FSetList.
 Require Import ZArith.
