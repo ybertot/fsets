@@ -261,7 +261,7 @@ End FoldEquiv.
 
 
 (* Beware: a Program version needs extensionnality! *)
-Require Import Coq.subtac.Utils FunctionalExtensionality.
+Require Import Coq.Program.Utils FunctionalExtensionality.
 
 Module FoldProgram (E:UsualOrderedType)(M:S with Module E:=E).
 Module UF := UsualFacts E M.
