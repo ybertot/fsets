@@ -223,7 +223,11 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   rewrite F.map2_1bis; auto.
   destruct (M.find x s); destruct (M.find x s'); auto.
   simpl.
-  destruct (Pcompare p0 p1 Eq); auto.
+  case_eq (Pcompare p0 p1 Eq); intro H.
+  apply Pcompare_Eq_eq in H. rewrite H. now rewrite Pminus_mask_diag.
+  now rewrite (Pminus_mask_Lt p0 p1 H).
+  pose proof (Pminus_mask_Gt p0 p1 H) as H1. unfold Pminus.
+  destruct H1 as [h [H1 _]]; now rewrite H1.
   Qed.
 
   (** Specification of [fold] *)  
@@ -308,7 +312,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   red; intros.
   rewrite diff_1.
   rewrite empty_1.
-  apply Nle_Nminus_N0; auto.
+  apply <- Nminus_N0_Nle; auto.
   Qed.
 
   Lemma subset_2 : forall s s', subset s s' = true -> s[<=]s'.
@@ -317,7 +321,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   assert (H0:=equal_2 H a).
   rewrite diff_1 in H0.
   rewrite empty_1 in H0.
-  apply Nminus_N0_Nle; auto.
+  apply -> Nminus_N0_Nle; auto.
   Qed.
 
 End Multi.
