@@ -184,11 +184,11 @@ unfold f2; rewrite sum_filter; auto.
 unfold nb_pred.
 unfold set_pred.
 unfold sum.
-rewrite (@fold_2 (remove n G) G n _ _  (gen_st nat) 0 (fun x => plus (f1 x))); auto.
+rewrite (@fold_2 (remove n G) G n _ _  (gen_st nat) 0 (fun x => plus (f1 x))); auto with set.
 assert (f1 n  = nb_succ G n).
 unfold f1, nb_succ, set_succ, node_remove, is_succ; simpl.
 apply Equal_cardinal.
-eapply add_filter_2; unfold Add; eauto.
+eapply add_filter_2; unfold Add; eauto with set.
 rewrite H1; omega.
 unfold transpose; intros; omega.
 unfold g, f1, f2; intros; apply node_remove_3; auto.
@@ -221,7 +221,7 @@ assert (mem x (set_pred G n) = true -> (mem x (set_succ G n))=true -> False).
   intros; unfold set_pred, is_pred, set_succ, is_succ in H0, H1.
   rewrite filter_mem in H0; rewrite filter_mem in H1; auto.
   elim (andb_prop _ _  H0); elim (andb_prop _ _ H1); intros.
-  elim (@Hacyclic G n); apply chain_t with x; apply chain_i; auto.
+  elim (@Hacyclic G n); apply chain_t with x; apply chain_i; auto with set.
 generalize H0; case (mem x (set_pred G n)); case (mem x (set_succ G n)); intuition.
 unfold set_linked, is_linked, set_pred, set_succ; apply eq_sym; apply union_filter; auto.
 Qed.
@@ -251,13 +251,13 @@ assert (Hc: In current non_visited).
  elim (@Hacyclic G current); auto.
 apply IHn with (remove current non_visited) newcurrent; auto. 
 assert (S (cardinal (remove current non_visited))  = (S n)).
- rewrite <- H; apply remove_cardinal_1; auto.
+ rewrite <- H; apply remove_cardinal_1; auto with set.
  inversion H3; auto.
 auto with arith.
 intros; elim (ME.eq_dec current k).
 unfold E.eq; intros Eq; rewrite <- Eq; auto.
 apply chain_i; auto.
-intros; apply chain_t with current; auto; apply chain_i; auto.
+intros; apply chain_t with current; auto with set; apply chain_i; auto with set.
 intros _ A. 
 exists current; split; auto.
 unfold nb_pred; apply cardinal_1; auto.
@@ -284,8 +284,8 @@ Lemma chain_remove : forall (G:Graph)(n i j:nat),
 (chain (node_remove G n) i j)->(chain G i j).
 Proof.
 unfold node_remove; intros G n i j c; elim c; simpl; intros. 
-apply chain_i; eauto.
-eapply chain_t; eauto.
+apply chain_i; eauto with set.
+eapply chain_t; eauto with set.
 Qed.
 
 Lemma remove_acyclic : forall (G:AcyclicGraph)(n:nat), (acyclic (node_remove G n)).
@@ -343,7 +343,7 @@ Lemma wprec_remove : forall (G:AcyclicGraph)(n:nat),
 (weak_precedence (acyclic_node_remove G n)).
 Proof.
 unfold weak_precedence;simpl;intros;auto.
-apply (H i j k);eauto.
+apply (H i j k);eauto with set.
 Qed.
 
 Definition wprec_node_remove (G:WPrecGraph)(n:nat) :=
@@ -382,8 +382,8 @@ unfold set_linked, is_linked in H5; rewrite filter_mem in H5; auto.
 elim (andb_prop _ _ H5); clear H5; intros.
 elim (orb_prop _ _ H7); clear H7; intros.
 unfold is_pred in H7.
-rewrite (@Hprec G i x j) in Hj2; auto; discriminate Hj2.
-rewrite (@Hprec G i j x) in H6; auto; discriminate H6.
+rewrite (@Hprec G i x j) in Hj2; auto with set; discriminate Hj2.
+rewrite (@Hprec G i j x) in H6; auto with set; discriminate H6.
 unfold E.eq, compat_bool; intros; rewrite H7; auto.
 intros _ A.
 unfold nb_succ in H3; rewrite cardinal_1 in H3; auto.
@@ -404,8 +404,8 @@ case (choose s).
 unfold s; intros x Hx _; generalize (mem_1 (Hx x (refl_equal _))); clear Hx; 
   rewrite filter_mem.
 intros Hx; elim (andb_prop _ _ Hx); clear Hx; intros.
-exists x; split; intros; auto.
-generalize H2; case (le_lt_dec (nb_linked G x) p); auto; intros; discriminate H3.
+exists x; split; intros; auto with set.
+generalize H2; case (le_lt_dec (nb_linked G x) p); auto with set; intros; discriminate H3.
 unfold E.eq, compat_bool; intros; rewrite H1; auto.
 intros _ A; generalize (A (refl_equal _)); clear A; unfold Empty, s; intros A.
 absurd (double (S p)  <= nb_nodes G); auto with arith.
@@ -476,7 +476,7 @@ unfold G'.
 assert (S (nb_nodes (wprec_node_remove G x))=(S n)).
 rewrite <-H.
 unfold nb_nodes, wprec_node_remove;simpl.
-apply remove_cardinal_1;auto.
+apply remove_cardinal_1;auto with set.
 inversion H3; auto.
 rewrite H;auto with arith.
 rewrite H;auto with arith.
@@ -503,7 +503,7 @@ unfold G'.
 assert (S (nb_nodes (wprec_node_remove G x))=S n).
 rewrite <-H.
 unfold nb_nodes, wprec_node_remove;simpl.
-apply remove_cardinal_1;auto.
+apply remove_cardinal_1;auto with set.
 inversion H3; auto.
 rewrite H;auto with arith.
 rewrite H;auto.

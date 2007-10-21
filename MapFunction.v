@@ -116,8 +116,8 @@ Lemma map_cardinal : forall s,
  (forall x y, In x s -> In y s -> E.eq (f x) (f y) -> E.eq x y) ->
  cardinal (map s) = cardinal s.
 Proof.
- intros; unfold map; rewrite map_cardinal_aux; auto.
- rewrite empty_cardinal; auto.
+ intros; unfold map; rewrite map_cardinal_aux; auto with set.
+ rewrite empty_cardinal; auto with set.
 Qed.
 
 End Map.

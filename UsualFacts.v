@@ -115,7 +115,7 @@ Lemma Equal_eq_elements :
  forall s s', s[=]s' <-> elements s = elements s'.
 Proof.
 split; intros.
-apply list_unique; auto.
+apply list_unique; auto with set.
 rewrite <- Equal_elements_equivlist; auto.
 red; intros; do 2 rewrite elements_iff; auto.
 rewrite H; split; auto.
@@ -126,9 +126,9 @@ Lemma elements_min : forall s x,
  elements s = x::elements (remove x s).
 Proof.
 intros.
-apply list_unique; auto.
-constructor; auto.
-rewrite Inf_alt; auto; intros.
+apply list_unique; auto with set.
+constructor; auto with set.
+rewrite Inf_alt; auto with set; intros.
 rewrite <- MF.elements_iff in H0.
 assert (H1:=@min_elt_2 _ _ y H).
 destruct (E.compare x y); auto.
@@ -148,8 +148,8 @@ Lemma elements_max : forall s x,
  elements s = elements (remove x s)++x::nil.
 Proof.
 intros.
-apply list_unique; auto.
-apply SortA_app with M.E.eq; try red; auto.
+apply list_unique; auto with set.
+apply SortA_app with M.E.eq; try red; auto with set.
 intros z y H0; revert y; rewrite <- Inf_alt; auto; constructor.
 rewrite <- MF.elements_iff in H0.
 assert (H1:=@max_elt_2 _ _ z H).
@@ -163,9 +163,9 @@ apply in_or_app; simpl.
 intros; rewrite <- elements_iff in *.
 destruct (ME.eq_dec x x0); unfold E.eq; intuition.
 destruct (in_app_or _ _ _ H0); clear H0.
-intros; rewrite <- elements_iff in *; eauto.
+intros; rewrite <- elements_iff in *; eauto with set.
 simpl in H1; inversion H1; subst; auto.
-intros; rewrite <- elements_iff in *; auto.
+intros; rewrite <- elements_iff in *; auto with set.
 contradiction.
 Qed.
 
@@ -279,7 +279,8 @@ Program Fixpoint fold_direct_prog (s:t)(i:A)
   end.
 
 Next Obligation.
- rewrite <- (@MP.remove_cardinal_1 s x); auto with arith.
+ symmetry in Heq_anonymous.
+ rewrite <- (@MP.remove_cardinal_1 s x); auto with arith set.
 Qed.
 
 Program Fixpoint fold_tail_prog (s:t)(i:A)
@@ -290,7 +291,8 @@ Program Fixpoint fold_tail_prog (s:t)(i:A)
   end.
 
 Next Obligation.
- rewrite <- (@MP.remove_cardinal_1 s x); auto with arith.
+ symmetry in Heq_anonymous.
+ rewrite <- (@MP.remove_cardinal_1 s x); auto with arith set.
 Qed.
 
 Lemma fold_direct_prog_1 : 
