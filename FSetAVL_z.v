@@ -1432,6 +1432,11 @@ Proof.
 Qed.
 Hint Resolve elements_sort.
 
+Lemma elements_nodup : forall s : tree, bst s -> NoDupA X.eq (elements s).
+Proof.
+ auto.
+Qed.
+
 (** * Filter *)
 
 Section F.
@@ -2899,6 +2904,9 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Qed.
 
  Definition elements_3 : sort E.lt (elements s) := elements_sort _ (is_bst s).
+
+ Lemma elements_3w : NoDupA E.eq (elements s).
+ Proof. exact (Raw.elements_nodup _ (is_bst s)). Qed.
 
  Definition min_elt_1 := min_elt_1 s x.
  Definition min_elt_2 := min_elt_2 s x y (is_bst s). 

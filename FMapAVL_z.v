@@ -1090,6 +1090,10 @@ Proof.
 Qed.
 Hint Resolve elements_sort.
 
+Lemma elements_nodup : forall s : t elt, bst s -> NoDupA eqk (elements s).
+Proof.
+ intros; apply Sort_NoDupA; auto.
+Qed.
 
 (** * Fold *)
 
@@ -1829,6 +1833,9 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Qed.
  
  Definition elements_3 m := @elements_sort elt m.(this) m.(is_bst).
+
+ Lemma elements_3w : forall m, NoDupA eq_key (elements m).  
+ Proof. intros m; exact (@Raw.elements_nodup elt m.(this) m.(is_bst)). Qed.
 
  Definition Equal cmp m m' := 
    (forall k, In k m <-> In k m') /\ 

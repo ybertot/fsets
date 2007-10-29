@@ -214,7 +214,7 @@ do 2 rewrite IHs1; clear IHs1.
 intuition.
 firstorder.
 firstorder.
-red; intro a; generalize (H2 a)(H0 a); F.set_iff; destruct (F.ME.eq_dec a x); intuition.
+red; intro a; generalize (H2 a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
 destruct (P.In_dec x s'); [right|left].
 split; auto.
 right.
@@ -325,16 +325,16 @@ rewrite FF.filter_iff; [ red; intros; rewrite H3; auto | ].
 rewrite powerset_is_powerset.
 intuition.
 assert (~M.In x a).
- red; intros; elim (@F.ME.lt_antirefl x); auto.
+ red; intros; elim (@P.ME.lt_antirefl x); auto.
 rewrite P.add_cardinal_2 in H5; simpl in H5; auto.
 assert (~M.In x a).
- red; intros; elim (@F.ME.lt_antirefl x); auto.
+ red; intros; elim (@P.ME.lt_antirefl x); auto.
 rewrite P.add_cardinal_2; simpl; auto.
 rewrite H3.
 rewrite IHs1.
 rewrite (@P.cardinal_2 s1 s2 x); auto.
 simpl; auto with arith.
-red; intros; elim (@F.ME.lt_antirefl x); auto.
+red; intros; elim (@P.ME.lt_antirefl x); auto.
 
 intros.
 rewrite FF.filter_iff in H3.
@@ -344,9 +344,9 @@ destruct H4.
 rewrite powerset_is_powerset in H3.
 rewrite powerset_is_powerset in H4.
 assert (~M.In x x0).
- red; intros; elim (@F.ME.lt_antirefl x); auto.
+ red; intros; elim (@P.ME.lt_antirefl x); auto.
 assert (~M.In x y).
- red; intros; elim (@F.ME.lt_antirefl x); auto.
+ red; intros; elim (@P.ME.lt_antirefl x); auto.
 red; red; red; intros.
 generalize (H5 a); clear H5; do 2 rewrite F.add_iff.
 intuition.
@@ -366,7 +366,7 @@ rewrite map_add.
 do 2 rewrite powerset_is_powerset.
 destruct (P.In_dec x x0).
 left; intuition.
-elim (@F.ME.lt_antirefl x); auto.
+elim (@P.ME.lt_antirefl x); auto.
 right; intuition.
 Qed.
 
@@ -433,7 +433,7 @@ destruct H1.
 destruct H2; intuition.
 firstorder.
 elim (@M.E.lt_not_eq x x); auto.
-red; intro a; generalize (H3 a)(H0 a); F.set_iff; destruct (F.ME.eq_dec a x); intuition.
+red; intro a; generalize (H3 a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
 rewrite <- H4.
 symmetry; apply P.remove_cardinal_1; auto.
 destruct (P.In_dec x s').

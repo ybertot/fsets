@@ -43,7 +43,7 @@ Module MapFunction (M:S).
  right; exists b; split; auto.
  red in H0; rewrite H0; auto.
  destruct H2 as (b,(H2,H3)).
- destruct (FM.ME.eq_dec x b).
+ destruct (FM.eq_dec x b).
  left.
  apply E.eq_trans with (f b); auto.
  right; right; exists b; split; auto.
