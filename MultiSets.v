@@ -456,7 +456,7 @@ f_equal.
 change (Nplus (Npos e)) with (fmu x e).
 apply fold_Add; auto.
 rewrite not_find_mapsto_iff; rewrite not_find_mapsto_iff in A1.
-assert (y<>x) by (swap E; auto).
+assert (y<>x) by (contradict E; auto).
 generalize (Mu.update_2 s1 n H).
 unfold Mu.multi; rewrite A1.
 destruct (Ma.find x (Mu.update y n s1)); intros; discriminate || auto.

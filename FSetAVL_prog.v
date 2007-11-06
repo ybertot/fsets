@@ -2113,14 +2113,14 @@ Qed.
 
 Next Obligation. (* post EQ + left + right *)
  destruct H1.
- unfold Subset in *; swap H0; intros.
+ unfold Subset in *; contradict H0; intros.
  assert (In a (Node l2 x2 r2 h2)) by auto.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post EQ + right + _ *)
  destruct H0.
- unfold Subset in *; swap H; intros.
+ unfold Subset in *; contradict H; intros.
  assert (In a (Node l2 x2 r2 h2)) by auto.
  inv bst; intuition_in; order.
 Qed.
@@ -2149,13 +2149,13 @@ Qed.
 
 Next Obligation. (* post LT + left + right *)
  destruct H1.
- unfold Subset in *; swap H0; intros. 
+ unfold Subset in *; contradict H0; intros. 
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post LT + right + _ *)
  destruct H0.
- unfold Subset in *; swap H; intros. 
+ unfold Subset in *; contradict H; intros. 
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
@@ -2183,12 +2183,12 @@ Next Obligation. (* post GT + left + left *)
 Qed.
 
 Next Obligation. (* post GT + left + right *)
- destruct H1; unfold Subset in *; swap H0; intros.
+ destruct H1; unfold Subset in *; contradict H0; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post GT + right + _ *)
- destruct H0; unfold Subset in *; swap H; intros.
+ destruct H0; unfold Subset in *; contradict H; intros.
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
