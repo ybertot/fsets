@@ -23,7 +23,8 @@
 #                        #
 ##########################
 
-CAMLP4LIB=`camlp4 -where`
+CAMLP4LIB=`camlp5 -where 2> /dev/null || camlp4 -where`
+CAMLP4=`basename $CAMLP4LIB`
 COQSRC=-I $(COQTOP)/kernel -I $(COQTOP)/lib \
   -I $(COQTOP)/library -I $(COQTOP)/parsing \
   -I $(COQTOP)/pretyping -I $(COQTOP)/interp \
@@ -47,8 +48,8 @@ CAMLLINK=ocamlc
 CAMLOPTLINK=ocamlopt
 COQDEP=$(COQBIN)coqdep -c
 GRAMMARS=grammar.cma
-CAMLP4EXTEND=pa_extend.cmo pa_ifdef.cmo q_MLast.cmo
-PP=-pp "camlp4o -I . -I $(COQTOP)/parsing $(CAMLP4EXTEND) $(GRAMMARS) -impl"
+CAMLP4EXTEND=pa_extend.cmo pa_macro.cmo q_MLast.cmo
+PP=-pp "$(CAMLP4)o -I . -I $(COQTOP)/parsing $(CAMLP4EXTEND) $(GRAMMARS) -impl"
 
 #########################
 #                       #

@@ -10,6 +10,10 @@ PrecedenceGraph
 UsualFacts.v
 MapFunction.v
 PowerSet.v
+FMapListEq.v 
+FSetListEq.v
 MultiSets.v
+MultiSetsEq.v 
 -custom "$(COQC) demo.v > /dev/null " "compute.vo demo.v" demo.vo
+
 
