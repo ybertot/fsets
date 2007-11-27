@@ -5,7 +5,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 Module UsualFacts (E:UsualOrderedType)(M:S with Module E:=E).
-Module ME := OrderedTypeFacts M.E.  
+Module ME := OrderedTypeFacts E.  
 Module MF := FSetFacts.Facts M.
 Module MP := FSetProperties.Properties M.
 Import ME.
@@ -79,9 +79,9 @@ induction l; destruct l'; simpl; auto; intros.
 elimtype False; rewrite (H1 t0); simpl; auto.
 elimtype False; rewrite <- (H1 a); simpl; auto.
 inversion_clear H; inversion_clear H0.
-assert (forall y, List.In y l -> M.E.lt a y).
+assert (forall y, List.In y l -> E.lt a y).
  intros; eapply Sort_Inf_In with (l:=l); eauto.
-assert (forall y, List.In y l' -> M.E.lt t0 y).
+assert (forall y, List.In y l' -> E.lt t0 y).
  intros; eapply Sort_Inf_In with (l:=l'); eauto.
 clear H3 H4.
 assert (a=t0).

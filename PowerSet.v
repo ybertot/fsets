@@ -180,7 +180,6 @@ Proof.
 intros.
 rewrite FF.singleton_iff.
 split; intros; auto with set.
-symmetry; apply P.empty_is_empty_1; auto with set.
 Qed.
 
 Lemma powerset_base : forall s, M.Empty s -> powerset s [==] MM.singleton M.empty.
@@ -240,9 +239,9 @@ rewrite (@P.cardinal_2 s1 s2 x); auto.
 simpl; auto.
 red; intros.
 elim (@M.E.lt_not_eq x x); auto.
-intros; rewrite H1; auto.
+intros; rewrite H1; reflexivity.
 intros u v; do 2 rewrite powerset_is_powerset.
-red; red; red; intros.
+red; red; intros.
 generalize (H3 a) (H1 a) (H2 a); F.set_iff; clear H3 H1 H2.
 intuition; elim (@M.E.lt_not_eq a x); auto.
 intros u; rewrite map_add; do 2 rewrite powerset_is_powerset.
@@ -275,7 +274,7 @@ Qed.
 Lemma powerset_k_cardinal : forall s k, 
  MM.cardinal (powerset_k s k) = binomial (M.cardinal s) k.
 Proof.
-assert (forall k, compat_bool MM.E.eq (fun s0 => beq_nat (M.cardinal s0) k)).
+assert (forall k, compat_bool M.Equal (fun s0 => beq_nat (M.cardinal s0) k)).
  red; intros; rewrite H; auto.
 induction s using P.set_induction_max; unfold powerset_k; intros.
 
@@ -305,9 +304,9 @@ rewrite PP.union_cardinal; auto.
 unfold powerset_k in IHs1.
 rewrite IHs1.
 rewrite MM'.map_filter; auto.
- red; intros. change M.eq with M.Equal;  rewrite H3; auto with set.
+ red; intros. change M.eq with M.Equal; rewrite H3; reflexivity.
 rewrite MM'.map_cardinal; 
-[ | red; intros; change M.eq with M.Equal; rewrite H3; auto with set| ].
+[ | red; intros; change M.eq with M.Equal; rewrite H3; auto with set; reflexivity| ].
 destruct k.
 rewrite PP.cardinal_1.
 destruct (M.cardinal s1); destruct (M.cardinal s2); auto.
@@ -328,13 +327,13 @@ assert (~M.In x a).
  red; intros; elim (@P.ME.lt_antirefl x); auto.
 rewrite P.add_cardinal_2 in H5; simpl in H5; auto.
 assert (~M.In x a).
- red; intros; elim (@P.ME.lt_antirefl x); auto.
+ red; intros. elim (@P.ME.lt_antirefl x); auto.
 rewrite P.add_cardinal_2; simpl; auto.
 rewrite H3.
 rewrite IHs1.
 rewrite (@P.cardinal_2 s1 s2 x); auto.
 simpl; auto with arith.
-red; intros; elim (@P.ME.lt_antirefl x); auto.
+red; intros; elim (@P.ME.lt_antirefl x); auto. 
 
 intros.
 rewrite FF.filter_iff in H3.
@@ -347,7 +346,7 @@ assert (~M.In x x0).
  red; intros; elim (@P.ME.lt_antirefl x); auto.
 assert (~M.In x y).
  red; intros; elim (@P.ME.lt_antirefl x); auto.
-red; red; red; intros.
+red; red; intros.
 generalize (H5 a); clear H5; do 2 rewrite F.add_iff.
 intuition.
 elim H8; apply M.In_1 with a; auto.
