@@ -244,11 +244,10 @@ intros u v; do 2 rewrite powerset_is_powerset.
 red; red; intros.
 generalize (H3 a) (H1 a) (H2 a); F.set_iff; clear H3 H1 H2.
 intuition; elim (@M.E.lt_not_eq a x); auto.
-intros u; rewrite map_add; do 2 rewrite powerset_is_powerset.
-destruct (P.In_dec x u).
-left; red; intros.
+intros u (A,B).
+rewrite powerset_is_powerset in A.
+rewrite map_add in B; destruct B as (B,_).
 elim (@M.E.lt_not_eq x x); auto.
-right; intuition.
 Qed.
 
 (** Computing the set of all subsets of cardinal k for a particular set [s] *)
@@ -357,16 +356,11 @@ red; intros; rewrite H7; auto.
 red; intros; rewrite H6; auto.
 
 intros.
-rewrite FF.filter_iff.
-red; intros; rewrite H3; auto.
-rewrite FF.filter_iff.
-red; intros; rewrite H3; auto.
+do 2 (rewrite FF.filter_iff; [red; intros; subst; auto|]).
 rewrite map_add.
 do 2 rewrite powerset_is_powerset.
-destruct (P.In_dec x x0).
-left; intuition.
+intros ((A,_),((B,_),_)).
 elim (@P.ME.lt_antirefl x); auto.
-right; intuition.
 Qed.
 
 (** A more "direct" definition *)
