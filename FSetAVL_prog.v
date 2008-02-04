@@ -1842,8 +1842,11 @@ Definition cardinal2 (s:t*t) :=
 
 Obligations Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
- try clear union; unfold cardinal2; simpl fst in *; simpl snd in *; 
- try destruct a as (B1,(A1,(B2,A2))).
+ unfold cardinal2; simpl fst in *; simpl snd in *; 
+ try match goal with u:forall s:_,{x:_|_} |- _ => clear u end; 
+ try match goal with a: _ /\ _ /\ _ /\ _ |- _ => 
+   destruct a as {B1,A1,B2,A2}
+ end.
 
 Program Fixpoint union
  (s : t * t | bst s#1 /\ avl s#1 /\ bst s#2 /\ avl s#2) 
@@ -1879,7 +1882,6 @@ Next Obligation. (* 3: postcondition about s1 *)
 Qed.
 
 Next Obligation. (* 4: postcondition about (add x2 s1) *)
-  destruct H1 as [H11 [H12 [H13 H14]]].
   split.
   apply add_bst; auto.
   split; auto.
@@ -1893,7 +1895,6 @@ Next Obligation. (* 4: postcondition about (add x2 s1) *)
 Qed.
 
 Next Obligation. (* 5: precondition for (union (l1,l2')) *)
-  destruct H1 as [B1 [A1 [B2 A2]]].
   generalize (split_avl _ x1 A2).
   generalize (split_bst _ x1 B2 A2).
   rewrite <- Heq_anonymous; simpl.
@@ -1901,7 +1902,6 @@ Next Obligation. (* 5: precondition for (union (l1,l2')) *)
 Qed.
 
 Next Obligation. (* 6: decreasing of (union (l1,l2')) *)
-  destruct H1 as [B1 [A1 [B2 A2]]].
   assert (l2' = (split x1 (Node l2 x2 r2 h2))#1).
     rewrite <- Heq_anonymous; auto.
   clear Heq_anonymous.
@@ -1915,7 +1915,6 @@ Next Obligation. (* 6: decreasing of (union (l1,l2')) *)
 Qed.
 
 Next Obligation. (* 7: precondition for (union (r1,r2')) *)
-  destruct H1 as [B1 [A1 [B2 A2]]].
   generalize (split_avl _ x1 A2).
   generalize (split_bst _ x1 B2 A2).
   rewrite <- Heq_anonymous; simpl.
@@ -1923,7 +1922,6 @@ Next Obligation. (* 7: precondition for (union (r1,r2')) *)
 Qed.
 
 Next Obligation. (* 8: decreasing of (union (r1,r2')) *)
-  destruct H1 as [B1 [A1 [B2 A2]]].
   assert (r2' = (split x1 (Node l2 x2 r2 h2))#2#2).
     rewrite <- Heq_anonymous; auto.
   clear Heq_anonymous.
@@ -1938,7 +1936,7 @@ Qed.
 
 Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2'))) *)
   do 2 destruct_call union; simpl in *.
-  destruct H1 as [B1 [A1 [B2 A2]]].
+  destruct H1 as {B1,A1,B2,A2}.
   decompose [and] a; clear a.
   decompose [and] a0; clear a0.
   subst s; clear union; simpl snd in *; simpl fst in *.
@@ -1966,7 +1964,6 @@ Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2
 Qed.
 
 Next Obligation. (* 10: postcondition about (add x1 s2) *)
- destruct H1 as [B1 [A1 [B2 A2]]].
  split.
  apply add_bst; auto.
  split; auto.
@@ -1980,7 +1977,6 @@ Next Obligation. (* 10: postcondition about (add x1 s2) *)
 Qed.
 
 Next Obligation. (* 11: precondition for (union (l1',l2)) *)
- destruct H1 as [B1 [A1 [B2 A2]]].
  generalize (split_avl _ x2 A1).
  generalize (split_bst _ x2 B1 A1).
  rewrite <- Heq_anonymous; simpl.
@@ -1988,7 +1984,6 @@ Next Obligation. (* 11: precondition for (union (l1',l2)) *)
 Qed.
 
 Next Obligation. (* 12: decreasing of (union (l1',l2)) *)
- destruct H1 as [B1 [A1 [B2 A2]]].
  assert (l1' = (split x2 (Node l1 x1 r1 h1))#1).
    rewrite <- Heq_anonymous; auto.
  clear Heq_anonymous.
@@ -2002,7 +1997,6 @@ Next Obligation. (* 12: decreasing of (union (l1',l2)) *)
 Qed.
 
 Next Obligation. (* 13: precondition for (union (r1',r2)) *)
- destruct H1 as [B1 [A1 [B2 A2]]].
  generalize (split_avl _ x2 A1).
  generalize (split_bst _ x2 B1 A1).
  rewrite <- Heq_anonymous; simpl.
@@ -2010,7 +2004,6 @@ Next Obligation. (* 13: precondition for (union (r1',r2)) *)
 Qed.
 
 Next Obligation. (* 14: decreasing of (union (r1',r2)) *)
- destruct H1 as [B1 [A1 [B2 A2]]].
  assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
    rewrite <- Heq_anonymous; auto.
  clear Heq_anonymous.
@@ -2055,21 +2048,22 @@ Qed.
 (** * Subset *)
 
 Notation "a && b" := 
- (if a then if b then left _ _ else right _ _ else right _ _).
+ (if a then if b then left else right else right).
 
 Obligations Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
- try clear subset; unfold cardinal2; try clear Heq_anonymous;
+ unfold cardinal2;
  simpl fst in *; simpl snd in *; 
- try destruct a as (B1,B2).
+ try match goal with u:forall s:_,{_}+{_} |- _ => clear u end;
+ try match goal with a:_ /\ _ |- _ => destruct a as (B1,B2) end.
 
 Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2) 
  { measure cardinal2 s }
  : { Subset s#1 s#2 } + {~Subset s#1 s#2 } :=
  match s with 
-  | (Leaf, Leaf) => left _ _ 
-  | (Leaf, Node _ _ _ _) => left _ _
-  | (Node _ _ _ _, Leaf) => right _ _
+  | (Leaf, Leaf) => left 
+  | (Leaf, Node _ _ _ _) => left
+  | (Node _ _ _ _, Leaf) => right
   | (Node l1 x1 r1 h1, Node l2 x2 r2 h2) => 
      match X.compare x1 x2 with 
       | EQ _ => subset (l1,l2) && subset (r1,r2)
@@ -2091,7 +2085,7 @@ Next Obligation. (* post Node,Leaf *)
 Qed.
 
 Next Obligation. (* pre subset (l1,l2) *)
- destruct H; inv bst; auto.
+ inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (l1,l2) *)
@@ -2099,7 +2093,7 @@ Next Obligation. (* decr subset (l1,l2) *)
 Qed.
 
 Next Obligation. (* pre subset (r1,r2) *)
- destruct H0; inv bst; auto.
+ inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (r1,r2) *)
@@ -2107,26 +2101,27 @@ Next Obligation. (* decr subset (r1,r2) *)
 Qed.
 
 Next Obligation. (* post EQ + left + left *)
- unfold Subset in *; intros.
+ clear Heq_anonymous. 
+ red; intros. 
  intuition_in; constructor; order.
-Qed. 
+Qed.
 
 Next Obligation. (* post EQ + left + right *)
- destruct H1.
+ clear Heq_anonymous.
  unfold Subset in *; contradict H0; intros.
  assert (In a (Node l2 x2 r2 h2)) by auto.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post EQ + right + _ *)
- destruct H0.
+ clear Heq_anonymous.
  unfold Subset in *; contradict H; intros.
  assert (In a (Node l2 x2 r2 h2)) by auto.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
- destruct H; inv bst; auto.
+ inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
@@ -2134,7 +2129,7 @@ Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
 Qed.
 
 Next Obligation. (* pre subset (r1,s2) *)
- destruct H0; split; auto; inv bst; auto.
+ split; auto; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (r1,s2) *)
@@ -2142,26 +2137,25 @@ Next Obligation. (* decr subset (r1,s2) *)
 Qed.
 
 Next Obligation. (* post LT + left + left *)
- destruct H1.
+ clear Heq_anonymous.
  unfold Subset in *; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post LT + left + right *)
- destruct H1.
+ clear Heq_anonymous.
  unfold Subset in *; contradict H0; intros. 
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post LT + right + _ *)
- destruct H0.
+ clear Heq_anonymous.
  unfold Subset in *; contradict H; intros. 
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
- destruct H.
  split; auto; inv bst; auto.
 Qed.
 
@@ -2170,7 +2164,7 @@ Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
 Qed.
 
 Next Obligation. (* pre subset (l1,s2) *)
- destruct H0; split; auto; inv bst; auto.
+ split; auto; inv bst; auto.
 Qed.
 
 Next Obligation. (* decr subset (l1,s2) *)
@@ -2178,17 +2172,18 @@ Next Obligation. (* decr subset (l1,s2) *)
 Qed.
 
 Next Obligation. (* post GT + left + left *)
- destruct H1; unfold Subset in *; intros.
+ unfold Subset in *; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post GT + left + right *)
- destruct H1; unfold Subset in *; contradict H0; intros.
+ unfold Subset in *; contradict H0; intros.
  inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* post GT + right + _ *)
- destruct H0; unfold Subset in *; contradict H; intros.
+ clear Heq_anonymous.
+ unfold Subset in *; contradict H; intros.
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
@@ -2375,9 +2370,10 @@ Definition measure2 e := measure_e e#1 + measure_e e#2.
 
 Obligations Tactic := 
  simpl ; intros ; destruct_exists ;  
- try clear Heq_anonymous0; try clear Heq_anonymous compare_aux; 
  unfold measure2; simpl in *; 
- try destruct a as (S1,S2); try subst; simpl in *.
+ try match goal with c:forall e:_,Compare _ _ _ _ |- _ => clear c end;
+ try match goal with a:_/\_|-_=>destruct a as (S1,S2) end; 
+ try subst; simpl in *.
 
 Program Fixpoint compare_aux 
  (e:enumeration*enumeration|sorted_e e#1 /\ sorted_e e#2)
@@ -2413,14 +2409,12 @@ Next Obligation. (* post More,End *)
 Qed.
 
 Next Obligation. (* pre compare_aux (cons r1 e1, cons r2 e2) *)
- destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
   destruct (cons_1 r1 e1) as (H,_); auto.
   destruct (cons_1 r2 e2) as (H',_); auto.
 Qed.
 
 Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
- destruct H as [S1 S2].
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(H,_)); auto.
  destruct (cons_1 r2 e2) as (_,(H0,_)); auto.
@@ -2428,7 +2422,8 @@ Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
 Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = EQ *)
- destruct H as [S1 S2].
+ clear Heq_anonymous0 Heq_anonymous compare_aux.
+ destruct H as (S1,S2); subst; simpl in *.
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
@@ -2437,7 +2432,8 @@ Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = EQ *)
 Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
- destruct H as [S1 S2].
+ clear Heq_anonymous0 Heq_anonymous compare_aux.
+ destruct H as (S1,S2); subst; simpl in *.
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
@@ -2446,7 +2442,8 @@ Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
 Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = GT *)
- destruct H as [S1 S2].
+ clear Heq_anonymous0 Heq_anonymous compare_aux.
+ destruct H as (S1,S2); subst; simpl in *.
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
