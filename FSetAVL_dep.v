@@ -161,7 +161,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros; red in |- *; intros; apply H; auto.
   Qed.
 
-  Hint Resolve lt_node_lt gt_node_gt lt_left lt_right gt_left gt_right.
+  Hint Resolve lt_left lt_right gt_left gt_right.
 
   Lemma lt_tree_not_in :
    forall (x : elt) (t : tree), lt_tree x t -> ~ In_tree x t.
@@ -173,7 +173,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Lemma lt_tree_trans :
    forall x y : elt, X.lt x y -> forall t : tree, lt_tree x t -> lt_tree y t.
   Proof.
-    unfold lt_tree in |- *; firstorder eauto.
+    unfold lt_tree in |- *; eauto.
   Qed.
 
   Lemma gt_tree_not_in :
@@ -186,7 +186,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Lemma gt_tree_trans :
    forall x y : elt, X.lt y x -> forall t : tree, gt_tree x t -> gt_tree y t.
   Proof.
-    unfold gt_tree in |- *; firstorder eauto.
+    unfold gt_tree in |- *; eauto.
   Qed.
 
   Hint Resolve lt_tree_not_in lt_tree_trans gt_tree_not_in gt_tree_trans.
@@ -541,8 +541,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     clear H2; intro; intro; intuition; generalize (H5 y); intuition.
     apply ME.lt_eq with x; auto. 
     apply E.lt_trans with x; auto.
-    apply Hl; auto.
-    apply Hr; auto.
     clear H5.
     generalize z H H0; clear z H H0; simpl in (value of hl);
      unfold hl, hr in |- *.
@@ -3172,7 +3170,6 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     intros; apply H8; auto.
     apply in_flatten_e; auto.
     apply L.MX.ListIn_Inf.
-    unfold E.lt.
     inversion_clear H0.
     intros; elim (in_app_or _ _ _ H0); intuition.
     apply H4; apply in_flatten_e; auto.

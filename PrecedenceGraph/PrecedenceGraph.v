@@ -117,7 +117,8 @@ unfold Equal; split; intros.
 assert (to G m a = true).
  change ((fun m0 =>to G m m0) a = true).
  eapply filter_2; eauto.
-apply filter_3; intuition.
+(* apply filter_3; intuition. ---> Not found *)
+apply filter_3; auto.
 apply remove_2.
 unfold E.eq; red; intros.
 rewrite H4 in H1; rewrite H3 in H1; discriminate H1.
@@ -254,7 +255,7 @@ assert (S (cardinal (remove current non_visited))  = (S n)).
  rewrite <- H; apply remove_cardinal_1; auto with set.
  inversion H3; auto.
 auto with arith.
-intros; elim (ME.eq_dec current k).
+intros; elim (D.eq_dec current k).
 unfold E.eq; intros Eq; rewrite <- Eq; auto.
 apply chain_i; auto.
 intros; apply chain_t with current; auto with set; apply chain_i; auto with set.

@@ -103,7 +103,7 @@ End THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
 Module M := FSetAVL.Make(Z_as_OT).
 
 (* This module M provides plenty of functions on Z-sets *)
-Print M.
+Check M.add.
 
 (* Let's play with them : *)
 Definition ens1 := M.add 3 (M.add 0 (M.add 2 (M.empty))).
@@ -113,8 +113,9 @@ Eval compute in (M.mem 2 ens3).
 Eval compute in (M.elements ens3).
 
 (* M also provides some basic properties, for instance: *)
-Check (M.elements_3 ens3). (* elements always returns a sorted list ... *)
-Eval red in M.E.lt. (* ... with respect to the underlying order. *)
+Check (M.elements_3 ens3). 
+(* elements always returns a sorted list
+   with respect to the underlying order. *)
 
 (* The M.t type for sets is meant to be used as an abstract type 
    since it will vary amongst the different implementations of FSets. 
@@ -122,7 +123,7 @@ Eval red in M.E.lt. (* ... with respect to the underlying order. *)
    But for once, let's have a look at the raw aspect of a set: *)
 Set Printing Implicit.
 Import M.Raw.
-Eval compute in ens1. 
+Eval compute in ens1.
 (* Here for FSetAVL, a set is a pair of a tree (see 1st line) and some proofs *)
 Eval compute in ens3. (* The proofs parts can grow quite fast *)
 Unset Printing Implicit.
@@ -135,6 +136,7 @@ Module R:=M.Raw.
 Definition raw1 := R.add 3 (R.add 0 (R.add 2 R.empty)).
 Definition raw2 := R.add 0 (R.add 2 (R.add 4 R.empty)).
 Definition raw3 := R.inter raw1 raw2.
+
 Eval compute in raw3.
 Eval compute in (R.elements raw3).
 
@@ -379,8 +381,6 @@ End Int.
    FMapWeak counterparts of FSets and FMap provides such structures. 
 *)
   
-Require Import FSetWeak.
-
 Module W := FSetWeakList.Make (Z_as_DT).
 
 (* Of course, we cannot provide efficient functions anymore : the 

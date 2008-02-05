@@ -114,10 +114,12 @@ Module MM := FSetList.Make M.
 Module MM' := MapFunction.MapFunction MM.
 (* Properties functors *)
 Module P := FSetProperties.Properties M.
+Module P' := FSetProperties.OrdProperties M.
 Module F := P.FM.
 Module PEP := FSetEqProperties.EqProperties MM.
 Module PP := PEP.MP.
 Module FF := PP.FM.
+Module ME := OrderedTypeFacts M.E.
 
 Infix "[=]" := M.Equal (at level 70, no associativity).
 Infix "[==]" := MM.Equal (at level 70, no associativity).
@@ -137,8 +139,7 @@ Lemma map_add : forall s s' x, MM.In s' (MM'.map (M.add x) s)
 Proof.
 intros.
 rewrite MM'.map_In.
-red; intros.
-red; rewrite H; auto with set.
+intros; rewrite H; reflexivity.
 split; intros.
 destruct H as (b,(H1,H2)).
 assert (M.In x s').
@@ -161,6 +162,7 @@ apply (MM.In_1 H0 H1).
 destruct H.
 destruct H0.
 exists s'; split; auto.
+change (M.Equal (M.add x s') s'). (* ???? *)
 red; intro a; F.set_iff; intuition.
 rewrite <- H2; auto.
 exists (M.remove x s'); split; auto.
@@ -179,7 +181,9 @@ Lemma singleton_empty : forall s, MM.In s (MM.singleton M.empty) <-> M.Empty s.
 Proof.
 intros.
 rewrite FF.singleton_iff.
-split; intros; auto with set.
+split; intros.
+ auto with set.
+change (M.Equal M.empty s); auto with set.  (* ????? *)
 Qed.
 
 Lemma powerset_base : forall s, M.Empty s -> powerset s [==] MM.singleton M.empty.
@@ -189,11 +193,11 @@ rewrite (@P.fold_1 s MM.t MM.Equal); auto with set.
  constructor; auto with set; eapply PP.equal_trans.
 Qed.
 
-Lemma powerset_step : forall s1 s2 x, P.Above x s1 -> P.Add x s1 s2 -> 
+Lemma powerset_step : forall s1 s2 x, P'.Above x s1 -> P.Add x s1 s2 -> 
  powerset s2 [==] MM.union (powerset s1) (MM'.map (M.add x) (powerset s1)). 
 Proof.
 intros; unfold powerset.
-rewrite (@P.fold_3 s1 s2 x MM.t MM.Equal); auto with set.
+rewrite (@P'.fold_3 s1 s2 x MM.t MM.Equal); auto with set.
  constructor; auto with set; eapply PP.equal_trans.
  apply compat_op_pow.
 Qed.
@@ -201,7 +205,7 @@ Qed.
 Lemma powerset_is_powerset: 
  forall s s', MM.In s' (powerset s) <-> M.Subset s' s.
 Proof.
-induction s using P.set_induction_max; intros.
+induction s using P'.set_induction_max; intros.
 
 rewrite (powerset_base H).
 rewrite singleton_empty; firstorder.
@@ -225,7 +229,7 @@ Qed.
 Lemma powerset_cardinal: 
  forall s, MM.cardinal (powerset s) = two_power (M.cardinal s).
 Proof.
-induction s using P.set_induction_max; intros.
+induction s using P'.set_induction_max; intros.
 
 rewrite (powerset_base H).
 rewrite PP.singleton_cardinal.
@@ -275,7 +279,7 @@ Lemma powerset_k_cardinal : forall s k,
 Proof.
 assert (forall k, compat_bool M.Equal (fun s0 => beq_nat (M.cardinal s0) k)).
  red; intros; rewrite H; auto.
-induction s using P.set_induction_max; unfold powerset_k; intros.
+induction s using P'.set_induction_max; unfold powerset_k; intros.
 
 rewrite P.cardinal_1; auto.
 destruct k.
@@ -303,9 +307,9 @@ rewrite PP.union_cardinal; auto.
 unfold powerset_k in IHs1.
 rewrite IHs1.
 rewrite MM'.map_filter; auto.
- red; intros. change M.eq with M.Equal; rewrite H3; reflexivity.
+ intros; rewrite H3; reflexivity.
 rewrite MM'.map_cardinal; 
-[ | red; intros; change M.eq with M.Equal; rewrite H3; auto with set; reflexivity| ].
+[ | intros; rewrite H3; reflexivity | ].
 destruct k.
 rewrite PP.cardinal_1.
 destruct (M.cardinal s1); destruct (M.cardinal s2); auto.
@@ -323,16 +327,16 @@ rewrite FF.filter_iff; [ red; intros; rewrite H3; auto | ].
 rewrite powerset_is_powerset.
 intuition.
 assert (~M.In x a).
- red; intros; elim (@P.ME.lt_antirefl x); auto.
+ red; intros; elim (@ME.lt_antirefl x); auto.
 rewrite P.add_cardinal_2 in H5; simpl in H5; auto.
 assert (~M.In x a).
- red; intros. elim (@P.ME.lt_antirefl x); auto.
+ red; intros. elim (@ME.lt_antirefl x); auto.
 rewrite P.add_cardinal_2; simpl; auto.
 rewrite H3.
 rewrite IHs1.
 rewrite (@P.cardinal_2 s1 s2 x); auto.
 simpl; auto with arith.
-red; intros; elim (@P.ME.lt_antirefl x); auto. 
+red; intros; elim (@ME.lt_antirefl x); auto. 
 
 intros.
 rewrite FF.filter_iff in H3.
@@ -342,9 +346,9 @@ destruct H4.
 rewrite powerset_is_powerset in H3.
 rewrite powerset_is_powerset in H4.
 assert (~M.In x x0).
- red; intros; elim (@P.ME.lt_antirefl x); auto.
+ red; intros; elim (@ME.lt_antirefl x); auto.
 assert (~M.In x y).
- red; intros; elim (@P.ME.lt_antirefl x); auto.
+ red; intros; elim (@ME.lt_antirefl x); auto.
 red; red; intros.
 generalize (H5 a); clear H5; do 2 rewrite F.add_iff.
 intuition.
@@ -360,7 +364,7 @@ do 2 (rewrite FF.filter_iff; [red; intros; subst; auto|]).
 rewrite map_add.
 do 2 rewrite powerset_is_powerset.
 intros ((A,_),((B,_),_)).
-elim (@P.ME.lt_antirefl x); auto.
+elim (@ME.lt_antirefl x); auto.
 Qed.
 
 (** A more "direct" definition *)
@@ -377,7 +381,7 @@ Definition powerset_k' s :=
 Lemma powerset_k'_is_powerset_k : 
  forall s s' k, MM.In s' (powerset_k' s k) <-> M.Subset s' s /\ M.cardinal s' = k.
 Proof.
-induction s using P.set_induction_max; intros.
+induction s using P'.set_induction_max; intros.
 
 intros; unfold powerset_k'.
 assert (T:=@P.fold_1 s (nat->MM.t) (fun g h => forall k, g k [==] h k)).
@@ -394,7 +398,7 @@ intuition.
 rewrite P.cardinal_1 in H2; try discriminate; firstorder.
 
 intros; unfold powerset_k'.
-assert (T:=@P.fold_3 s1 s2 x (nat->MM.t) (fun g h => forall k, g k [==] h k)); 
+assert (T:=@P'.fold_3 s1 s2 x (nat->MM.t) (fun g h => forall k, g k [==] h k)); 
 simpl in T; rewrite T; clear T; auto.
 
 constructor; auto with set. intros. apply PP.equal_trans with (y k0); auto with set.

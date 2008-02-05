@@ -23,8 +23,8 @@
 #                        #
 ##########################
 
-CAMLP4LIB=`camlp5 -where 2> /dev/null || camlp4 -where`
-CAMLP4=`basename $CAMLP4LIB`
+CAMLP4LIB=$(shell camlp5 -where 2> /dev/null || camlp4 -where)
+CAMLP4=$(notdir $(CAMLP4LIB))
 COQSRC=-I $(COQTOP)/kernel -I $(COQTOP)/lib \
   -I $(COQTOP)/library -I $(COQTOP)/parsing \
   -I $(COQTOP)/pretyping -I $(COQTOP)/interp \
@@ -40,9 +40,9 @@ ZFLAGS=$(OCAMLLIBS) $(COQSRC)
 OPT=
 COQFLAGS=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 COQC=$(COQBIN)coqc
-GALLINA=gallina
+GALLINA=$(COQBIN)gallina
 COQDOC=$(COQBIN)coqdoc
-CAMLC=ocamlc -c
+CAMLC=ocamlc -rectypes -c
 CAMLOPTC=ocamlopt -c
 CAMLLINK=ocamlc
 CAMLOPTLINK=ocamlopt
@@ -77,7 +77,10 @@ VFILES=FSetRBT.v\
   UsualFacts.v\
   MapFunction.v\
   PowerSet.v\
-  MultiSets.v
+  FMapListEq.v\
+  FSetListEq.v\
+  MultiSets.v\
+  MultiSetsEq.v
 VOFILES=$(VFILES:.v=.vo)
 VIFILES=$(VFILES:.v=.vi)
 GFILES=$(VFILES:.v=.g)
@@ -96,7 +99,10 @@ all: FSetRBT.vo\
   UsualFacts.vo\
   MapFunction.vo\
   PowerSet.vo\
+  FMapListEq.vo\
+  FSetListEq.vo\
   MultiSets.vo\
+  MultiSetsEq.vo\
   demo.vo
 
 spec: $(VIFILES)
@@ -143,26 +149,26 @@ PrecedenceGraph:
 
 .SUFFIXES: .v .vo .vi .g .html .tex .g.tex .g.html
 
-.v.vo:
-	$(COQC) $(COQDEBUG) $(COQFLAGS) $*
+%.vo %.glob: %.v
+	$(COQC) -dump-glob $*.glob $(COQDEBUG) $(COQFLAGS) $*
 
-.v.vi:
+%.vi: %.v
 	$(COQC) -i $(COQDEBUG) $(COQFLAGS) $*
 
-.v.g:
+%.g: %.v
 	$(GALLINA) $<
 
-.v.tex:
+%.tex: %.v
 	$(COQDOC) -latex $< -o $@
 
-.v.html:
-	$(COQDOC) -html $< -o $@
+%.html: %.v %.glob
+	$(COQDOC) -glob-from $*.glob  -html $< -o $@
 
-.v.g.tex:
+%.g.tex: %.v
 	$(COQDOC) -latex -g $< -o $@
 
-.v.g.html:
-	$(COQDOC) -html -g $< -o $@
+%.g.html: %.v %.glob
+	$(COQDOC) -glob-from $*.glob -html -g $< -o $@
 
 byte:
 	$(MAKE) all "OPT=-byte"
@@ -191,7 +197,7 @@ Makefile: Make
 
 clean:
 	rm -f *.cmo *.cmi *.cmx *.o $(VOFILES) $(VIFILES) $(GFILES) *~
-	rm -f all.ps all-gal.ps $(HTMLFILES) $(GHTMLFILES)
+	rm -f all.ps all-gal.ps all.glob $(VFILES:.v=.glob) $(HTMLFILES) $(GHTMLFILES) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex)
 	- rm -f demo.vo
 	(cd PrecedenceGraph ; $(MAKE) clean)
 

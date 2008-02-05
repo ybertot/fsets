@@ -16,10 +16,9 @@ Require Import ProofIrrelevance.
 
 Module UsualEqual (U:UsualOrderedType).
 
-  Module M := FSetList.Make U.
-  Import M.
-  Module P := FSetProperties.Properties M.
-  Import P.
+  Module Import M := FSetList.Make U.
+  Module Import P := FSetProperties.Properties M.
+  Module Import P' := FSetProperties.OrdProperties M.
 
   (* True in any FSet: *) 
 

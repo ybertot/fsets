@@ -90,13 +90,13 @@ Proof.
  intros.
  apply H3; auto.
  rewrite (H2 x0).
- destruct (ME.eq_dec x x0); intuition.
+ destruct (D.eq_dec x x0); intuition.
  rewrite (H2 y).
- destruct (ME.eq_dec x y); intuition.
+ destruct (D.eq_dec x y); intuition.
  intros.
  apply H4.
  rewrite (H2 x0).
- destruct (ME.eq_dec x x0); intuition.
+ destruct (D.eq_dec x x0); intuition.
  red; intros.
  unfold F in H8; rewrite map_In_aux in H8.
  destruct H8.
@@ -106,7 +106,7 @@ Proof.
  assert (E.eq b x).
   apply H3; auto.
   rewrite (H2 b).
-  destruct (ME.eq_dec x b); intuition.
+  destruct (D.eq_dec x b); intuition.
   rewrite (H2 x); auto.
  elim H1.
  rewrite <- (FM.In_eq_iff s1 H10); auto.

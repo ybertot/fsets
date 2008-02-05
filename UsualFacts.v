@@ -161,7 +161,8 @@ elim (remove_1 e H0).
 split; intros.
 apply in_or_app; simpl.
 intros; rewrite <- elements_iff in *.
-destruct (ME.eq_dec x x0); unfold E.eq; intuition.
+(* destruct (ME.eq_dec x x0); unfold E.eq; intuition. ---> Not_found *)
+destruct (ME.eq_dec x x0); auto with set.
 destruct (in_app_or _ _ _ H0); clear H0.
 intros; rewrite <- elements_iff in *; eauto with set.
 simpl in H1; inversion H1; subst; auto.

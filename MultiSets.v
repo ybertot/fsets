@@ -343,9 +343,9 @@ Definition fmu := fun (_:Ma.key) p s => (Npos p) + s.
 
 Definition total_multi s := Mu.fold fmu s 0.
 
-Module NP := FMapFacts.Properties Ma.
-Import NP.
+Module Import NP := FMapFacts.Properties Ma.
 Import NP.F.
+Module Import NP' := FMapFacts.OrdProperties Ma.
 
 Lemma fmu_compat : compat_op (@O.eqke _) (@eq _) (fun y => fmu (fst y) (snd y)).
 Proof.
@@ -388,14 +388,14 @@ unfold fmu at 1 3; rewrite Nplus_assoc; f_equal.
 unfold u; apply Ma.remove_1; auto.
 unfold u, Mu.union; red; intros; rewrite add_o; rewrite remove_o.
 rewrite map2_1bis; auto.
-destruct (ME.eq_dec x y); auto.
+destruct (eq_dec x y); auto.
 compute in e0; subst; rewrite H1; auto.
 rewrite not_find_mapsto_iff in H; rewrite H; auto.
 unfold u; apply Ma.remove_1; auto.
 unfold u, Mu.union; red; intros; rewrite add_o; rewrite remove_o.
 do 2 (rewrite map2_1bis; auto).
 rewrite H0; rewrite add_o.
-destruct (ME.eq_dec x y); auto.
+destruct (eq_dec x y); auto.
 compute in e0; subst; rewrite H1; auto.
 (* simple situation where x isn't in s' *)
 change (Nplus (Npos e)) with (fmu x e).
@@ -405,7 +405,7 @@ unfold Mu.union; rewrite map2_1bis; auto; rewrite H1; rewrite H; auto.
 red; intros; unfold Mu.union; rewrite add_o.
 do 2 (rewrite map2_1bis; auto).
 rewrite H0; rewrite add_o.
-destruct (ME.eq_dec x y); auto.
+destruct (eq_dec x y); auto.
 compute in e0; subst; rewrite H1; auto.
 Qed.
 
@@ -422,7 +422,7 @@ unfold Mu.update; destruct n.
 do 2 rewrite Nplus_0_r.
 apply fold_Equal with (eqA:=@eq _); auto.
  red; intros; rewrite remove_o; rewrite elements_o; rewrite H; simpl.
- destruct (ME.eq_dec x y); auto.
+ destruct (eq_dec x y); auto.
 rewrite Nplus_0_r; rewrite Nplus_comm.
 change (Nplus (Npos p)) with (fmu x p).
 apply fold_Add with (eqA:=@eq _); auto.
@@ -434,7 +434,7 @@ replace (Ma.fold fmu s2 0) with (fmu x e (Ma.fold fmu s1 0))
  by (symmetry; apply fold_Add; auto).
 unfold fmu at 2; rewrite <- Nplus_assoc. 
 rewrite <- (IHs1 y n); clear IHs1; rewrite Nplus_assoc.
-destruct (ME.eq_dec x y) as [E|E].
+destruct (eq_dec x y) as [E|E].
 (* x=y *)
 compute in E; subst y.
 replace (Mu.multi x s2) with (Npos e).
@@ -443,13 +443,13 @@ rewrite Nplus_0_r; rewrite Nplus_comm; f_equal.
 apply fold_Equal with (eqA:=@eq _); eauto.
 red; intros; unfold Mu.update; destruct n.
 do 2 rewrite remove_o; rewrite A2; rewrite add_o.
-destruct (ME.eq_dec x y); auto.
+destruct (eq_dec x y); auto.
 do 2 rewrite add_o; rewrite A2; rewrite add_o.
-destruct (ME.eq_dec x y); auto.
+destruct (eq_dec x y); auto.
 unfold Mu.multi; rewrite not_find_mapsto_iff in A1; rewrite A1; auto.
 unfold Mu.multi.
 rewrite A2; rewrite add_o.
-destruct (ME.eq_dec x x) as [_|H]; [ auto | elim H; ME.order ].
+destruct (eq_dec x x) as [_|H]; [ auto | elim H; ME.order ].
 (* x<>y *)
 replace (Mu.multi y s2) with (Mu.multi y s1).
 f_equal.
@@ -463,7 +463,7 @@ destruct (Ma.find x (Mu.update y n s1)); intros; discriminate || auto.
 red; intros; rewrite add_o.
 unfold Mu.update; destruct n; try rewrite remove_o; try rewrite add_o; 
  rewrite A2; repeat rewrite add_o; repeat rewrite remove_o; 
- destruct (ME.eq_dec y y0); destruct (ME.eq_dec x y0); auto; ME.order. 
+ destruct (eq_dec y y0); destruct (eq_dec x y0); auto; ME.order. 
 unfold Mu.multi; rewrite A2; rewrite add_o.
-destruct (ME.eq_dec x y) as [H|_]; [ elim E; auto | auto ].
+destruct (eq_dec x y) as [H|_]; [ elim E; auto | auto ].
 Qed.

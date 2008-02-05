@@ -16,10 +16,9 @@ Require Import ProofIrrelevance.
 
 Module UsualEqual (U:UsualOrderedType).
 
-  Module M := FMapList.Make U.
-  Import M.
-  Module P := FMapFacts.Properties M.
-  Import P.
+  Module Import M := FMapList.Make U.
+  Module Import P := FMapFacts.Properties M.
+  Module Import P' := FMapFacts.OrdProperties M.
 
   (* True in any FMap: *) 
 

@@ -154,7 +154,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros; red in |- *; intros; apply H; auto.
   Qed.
 
-  Hint Resolve lt_node_lt gt_node_gt lt_left lt_right gt_left gt_right.
+  Hint Resolve (*lt_node_lt gt_node_gt*) lt_left lt_right gt_left gt_right.
 
   Lemma lt_tree_not_in :
    forall (x : elt) (t : tree), lt_tree x t -> ~ In_tree x t.
@@ -249,7 +249,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply gt_tree_node; intuition.
     inversion H4; auto.
     apply gt_tree_trans with y; auto.
-    eauto.
   Qed.
 
   Hint Resolve rotate_left rotate_right.
@@ -597,7 +596,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply gt_tree_node; intuition.
     intro z; generalize (i z); intuition.
     apply X.lt_trans with x; auto.
-    apply H; assumption.
     generalize (a0 n H4); constructor; intuition.
     generalize (i y0); inversion_clear H3; intuition; inversion_clear H4;
      intuition.
@@ -1348,7 +1346,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
       inversion H3; induction  d as [| ]; intuition.
       generalize (H4 y); clear H4; inversion_clear H1; intuition.
       apply (E.lt_not_eq (x:=y) (y:=t1)); auto.
-      apply H7; auto.
       apply E.eq_trans with x; auto.
       firstorder. 
       generalize (H4 y); clear H4; inversion_clear H6; intuition.
@@ -1420,20 +1417,16 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
       intro; intro; apply E.lt_trans with t1.
       apply H7; trivial.
       generalize (H5 m); clear H5; intuition.
-      apply H8; intuition.
       inversion_clear H2; constructor; firstorder.
       generalize (H5 y); intuition.
       inversion_clear H2; inversion_clear H1.
       generalize (H7 H9); intro.
       apply (E.lt_not_eq (x:=t1) (y:=y)); auto.
-      apply H13; trivial.
       apply E.eq_trans with x; auto.
       apply (E.lt_not_eq (x:=y) (y:=t1)); auto.
-      apply H12; trivial.
       apply E.eq_trans with x; auto.
       generalize (H10 H9); intro.
       apply (E.lt_not_eq (x:=t1) (y:=y)); auto.
-      apply H13; trivial.
       apply E.eq_trans with x; auto.
       generalize (H5 y); clear H5; inversion_clear H2; intuition.
       generalize (H5 y); clear H5; inversion_clear H7; intuition.
