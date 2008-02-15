@@ -363,3 +363,64 @@ Qed.
 End Fold.
 End FoldProgram.
 
+
+Require Import Recdef.
+
+Module FoldFunction (E:UsualOrderedType)(M:S with Module E:=E).
+Module Import P := Properties M.
+Module Import F := FoldEquiv E M.
+Import M.
+Section Fold.
+
+Variable A:Type.
+Variable f:elt->A->A.
+
+Definition eq := Logic.eq.
+
+Function fold_direct_fun (s:t)(i:A) { measure cardinal s } : A := 
+  match max_elt s with 
+  | None => i
+  | Some x => f x (fold_direct_fun (remove x s) i)
+  end.
+Proof.
+ intros.
+ rewrite <- (@P.remove_cardinal_1 s x); auto with arith set.
+Defined.
+
+Function fold_tail_fun (s:t)(i:A) { measure cardinal s } : A :=
+  match min_elt s with 
+  | None => i
+  | Some x => fold_tail_fun (remove x s) (f x i)
+  end.
+Proof.
+ intros.
+ rewrite <- (@P.remove_cardinal_1 s x); auto with arith set.
+Defined.
+
+Lemma fold_direct_fun_1 : 
+ forall s i, fold_direct_fun s i = fold f s i.
+Proof.
+intros s i.
+rewrite <- F.fold_direct_1.
+functional induction fold_direct_fun s i; simpl; auto.
+rewrite P.cardinal_1; simpl; auto with set.
+rewrite <- P.remove_cardinal_1 with s x; auto with set.
+simpl; auto.
+rewrite e; simpl.
+congruence.
+Qed.
+
+Lemma fold_tail_prog_1 : forall s i, 
+ fold_tail_fun s i = fold f s i.
+Proof.
+intros s i.
+rewrite <- F.fold_tail_1.
+functional induction fold_tail_fun s i; simpl; auto.
+rewrite P.cardinal_1; simpl; auto with set.
+rewrite <- P.remove_cardinal_1 with s x; auto with set.
+simpl; auto.
+rewrite e; simpl; auto.
+Qed.
+
+End Fold.
+End FoldFunction.
