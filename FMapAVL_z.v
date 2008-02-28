@@ -1142,7 +1142,7 @@ Qed.
 
 (** * Comparison *)
 
-Definition Equal (cmp:elt->elt->bool) m m' := 
+Definition Equivb (cmp:elt->elt->bool) m m' := 
   (forall k, In k m <-> In k m') /\ 
   (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
 
@@ -1349,13 +1349,13 @@ Qed.
 Definition equal_aux : 
  forall (cmp: elt -> elt -> bool)(e1 e2:enumeration), 
  sorted_e e1 -> sorted_e e2 -> 
- { L.Equal cmp (flatten_e e1) (flatten_e e2) } +
- { ~ L.Equal cmp (flatten_e e1) (flatten_e e2) }.
+ { L.Equivb cmp (flatten_e e1) (flatten_e e2) } +
+ { ~ L.Equivb cmp (flatten_e e1) (flatten_e e2) }.
 Proof.
  intros cmp e1 e2; pattern e1, e2 in |- *; apply compare_rec2.
  simple destruct x; simple destruct x'; intros.
  (* x = x' = End *)
- left; unfold L.Equal in |- *; split; intros.
+ left; unfold L.Equivb in |- *; split; intros.
  intuition.
  inversion H2.
  (* x = End x' = More *)
@@ -1419,10 +1419,10 @@ Proof.
  intuition order. 
 Qed.
 
-Lemma Equal_elements : forall cmp s s', 
- Equal cmp s s' <-> L.Equal cmp (elements s) (elements s').
+Lemma Equivb_elements : forall cmp s s', 
+ Equivb cmp s s' <-> L.Equivb cmp (elements s) (elements s').
 Proof.
-unfold Equal, L.Equal; split; split; intros.
+unfold Equivb, L.Equivb; split; split; intros.
 do 2 rewrite elements_in; firstorder.
 destruct H.
 apply (H2 k); rewrite <- elements_mapsto; auto.
@@ -1432,7 +1432,7 @@ apply (H2 k); unfold L.PX.MapsTo; rewrite elements_mapsto; auto.
 Qed.
 
 Definition equal : forall cmp s s', bst s -> bst s' -> 
-  {Equal cmp s s'} + {~ Equal cmp s s'}.
+  {Equivb cmp s s'} + {~ Equivb cmp s s'}.
 Proof.
  intros cmp s1 s2 s1_bst s2_bst; simpl.
  destruct (@cons s1 End); auto.
@@ -1445,11 +1445,11 @@ Proof.
  destruct (@equal_aux cmp x x0); auto.
  left.
  rewrite H2 in e; rewrite H5 in e.
- rewrite Equal_elements; auto.
+ rewrite Equivb_elements; auto.
  right.
  contradict n.
  rewrite H2; rewrite H5.
- rewrite <- Equal_elements; auto.
+ rewrite <- Equivb_elements; auto.
 Qed.
 
 End Elt2.
@@ -1839,32 +1839,40 @@ Module Make (X: OrderedType) <: S with Module E := X.
  Lemma elements_3w : forall m, NoDupA eq_key (elements m).  
  Proof. intros m; exact (@Raw.elements_nodup elt m.(this) m.(is_bst)). Qed.
 
- Definition Equal cmp m m' := 
+ Definition Equal m m' := forall y, find y m = find y m'.
+ Definition Equiv (eq_elt:elt->elt->Prop) m m' := 
    (forall k, In k m <-> In k m') /\ 
-   (forall k e e', MapsTo k e m -> MapsTo k e' m' -> cmp e e' = true).  
+   (forall k e e', MapsTo k e m -> MapsTo k e' m' -> eq_elt e e').
+ Definition Equivb cmp := Equiv (Cmp cmp).
 
- Lemma Equal_Equal : forall cmp m m', Equal cmp m m' <-> Raw.Equal cmp m m'.
+ Lemma Equivb_Equivb : forall cmp m m', Equivb cmp m m' <-> Raw.Equivb cmp m m'.
  Proof. 
- intros; unfold Equal, Raw.Equal, In; intuition.
- generalize (H0 k); do 2 rewrite In_alt; intuition.
- generalize (H0 k); do 2 rewrite In_alt; intuition.
- generalize (H0 k); do 2 rewrite <- In_alt; intuition.
- generalize (H0 k); do 2 rewrite <- In_alt; intuition.
- Qed. 
+ intros; unfold Equivb, Equiv, Raw.Equivb, In; intuition.
+ generalize (H0 k); do 2 rewrite Raw.In_alt; intuition.
+ generalize (H0 k); do 2 rewrite Raw.In_alt; intuition.
+ generalize (H0 k); do 2 rewrite <- Raw.In_alt; intuition.
+ generalize (H0 k); do 2 rewrite <- Raw.In_alt; intuition.
+ Qed.
 
  Lemma equal_1 : forall m m' cmp, 
-   Equal cmp m m' -> equal cmp m m' = true. 
+   Equivb cmp m m' -> equal cmp m m' = true. 
  Proof. 
- unfold equal; intros m m' cmp; rewrite Equal_Equal.
+ unfold equal; intros m m' cmp; rewrite Equivb_Equivb.
  destruct (@Raw.equal _ cmp m m'); auto.
  Qed. 
 
  Lemma equal_2 : forall m m' cmp, 
-   equal cmp m m' = true -> Equal cmp m m'.
+   equal cmp m m' = true -> Equivb cmp m m'.
  Proof. 
- unfold equal; intros; rewrite Equal_Equal.
+ unfold equal; intros; rewrite Equivb_Equivb.
  destruct (@Raw.equal _ cmp m m'); auto; try discriminate.
  Qed.  
+
+ (* [cardinal] is now member of the FMap interface. 
+    I'm too fed up to write a more clever version. *)
+ Definition cardinal m := length (elements m).
+ Lemma cardinal_1 : forall m, cardinal m = length (elements m).
+ Proof. intros; reflexivity. Qed.
 
  End Elt.
 
@@ -1918,23 +1926,23 @@ Module Make_ord (X: OrderedType)(D : OrderedType) <:
   Definition lt : t -> t -> Prop := 
     fun m1 m2 => LO.lt (elements m1) (elements m2).
 
-  Lemma eq_1 : forall m m', Equal cmp m m' -> eq m m'.
+  Lemma eq_1 : forall m m', Equivb cmp m m' -> eq m m'.
   Proof.
   intros m m'.
   unfold eq.
-  rewrite Equal_Equal.
-  rewrite Raw.Equal_elements.
+  rewrite Equivb_Equivb.
+  rewrite Raw.Equivb_elements.
   intros.
   apply LO.eq_1.
   auto.
   Qed.
 
-  Lemma eq_2 : forall m m', eq m m' -> Equal cmp m m'.
+  Lemma eq_2 : forall m m', eq m m' -> Equivb cmp m m'.
   Proof.
   intros m m'.
   unfold eq.
-  rewrite Equal_Equal.
-  rewrite Raw.Equal_elements.
+  rewrite Equivb_Equivb.
+  rewrite Raw.Equivb_elements.
   intros.
   generalize (LO.eq_2 H).
   auto.

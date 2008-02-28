@@ -269,7 +269,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   Proof.
   unfold equal, Equal, multi; intros.
   apply M.equal_1.
-  unfold M.Equal; intros.
+  unfold M.Equivb, Cmp; intros.
   split; intros.
   generalize (H k); clear H; intros H.
   unfold M.In.
@@ -289,6 +289,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   unfold equal, Equal, multi; intros.
   generalize (M.equal_2 H); clear H; intros H.
   destruct H.
+  unfold Cmp in *.
   case_eq (M.find a s); case_eq (M.find a s'); simpl; intros; auto.
   assert (H3:=H0 a p1 p0).
   do 2 rewrite F.find_mapsto_iff in H3.
