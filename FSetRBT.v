@@ -35,11 +35,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   (** * Red-black trees *)
 
-  Inductive color : Set :=
+  Inductive color :=
     | red : color
     | black : color.
 
-  Inductive tree : Set :=
+  Inductive tree :=
     | Leaf : tree
     | Node : color -> tree -> X.t -> tree -> tree.
 
@@ -307,7 +307,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
       a proof that it is a binary search tree and a proof that it is 
       a properly balanced red-black tree *)
 
-  Record t_ : Set := t_intro
+  Record t_ := t_intro
     {the_tree :> tree;
      is_bst : bst the_tree;
      is_rbtree : exists n : nat, rbtree n the_tree}.
@@ -481,7 +481,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
       a rather complex pattern-matching; it is realized by the following
       function [conflict] which returns in the sum type [Conflict] *)
 
-  Inductive Conflict (s : tree) : Set :=
+  Inductive Conflict (s : tree) :=
     | NoConflict :
         (forall n : nat, almost_rbtree n s -> rbtree n s) -> Conflict s
     | RedRedConflict :
@@ -1093,14 +1093,14 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     simple destruct t0.
     induction  c as [| ].
     (* s = Node red Leaf t1 t2 *)
-    intros; clear H H0. 
+    intros; rename H0 into H2, H into H1; clear X X0.
     exists (t2, (t1, false)); simpl in |- *; intuition.
     inversion_clear H1; auto.
     inversion_clear H; auto.
     inversion_clear H1; apply H5; auto.
     inversion_clear H; auto; inversion H0.
     (* s = Node black Leaf t1 t2 *)
-    simple destruct t2; intros; clear H H0.
+    simple destruct t2; intros; rename H0 into H2, H into H1; clear X X0.
     (* s = Node black Leaf t1 Leaf *)
     exists (Leaf, (t1, true)); simpl in |- *; intuition.
     inversion_clear H; auto with arith.
@@ -1120,7 +1120,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     right; apply In_color with c; auto.
     apply InRight; apply In_color with black; auto.
     (* s = Node c (Node c0 t1 t2 t3) t4 t5 *)
-    intros; clear H0.
+    intros. rename H0 into H2, H into H1, X into H; clear X0.
     set (l := Node c0 t1 t2 t3) in *.
     case H; clear H. (* remove_min l = l',m,d *)
     inversion H1; auto.
@@ -1156,7 +1156,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     constructor; inversion_clear H8; auto.
     generalize (H0 n); intuition.
     rewrite <- (S_pred n 0 H11); auto.
-(* OK*)
     (* c = black *)
     assert ((n <= 1)%nat \/ (0 < pred n)%nat); [ omega | intuition ].
     (* n = 1 => absurd *)
@@ -1262,7 +1261,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros; exists (Leaf, false); intuition.
     inversion H0.
     (* s = Node c t0 t1 t2 *)
-    intros.
+    intros. rename H into H1, X0 into H0, X into H. 
     case (X.compare x t1); intro.
     (* lt x t1 *)
     clear H0; case H; clear H.

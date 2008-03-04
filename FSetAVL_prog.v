@@ -37,7 +37,7 @@ Definition elt := X.t.
 
 (** * Trees *)
 
-Inductive tree : Set :=
+Inductive tree :=
   | Leaf : tree
   | Node : tree -> X.t -> tree -> int -> tree.
 
@@ -2254,7 +2254,7 @@ Qed.
 
 (** ** Enumeration of the elements of a tree *)
 
-Inductive enumeration : Set :=
+Inductive enumeration :=
  | End : enumeration
  | More : elt -> tree -> enumeration -> enumeration.
 
@@ -2554,7 +2554,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Module E := X.
  Module Raw := Raw I X. 
 
- Record bbst : Set := Bbst {this :> Raw.t; is_bst : Raw.bst this; is_avl: Raw.avl this}.
+ Record bbst := Bbst {this :> Raw.t; is_bst : Raw.bst this; is_avl: Raw.avl this}.
  Definition t := bbst. 
  Definition elt := E.t.
  

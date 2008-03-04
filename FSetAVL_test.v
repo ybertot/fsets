@@ -1,6 +1,6 @@
-Require Import ZArith FSets FSetAVL_prog.
+Require Import ZArith FSets FSetAVL.
 
-Module M := FSetAVL_prog.Make(Z_as_OT).
+Module M := FSetAVL.Make(Z_as_OT).
 
 Open Scope Z_scope.
 

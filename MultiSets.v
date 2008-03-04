@@ -16,7 +16,7 @@ Module Type S.
   Declare Module E : OrderedType.
   Definition elt := E.t.
 
-  Parameter t : Set. (** the abstract type of sets *)
+  Parameter t : Type. (** the abstract type of sets *)
 
   Parameter empty : t.
   (** The empty set. *)

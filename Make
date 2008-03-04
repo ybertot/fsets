@@ -1,9 +1,8 @@
 FSetRBT.v 
 FSetAVL_dep.v
 FSetAVL_prog.v
-FSetAVL_prog_test.v
+FSetAVL_test.v
 extract.v 
-compute.v
 PrecedenceGraph
 UsualFacts.v
 MapFunction.v

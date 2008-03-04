@@ -23,7 +23,7 @@ module type OrderedType =
 (* The corresponding OrderedType in Coq: *)
 
 (*excerpt from OrderedType.v *)
-Inductive Compare (X : Set) (lt eq : X -> X -> Prop) (x y : X) : Set :=
+Inductive Compare (X : Type) (lt eq : X -> X -> Prop) (x y : X) : Type :=
   | LT : lt x y -> Compare lt eq x y
   | EQ : eq x y -> Compare lt eq x y
   | GT : lt y x -> Compare lt eq x y.
@@ -32,7 +32,7 @@ Extraction Compare.
 
 Module Type OrderedType.
 
-  Parameter t : Set.
+  Parameter t : Type.
 
   Parameter eq : t -> t -> Prop.
   Parameter lt : t -> t -> Prop.

@@ -34,7 +34,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
 
   (** * Trees *)
 
-  Inductive tree : Set :=
+  Inductive tree :=
     | Leaf : tree
     | Node : tree -> X.t -> tree -> Z -> tree.
 
@@ -326,7 +326,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
       a proof that it is a binary search tree and a proof that it is 
       a properly balanced AVL tree *)
 
-  Record t_ : Set := t_intro
+  Record t_ := t_intro
     {the_tree :> tree; is_bst : bst the_tree; is_avl : avl the_tree}.
   Definition t := t_.
 
@@ -747,6 +747,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      intuition try omega.
     inversion_clear H1; intuition.
     (* s = Node t0 t1 t2 *)
+    rename H0 into H2, H into H1, X0 into H0, X into H.
     case (X.compare x t1); intro.
     (* x < t1 *)
     clear H0; case H; clear H.
@@ -839,7 +840,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros s' (s'_bst, (s'_avl, Hs')); simpl in |- *; exists s'; intuition.
     unfold height_of_node in |- *; simpl in |- *. AVL H2; AVL s'_avl; intuition omega.
     firstorder. firstorder. inversion_clear H5. firstorder.
-    intros; clear H.
+    intros. rename H4 into H6, H3 into H5, H2 into H4, H1 into H3, H0 into H2, H into H1, X0 into H0; clear X.
     induction  r as [| r1 Hrecr1 t3 r0 Hrecr0 z0]; simpl in |- *.
     (* r = Leaf *)
     clear H0.
@@ -848,7 +849,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     unfold height_of_node in |- *; simpl in |- *. AVL s'_avl; intuition omega.
     firstorder. firstorder. firstorder. inversion_clear H.
     (* l = Node t0 t1 t2 z and r = Node r1 t3 r0 z0 *)
-    intros.
     case (Z_gt_le_dec z (z0 + 2)); intro.
     (* z > z0+2 *)
     clear Hrecr1 Hrecr0.
@@ -919,7 +919,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s = Node t0 t1 t2 *)
     destruct t0 as [| t0 t3 t4 z0].
     (* t0 = Leaf *)
-    clear H H0.
+    rename H1 into H3, H0 into H2, H into H1; clear X X0.
     exists (t2, t1); intuition.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
@@ -927,7 +927,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; apply H6; auto.
     inversion_clear H; auto; inversion_clear H0.
     (* t0 = Node t0 t3 t4 *)
-    clear H0; case H; clear H.
+    rename H1 into H3, H0 into H2, H into H1; clear X0.
+    case X; clear X.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     discriminate.
@@ -975,7 +976,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s = Node t0 t1 t2 *)
     destruct t2 as [| t2 t3 t4 z0].
     (* t2 = Leaf *)
-    clear H H0.
+    rename H1 into H3, H0 into H2, H into H1; clear X X0.
     exists (t0, t1); intuition.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
@@ -983,7 +984,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; apply H5; auto.
     inversion_clear H; auto; inversion_clear H0.
     (* t2 = Node t2 t3 t4 *)
-    clear H; case H0; clear H0.
+    rename H1 into H3, H0 into H2, H into H1; clear X.
+    case X0; clear X0.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     discriminate.
@@ -1090,7 +1092,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s = Node t0 t1 t2 *)
     case (X.compare x t1); intro.
     (* x < t1 *)
-    clear H0; case H; clear H.
+    rename H0 into H2, H into H1; clear X0.
+    case X; clear X.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     intros t'0; intuition.
@@ -1114,7 +1117,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     generalize (H9 y) (H5 y); clear H5 H9; intuition.
     inversion_clear H8; generalize (H9 y) (H5 y); clear H5 H9; intuition.
     (* x = t1 *)
-    clear H H0; case (merge t0 t2).
+    rename H0 into H2, H into H1; clear X X0.
+    case (merge t0 t2).
     inversion_clear H1; auto.
     inversion_clear H2; auto.
     inversion_clear H1; auto.
@@ -1135,7 +1139,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     absurd (X.eq x y); auto.
     apply X.eq_trans with t1; auto.
     (* t1 < x *)
-    clear H; case H0; clear H0.
+    rename H0 into H2, H into H1; clear X.
+    case X0; clear X0.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     intros t'2; intuition.
@@ -1363,7 +1368,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s = Node t0 t1 t2 z *)
     case (X.compare x t1); intro.
     (* x < t1 *)
-    clear H0; case H; clear H.
+    rename H0 into H2, H into H1; clear X0.
+    case X; clear X.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     intros (ll, (pres, rl)); intuition.
@@ -1390,7 +1396,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     absurd (X.eq x t1); auto.
     absurd (X.lt x t1); inversion_clear H1; auto.
     (* x = t1 *)
-    clear H H0.
+    rename H0 into H2, H into H1; clear X X0.
     exists (t0, (true, t2)); simpl in |- *.
     split. inversion_clear H1; trivial.
     split. inversion_clear H2; trivial.
@@ -1410,7 +1416,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     absurd (X.lt x y); auto.
     apply ME.lt_not_gt; apply ME.lt_eq with t1; auto.
     (* x > t1 *)
-    clear H; case H0; clear H0.
+    rename H0 into H2, H into H1; clear X.
+    case X0; clear X0.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     intros (lr, (pres, rr)); intuition.
@@ -1825,7 +1832,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed. 
 
   Lemma cardinal_rec2 :
-   forall P : tree -> tree -> Set,
+   forall P : tree -> tree -> Type,
    (forall x x' : tree,
     (forall y y' : tree,
      (cardinal_tree y + cardinal_tree y' < cardinal_tree x + cardinal_tree x')%nat ->
@@ -1898,10 +1905,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     pattern s1, s2 in |- *; apply cardinal_rec2.
     unfold In in |- *; simple destruct x; simpl in |- *; intuition.
     (* x = Leaf *)
-    clear H.
+    clear X.
     exists (t_intro x' s2_bst s2_avl0); simpl in |- *; intuition.
     inversion_clear H0.
     (* x = Node t0 t1 t2 *)
+    rename X into H.
     destruct x' as [| t3 t4 t5 z0]; simpl in |- *.
     (* x' = Leaf *)
     clear H.
@@ -2024,6 +2032,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     exists acc; intuition.
     inversion_clear H4.
     (* s = Node t0 t1 t2 *)
+    rename H2 into H4, H1 into H3, H0 into H2, H into H1, X0 into H0, X into H.
     case (Pdec t1); intro.
     (* P t1 *)
     case (add_tree t1 acc); auto.
@@ -2103,6 +2112,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s = Leaf *)
     exists (acct, accf); simpl in |- *; intuition; inversion_clear H6.
     (* s = Node t0 t1 t2 *)
+    rename H4 into H6, H3 into H5, H2 into H4, H1 into H3, H0 into H2, H into H1, X0 into H0, X into H.
     case (Pdec t1); intro.
     (* P t1 *)
     case (add_tree t1 acct); auto.
@@ -2237,8 +2247,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     pattern s1, s2 in |- *; apply cardinal_rec2.
     simple destruct x; simpl in |- *; intuition.
     (* x = Leaf *)
-    clear H; left; intros; inversion_clear H.
+    clear X; left; intros; inversion_clear H.
     (* x = Node t0 t1 t2 z *)
+    rename X into H.
+    remember (cardinal_tree x') as c.
     destruct x' as [| t3 t4 t5 z0]; simpl in |- *; intuition.
     (* x' = Leaf *)
     right; intros.
@@ -2248,12 +2260,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     case (X.compare t1 t4); intro.
     (* t1 < t4 *)
     case (H (Node t0 t1 Leaf 0) t3); auto; intros.
-    simpl in |- *; omega.
+    simpl in *; omega.
     constructor; inversion_clear s1_bst; auto.
     inversion_clear s2_bst; auto.
     (* Subset (Node t0 t1 Leaf) t3 *)
     intros; case (H t2 (Node t3 t4 t5 z0)); auto; intros.
-    simpl in |- *; omega.
+    simpl in *; omega.
     inversion_clear s1_bst; auto.
     (* Subset t2 (Node t3 t4 t5 z0) *)
     clear H; left; intuition.
@@ -2285,12 +2297,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H3.
     (* t1 = t4 *)
     case (H t0 t3); auto; intros.
-    simpl in |- *; omega.
+    simpl in *; omega.
     inversion_clear s1_bst; auto.
     inversion_clear s2_bst; auto.
     (* Subset t0 t3 *)
     case (H t2 t5); auto; intros.
-    simpl in |- *; omega.
+    simpl in *; omega.
     inversion_clear s1_bst; auto.
     inversion_clear s2_bst; auto.
     (* Subset t2 t5 *)
@@ -2325,12 +2337,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply ME.eq_lt with t4; auto.
     (* t4 < t1 *)
     case (H (Node Leaf t1 t2 0) t5); auto; intros.
-    simpl in |- *; omega.
+    simpl in *; omega.
     constructor; inversion_clear s1_bst; auto.
     inversion_clear s2_bst; auto.
     (* Subset (Node Leaf t1 t2) t5 *)
     intros; case (H t0 (Node t3 t4 t5 z0)); auto; intros.
-    simpl in |- *; omega.
+    simpl in *; omega.
     inversion_clear s1_bst; auto.
     (* Subset t0 (Node t3 t4 t5 z0) *)
     clear H; left; intuition.
@@ -2866,23 +2878,26 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     constructor 2; unfold L.eq, L.Equal in |- *; intuition.
     (* x = nil *)
     constructor 1; simpl in |- *; auto.
-    inversion_clear H2; intuition.
-    destruct t0 as [| t0 t1 t2 z]; inversion_clear H1; simpl in |- *.
-    elim H3.
+    inversion_clear H1; intuition.
+    destruct t0 as [| t0 t1 t2 z]; inversion_clear H0; simpl in |- *.
+    elim H2.
     auto.
     (* x <> nil, x' = nil *)
     constructor 3; simpl in |- *; auto.
-    destruct t0 as [| t0 t1 t2 z]; inversion_clear H0; simpl in |- *.
-    inversion_clear H2; intuition.
-    elim H0.
+    destruct t0 as [| t0 t1 t2 z]; inversion_clear H; simpl in |- *.
+    inversion_clear H1; intuition.
+    elim H.
     auto.
     (* x,x' <> nil *)
+    rename H1 into H2, H0 into H1, H into H0, X into H.
+    remember (measure_l (t0::l)) as m0.
+    remember (measure_l (t1::l0)) as m1.
     destruct t0 as [| t0 t2 t3 z];
      [ destruct t1 as [| t0 t1 t2 z] | destruct t1 as [| t1 t4 t5 z0] ];
      simpl in |- *.
     (* Leaf :: l, Leaf :: l0 *)
     case (H l l0); clear H; auto; intros.
-    Measure_l; unfold measure_t in |- *; omega.
+    subst; Measure_l; unfold measure_t in |- *; omega.
     inversion_clear H0; trivial.
     inversion_clear H1; trivial.
     inversion_clear H2; intuition.
@@ -2894,7 +2909,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     destruct t0 as [| t0 t3 t4 z0]; simpl in |- *.
     (* Leaf :: l, (Node Leaf t1 t2) :: l0 *)
     case (H l (Node Leaf t1 t2 z :: l0)); clear H; auto; intros.
-    Measure_l; Measure_t; omega.
+    subst; Measure_l; Measure_t; omega.
     inversion_clear H0; auto.
     inversion_clear H2; intuition; elim H.
     constructor 1; auto.
@@ -2903,7 +2918,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* Leaf :: l, (Node (Node t0 t3 t4) t1 t2) :: l0 *)
     case (H (Leaf :: l) (Node t0 t3 t4 z0 :: Node Leaf t1 t2 z :: l0));
      clear H; auto; intros.
-    Measure_l; Measure_t. Measure_t_1 t0; Measure_t_1 t4; omega.
+    subst; Measure_l; Measure_t. Measure_t_1 t0; Measure_t_1 t4; omega.
     constructor; inversion_clear H1; auto.
     inversion_clear H; auto.
     constructor; auto.
@@ -2926,7 +2941,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     destruct t0 as [| t0 t1 t4 z0]; simpl in |- *.
     (* (Node Leaf t2 t3) :: l, Leaf :: l0 *)
     case (H (Node Leaf t2 t3 z :: l) l0); clear H; auto; intros.
-    Measure_l; Measure_t; omega.
+    subst; Measure_l; Measure_t; omega.
     inversion_clear H1; auto.
     inversion_clear H2; intuition; elim H3.
     constructor 1; auto.
@@ -2935,7 +2950,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* (Node (Node t0 t1 t4) t2 t3) :: l, Leaf :: l0 *)
     case (H (Node t0 t1 t4 z0 :: Node Leaf t2 t3 z :: l) (Leaf :: l0));
      clear H; auto; intros.
-    Measure_l; Measure_t. Measure_t_1 t0; Measure_t_1 t4; omega.
+    subst; Measure_l; Measure_t. Measure_t_1 t0; Measure_t_1 t4; omega.
     constructor; inversion_clear H0; auto.
     inversion_clear H; auto.
     constructor; auto.
@@ -2964,7 +2979,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     constructor 1; auto.
     (* t2 = t4 *)
     case (H (t3 :: l) (t5 :: l0)); clear H; auto; intros.
-    Measure_l; Measure_t. Measure_t_1 t3; Measure_t_1 t5; omega.
+    subst; Measure_l; Measure_t. Measure_t_1 t3; Measure_t_1 t5; omega.
     constructor; inversion_clear H0; auto.
     inversion_clear H; trivial.
     inversion_clear H1; constructor; intuition.
@@ -2983,7 +2998,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      (H (Node Leaf t2 t3 z :: l)
         (Node t0 t1 t6 z1 :: Node Leaf t4 t5 z0 :: l0)); 
      clear H; auto; intros.
-    Measure_l; Measure_t. 
+    subst; Measure_l; Measure_t. 
     Measure_t_1 t3; Measure_t_1 t5; Measure_t_1 t0; Measure_t_1 t6; omega.
     inversion_clear H1.
     constructor; intuition.
@@ -3007,7 +3022,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      (H (Node t0 t6 t7 z1 :: Node Leaf t2 t3 z :: l)
         (Node Leaf t4 t5 z0 :: l0)); clear H; auto; 
      intros.
-    Measure_l; Measure_t. 
+    subst; Measure_l; Measure_t. 
     Measure_t_1 t3; Measure_t_1 t5; Measure_t_1 t0; Measure_t_1 t5;
      Measure_t_1 t7; omega.
     inversion_clear H0.
@@ -3032,7 +3047,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      (H (Node t0 t6 t7 z1 :: Node Leaf t2 t3 z :: l)
         (Node (Node t1 t8 t9 z2) t4 t5 z0 :: l0)); 
      clear H; auto; intros.
-    Measure_l; Measure_t. 
+    subst; Measure_l; Measure_t. 
     Measure_t_1 t3; Measure_t_1 t5; Measure_t_1 t0; Measure_t_1 t5;
      Measure_t_1 t7; omega.
     inversion_clear H0.
@@ -3109,7 +3124,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
 
   (** ** Enumeration of the elements of a tree *)
 
-  Inductive enumeration : Set :=
+  Inductive enumeration :=
    | End : enumeration
    | More : elt -> tree -> enumeration -> enumeration.
 
@@ -3274,8 +3289,8 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     (* s = Leaf *)
     exists e; intuition.
     (* s = Node t0 t1 t2 z *)
-    clear H0.
-    case (H (More t1 t2 e)); clear H; intuition.
+    rename H1 into H3, H0 into H2, H into H1; clear X0.
+    case (X (More t1 t2 e)); clear X; intuition.
     inversion_clear H1; auto.
     constructor; inversion_clear H1; auto.
     inversion_clear H0; intuition.
@@ -3308,6 +3323,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     (* e < e3 *)
     constructor 1; simpl; auto.
     (* e = e3 *)
+    rename H0 into H1, H into H0, X into H.
     case (cons t0 e0).
     inversion_clear H0; auto.
     inversion_clear H0; auto.
@@ -3353,9 +3369,4 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
   Qed.
 
 End Make.
-
-
-
-
-
 

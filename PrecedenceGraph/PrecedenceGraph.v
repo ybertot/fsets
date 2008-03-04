@@ -12,6 +12,7 @@
 (** Reference: J. Beauqier, B. Berard, Systemes d'exploitations, Mac Graw Hill *)
 
 Require Import FSets.
+Require Import OrderedTypeEx.
 
 Require Import Sumbool.
 Require Import Compare_dec.
@@ -26,39 +27,7 @@ Set Implicit Arguments.
 (** We choose natural numbers to label the nodes. 
     With a little more work, any OrderedType could have fit. *)
 
-Module Nat <: OrderedType.
-
-  Definition t := nat.
-
-  Definition eq := @eq nat.
-  Definition lt := lt.
-
-  Lemma eq_refl : forall (x:t), eq x x. 
-    unfold eq; auto. Save.
-  Lemma eq_sym : forall (x y:t), (eq x y) -> (eq y x). 
-    unfold eq; auto. Save.
-  Lemma eq_trans : forall (x y z:t), (eq x y) -> (eq y z) -> (eq x z).
-    unfold eq; intros; rewrite H; auto. Save.
-  Lemma lt_trans : forall (x y z:t), (lt x y) -> (lt y z) -> (lt x z).
-    exact Lt.lt_trans. Save.
-  Lemma lt_not_eq : forall (x y:t), (lt x y) -> ~(eq x y).
-    unfold lt, eq; red; intros.
-    subst x; exact (lt_irrefl y H).
-    Save.
-  Definition compare : forall (x y:t),(Compare lt eq x y).
-    unfold lt, eq; intros x y; elim (lt_eq_lt_dec x y); auto.
-    destruct 1.
-    apply LT; auto.
-    apply EQ; auto.
-    intro; apply GT; auto.
-  Defined.
-
-  Hint Immediate eq_sym.
-  Hint Resolve eq_refl eq_trans lt_not_eq lt_trans.
-
-End Nat.
-
-Module Type Natset := S with Module E := Nat.
+Module Type Natset := S with Module E := Nat_as_OT.
 
 Module Precedence (M:Natset).
 Import M.
@@ -69,7 +38,7 @@ Import MP.
 
 (** A graph is composed of a set of nodes and a transition function *)
 
-Record Graph : Set := {
+Record Graph := {
   nodes:> t;
   to: nat -> nat -> bool
 }. 
@@ -140,6 +109,7 @@ unfold is_succ, is_pred; simpl; intros.
 assert (~ In n (filter (fun m0 => to G m m0) (remove n G))).
 intro.
 elim remove_1 with G n n; auto.
+red; auto.
 eapply filter_1; eauto.
 apply cardinal_2 with n; auto.
 unfold Add; split; intros.
@@ -192,18 +162,19 @@ apply Equal_cardinal.
 eapply add_filter_2; unfold Add; eauto with set.
 rewrite H1; omega.
 unfold transpose; intros; omega.
+apply remove_1; red; auto.
 unfold g, f1, f2; intros; apply node_remove_3; auto.
 Qed.
 
 (** * Acyclic graph *)
 
-Inductive chain (G:Graph) : elt->elt->Set:=
+Inductive chain (G:Graph) : elt->elt->Type:=
  chain_i :  forall i j, In i G -> In j G -> to G i j = true -> chain G i j
 | chain_t : forall i j k,chain G i j -> chain G j k -> chain G i k.
 
 Definition acyclic (G:Graph) := forall i, chain G i i ->False.
 
-Record AcyclicGraph : Set := {
+Record AcyclicGraph := {
  graph_support :> Graph;
  Hacyclic : (acyclic graph_support)
 }.
@@ -237,7 +208,7 @@ forall (G:AcyclicGraph)(n:nat)(non_visited:t),
 Proof.
 induction n; simpl; intros.
 elim (@Hacyclic G current).
-apply H2; auto.
+apply X; auto.
 apply (cardinal_inv_1 H).
 generalize (@choose_1 (set_pred G current)) (@choose_2 (set_pred G current)).
 case (choose (set_pred G current)).
@@ -247,13 +218,13 @@ unfold set_pred, is_pred in Hnc.
 assert (Hc: compat_bool E.eq (fun m => to G m current)). auto.
 generalize (filter_1 Hc Hnc) (filter_2 Hc Hnc); clear Hnc Hc; intros Hnc1 Hnc2.
 assert (Hc: In current non_visited).
- apply mem_2; generalize (H2 current) (@mem_1 non_visited current).
+ apply mem_2; generalize (X current) (@mem_1 non_visited current).
  case (mem current non_visited); intuition.
  elim (@Hacyclic G current); auto.
 apply IHn with (remove current non_visited) newcurrent; auto. 
 assert (S (cardinal (remove current non_visited))  = (S n)).
  rewrite <- H; apply remove_cardinal_1; auto with set.
- inversion H3; auto.
+ inversion H2; auto.
 auto with arith.
 intros; elim (D.eq_dec current k).
 unfold E.eq; intros Eq; rewrite <- Eq; auto.
@@ -291,7 +262,7 @@ Qed.
 
 Lemma remove_acyclic : forall (G:AcyclicGraph)(n:nat), (acyclic (node_remove G n)).
 Proof.
-unfold acyclic;intros;elim (Hacyclic _ (chain_remove H));auto.
+unfold acyclic;intros;elim (Hacyclic _ (chain_remove X));auto.
 Qed.
 
 Definition acyclic_node_remove (G:AcyclicGraph)(n:nat) :=
@@ -303,7 +274,7 @@ Theorem acyclic_node_remove_correct :
 Proof.
 unfold acyclic_node_remove;simpl.
 intros;rewrite arity_isom;auto.
-intros;apply edges_remove;auto.
+apply edges_remove;auto.
 assert (~ to G n n =true).
  intro Abs; elim (Hacyclic _ (chain_i _ H H Abs)).
 generalize H0; case (to G n n); intuition.
@@ -334,7 +305,7 @@ Qed.
 
 (** The converse is false, but that doesn't matter. *)
 
-Record WPrecGraph:Set := {
+Record WPrecGraph := {
   graph_support2:>AcyclicGraph;
   Hprec:(weak_precedence graph_support2)
 }. 
