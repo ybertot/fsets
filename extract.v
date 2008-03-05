@@ -17,7 +17,6 @@
 
 Require Import FSets.
 Require Import FSetAVL.
-Require Import FSetAVL_z.
 Require Import FSetAVL_dep.
 Require Import FSetRBT.
 Require Import ZArith.
@@ -35,9 +34,6 @@ Extraction "rbt.ml" NatRBT.empty.
 
 Module NatAVL := FSetAVL.Make Nat_as_OT.
 Extraction "avl.ml" NatAVL.empty.
-
-Module NatAVL_z := FSetAVL_z.Make Nat_as_OT.
-Extraction "avl_z.ml" NatAVL_z.empty.
 
 Module NatAVL_dep := FSetAVL_dep.Make Nat_as_OT.
 Extraction "avl_dep.ml" NatAVL_dep.empty.
