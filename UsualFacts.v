@@ -370,12 +370,11 @@ Module FoldFunction (E:UsualOrderedType)(M:S with Module E:=E).
 Module Import P := Properties M.
 Module Import F := FoldEquiv E M.
 Import M.
+Import Logic. (* Function works badly if eq isn't Leibniz *)
 Section Fold.
 
 Variable A:Type.
 Variable f:elt->A->A.
-
-Definition eq := Logic.eq.
 
 Function fold_direct_fun (s:t)(i:A) { measure cardinal s } : A := 
   match max_elt s with 
