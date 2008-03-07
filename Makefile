@@ -23,8 +23,8 @@
 #                        #
 ##########################
 
-CAMLP4LIB:=+camlp5
-CAMLP4:=/usr/bin/camlp5
+CAMLP4LIB:=+camlp4
+CAMLP4:=/home/notin/exec/ocaml-3.09.3/bin/camlp4
 COQSRC:=-I $(COQTOP)/kernel -I $(COQTOP)/lib \
   -I $(COQTOP)/library -I $(COQTOP)/parsing \
   -I $(COQTOP)/pretyping -I $(COQTOP)/interp \
@@ -43,10 +43,10 @@ COQC:=$(COQBIN)coqc
 COQDEP:=$(COQBIN)coqdep -c
 GALLINA:=$(COQBIN)gallina
 COQDOC:=$(COQBIN)coqdoc
-CAMLC:=/usr/bin/ocamlc -rectypes -c
-CAMLOPTC:=/usr/bin/ocamlopt -c
-CAMLLINK:=/usr/bin/ocamlc
-CAMLOPTLINK:=/usr/bin/ocamlopt
+CAMLC:=/home/notin/exec/ocaml-3.09.3/bin/ocamlc -rectypes -c
+CAMLOPTC:=/home/notin/exec/ocaml-3.09.3/bin/ocamlopt -c
+CAMLLINK:=/home/notin/exec/ocaml-3.09.3/bin/ocamlc
+CAMLOPTLINK:=/home/notin/exec/ocaml-3.09.3/bin/ocamlopt
 GRAMMARS:=grammar.cma
 CAMLP4EXTEND:=pa_extend.cmo pa_macro.cmo q_MLast.cmo
 PP:=-pp "$(CAMLP4)o -I . -I $(COQTOP)/parsing $(CAMLP4EXTEND) $(GRAMMARS) -impl"
@@ -57,9 +57,9 @@ PP:=-pp "$(CAMLP4)o -I . -I $(COQTOP)/parsing $(CAMLP4EXTEND) $(GRAMMARS) -impl"
 #                       #
 #########################
 
-OCAMLLIBS:=-I .
-COQLIBS:=-I .
-COQDOCLIBS:=
+OCAMLLIBS:=
+COQLIBS:= -R . FSets
+COQDOCLIBS:=-R . FSets
 
 ###################################
 #                                 #
@@ -72,6 +72,7 @@ VFILES:=FSetRBT.v\
   FSetAVL_prog.v\
   FSetAVL_test.v\
   extract.v\
+  PrecedenceGraph/PrecedenceGraph.v\
   UsualFacts.v\
   MapFunction.v\
   PowerSet.v\
@@ -91,7 +92,7 @@ all: FSetRBT.vo\
   FSetAVL_prog.vo\
   FSetAVL_test.vo\
   extract.vo\
-  PrecedenceGraph\
+  PrecedenceGraph/PrecedenceGraph.vo\
   UsualFacts.vo\
   MapFunction.vo\
   PowerSet.vo\
@@ -130,22 +131,13 @@ all-gal.ps: $(VFILES)
 demo.vo: compute.vo demo.v
 	$(COQC) demo.v > /dev/null 
 
-###################
-#                 #
-# Subdirectories. #
-#                 #
-###################
-
-PrecedenceGraph:
-	cd PrecedenceGraph ; $(MAKE) all
-
 ####################
 #                  #
 # Special targets. #
 #                  #
 ####################
 
-.PHONY: all opt byte archclean clean install depend html PrecedenceGraph
+.PHONY: all opt byte archclean clean install depend html
 
 .SUFFIXES: .v .vo .vi .g .html .tex .g.tex .g.html
 
@@ -187,24 +179,20 @@ opt:
 install:
 	mkdir -p `$(COQC) -where`/user-contrib
 	cp -f $(VOFILES) `$(COQC) -where`/user-contrib
-	(cd PrecedenceGraph ; $(MAKE) install)
 
 Makefile: Make
 	mv -f Makefile Makefile.bak
 	$(COQBIN)coq_makefile -f Make -o Makefile
 
-	(cd PrecedenceGraph ; $(MAKE) Makefile)
 
 clean:
 	rm -f *.cmo *.cmi *.cmx *.o $(VOFILES) $(VIFILES) $(GFILES) *~
 	rm -f all.ps all-gal.ps all.glob $(VFILES:.v=.glob) $(HTMLFILES) $(GHTMLFILES) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) $(VFILES:.v=.v.d)
 	- rm -rf html
 	- rm -f demo.vo
-	(cd PrecedenceGraph ; $(MAKE) clean)
 
 archclean:
 	rm -f *.cmx *.o
-	(cd PrecedenceGraph ; $(MAKE) archclean)
 
 
 -include $(VFILES:.v=.v.d)

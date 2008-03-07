@@ -1,9 +1,10 @@
+-R . FSets
 FSetRBT.v 
 FSetAVL_dep.v
 FSetAVL_prog.v
 FSetAVL_test.v
 extract.v 
-PrecedenceGraph
+PrecedenceGraph/PrecedenceGraph.v
 UsualFacts.v
 MapFunction.v
 PowerSet.v
