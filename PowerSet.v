@@ -138,8 +138,7 @@ Lemma map_add : forall s s' x, MM.In s' (MM'.map (M.add x) s)
  <-> M.In x s' /\ (MM.In s' s \/ MM.In (M.remove x s') s).
 Proof.
 intros.
-rewrite MM'.map_In.
-intros; rewrite H; reflexivity.
+rewrite MM'.map_In by (intros; rewrite H; reflexivity).
 split; intros.
 destruct H as (b,(H1,H2)).
 assert (M.In x s').
@@ -267,18 +266,18 @@ Lemma powerset_k_is_powerset_k : forall k s s',
 Proof.
 unfold powerset_k; intros.
 rewrite FF.filter_iff.
-red; intros; rewrite H; auto.
 rewrite powerset_is_powerset. 
 intuition.
 apply beq_nat_eq; auto.
 subst; symmetry; apply beq_nat_refl.
+red; intros; f_equal; rewrite H; auto.
 Qed.
 
 Lemma powerset_k_cardinal : forall s k, 
  MM.cardinal (powerset_k s k) = binomial (M.cardinal s) k.
 Proof.
 assert (forall k, compat_bool M.Equal (fun s0 => beq_nat (M.cardinal s0) k)).
- red; intros; rewrite H; auto.
+ red; intros; f_equal; rewrite H; auto.
 induction s using P'.set_induction_max; unfold powerset_k; intros.
 
 rewrite P.cardinal_1; auto.
@@ -306,24 +305,23 @@ rewrite PEP.filter_union; auto.
 rewrite PP.union_cardinal; auto.
 unfold powerset_k in IHs1.
 rewrite IHs1.
-rewrite MM'.map_filter; auto.
- intros; rewrite H3; reflexivity.
+rewrite MM'.map_filter; auto; [ | intros; rewrite H3; reflexivity ].
 rewrite MM'.map_cardinal; 
 [ | intros; rewrite H3; reflexivity | ].
 destruct k.
 rewrite PP.cardinal_1.
 destruct (M.cardinal s1); destruct (M.cardinal s2); auto.
 red; intro a; rewrite FF.filter_iff.
-red; intros; rewrite H3; auto.
 red; destruct 1.
 case_eq (M.cardinal (M.add x a)); intros.
 elim (@P.cardinal_inv_1 _ H5 x); F.set_iff; auto.
 rewrite H5 in H4; simpl in H4; inversion H4.
+red; intros; f_equal; rewrite H3; auto.
 assert (MM.filter (fun x0 => beq_nat (M.cardinal (M.add x x0)) (S k)) (powerset s1)
    [==] MM.filter (fun x0 => beq_nat (M.cardinal x0) k) (powerset s1)).
 red; intros.
-rewrite FF.filter_iff; [ red; intros; rewrite H3; auto | ].
-rewrite FF.filter_iff; [ red; intros; rewrite H3; auto | ].
+rewrite FF.filter_iff; [ | red; intros; f_equal; rewrite H3; auto ].
+rewrite FF.filter_iff; [ | red; intros; f_equal; rewrite H3; auto ].
 rewrite powerset_is_powerset.
 intuition.
 assert (~M.In x a).
@@ -356,11 +354,11 @@ elim H8; apply M.In_1 with a; auto.
 elim H8; apply M.In_1 with a; auto.
 elim H9; apply M.In_1 with a; auto.
 elim H9; apply M.In_1 with a; auto.
-red; intros; rewrite H7; auto.
-red; intros; rewrite H6; auto.
+red; intros; f_equal; rewrite H7; auto.
+red; intros; f_equal; rewrite H6; auto.
 
 intros.
-do 2 (rewrite FF.filter_iff; [red; intros; subst; auto|]).
+do 2 (rewrite FF.filter_iff; [|red; intros; subst; auto]).
 rewrite map_add.
 do 2 rewrite powerset_is_powerset.
 intros ((A,_),((B,_),_)).
@@ -387,8 +385,6 @@ intros; unfold powerset_k'.
 assert (T:=@P.fold_1 s (nat->MM.t) (fun g h => forall k, g k [==] h k)).
 simpl in T; rewrite T; clear T; auto.
 
-constructor; auto with set. intros. apply PP.equal_trans with (y k0); auto with set.
-
 destruct k.
 rewrite singleton_empty.
 intuition.
@@ -397,17 +393,11 @@ rewrite FF.empty_iff.
 intuition.
 rewrite P.cardinal_1 in H2; try discriminate; firstorder.
 
+constructor; auto with set. intros. apply PP.equal_trans with (y k0); auto with set.
+
 intros; unfold powerset_k'.
 assert (T:=@P'.fold_3 s1 s2 x (nat->MM.t) (fun g h => forall k, g k [==] h k)); 
 simpl in T; rewrite T; clear T; auto.
-
-constructor; auto with set. intros. apply PP.equal_trans with (y k0); auto with set.
-
-red; intros.
-destruct k0; auto.
-red; intros; FF.set_iff.
-do 2 rewrite map_add.
-repeat rewrite H2; rewrite H1; split; auto.
 
 change (MM.In s' (match k with 
          | O => powerset_k' s1 0
@@ -444,6 +434,14 @@ left.
  split; auto.
  red; intro a; generalize (H1 a)(H0 a); intuition.
  elim n; rewrite H6; auto.
+
+constructor; auto with set. intros. apply PP.equal_trans with (y k0); auto with set.
+
+red; intros.
+destruct k0; auto.
+red; intros; FF.set_iff.
+do 2 rewrite map_add.
+repeat rewrite H2; rewrite H1; split; auto.
 Qed.
 
 Lemma powerset_k_alt : 

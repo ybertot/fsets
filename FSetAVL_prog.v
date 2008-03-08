@@ -812,9 +812,9 @@ Proof.
  destruct s1;try contradiction;clear y.
  replace s2' with (fst (remove_min l2 x2 r2)); [|rewrite e1; auto].
  rewrite bal_in; auto.
- generalize (remove_min_avl l2 x2 r2 h2); rewrite e1; simpl; auto.
  generalize (remove_min_in l2 x2 r2 h2 y0); rewrite e1; simpl; intro.
  rewrite H3 ; intuition.
+ generalize (remove_min_avl l2 x2 r2 h2); rewrite e1; simpl; auto.
 Qed.
 
 Lemma merge_bst : forall s1 s2, bst s1 -> avl s1 -> bst s2 -> avl s2 -> 
@@ -1081,9 +1081,9 @@ Proof.
  inversion_clear H5.
  destruct s1;try contradiction;clear y; intros. 
  rewrite (join_in  (Node s1_1 t s1_2 i) m s2' y H0).
- generalize (remove_min_avl l2 x2 r2 h2 H2); rewrite e1; simpl; auto.
  generalize (remove_min_in l2 x2 r2 h2 y H2); rewrite e1; simpl.
  intro EQ; rewrite EQ; intuition.
+ generalize (remove_min_avl l2 x2 r2 h2 H2); rewrite e1; simpl; auto.
 Qed.
 
 (** * Splitting 
@@ -1136,9 +1136,9 @@ Proof.
  (* GT *)
  rewrite e1 in IHp;simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H6.
  rewrite join_in; auto.
- generalize (split_avl r x H5); rewrite e1; simpl; intuition.
  rewrite (IHp y0 H1 H5); clear e1.
  intuition; [ eauto | eauto | intuition_in ].
+ generalize (split_avl r x H5); rewrite e1; simpl; intuition.
 Qed.
 
 Lemma split_in_2 : forall s x y, bst s -> avl s -> 
@@ -1148,10 +1148,10 @@ Proof.
  intuition; try inversion_clear H1.
  (* LT *)
  rewrite e1 in IHp; simpl in *; inversion_clear 1; inversion_clear 1; clear H7 H6.
-  rewrite join_in; auto.
- generalize (split_avl l x H4); rewrite e1; simpl; intuition.
+ rewrite join_in; auto.
  rewrite (IHp y0 H0 H4); clear IHp e0.
  intuition; [ order | order | intuition_in ].
+ generalize (split_avl l x H4); rewrite e1; simpl; intuition.
  (* EQ *)
  simpl in *; inversion_clear 1; inversion_clear 1; clear H6 H5 e0.
  intuition; [ order | intuition_in; order ]. 
@@ -1263,9 +1263,9 @@ Proof.
  apply In_1 with x1; auto.
  (* in concat *)
  rewrite concat_in; try apply inter_avl; auto.
- intros y1 y2; rewrite (H28 y1), (H30 y2); intuition eauto.
  rewrite H30, H28; intuition_in.
  generalize (H26 (In_1 _ _ _ H22 H35)); intro; discriminate.
+ intros y1 y2; rewrite (H28 y1), (H30 y2); intuition eauto.
 Qed.
 
 Lemma inter_bst : forall s1 s2, bst s1 -> avl s1 -> bst s2 -> avl s2 -> 
@@ -1338,10 +1338,9 @@ Proof.
  destruct b.
  (* in concat *)
  rewrite concat_in; try apply diff_avl; auto.
- intros.
- intros; generalize (H28 y1) (H30 y2); intuition eauto.
  rewrite H30, H28; intuition_in.
  elim H35; apply In_1 with x1; auto.
+ intros; generalize (H28 y1) (H30 y2); intuition eauto.
  (* in join *)
  rewrite join_in; try apply diff_avl; auto.
  rewrite H30, H28; intuition_in.
@@ -1466,10 +1465,8 @@ Proof.
  induction s; simpl; intros.
  intuition_in.
  inv bst; inv avl.
- rewrite IHs2; auto.
- destruct (f t); auto.
- rewrite IHs1; auto.
- destruct (f t); auto.
+ rewrite IHs2 by (destruct (f t); auto).
+ rewrite IHs1 by (destruct (f t); auto).
  case_eq (f t); intros.
  rewrite (add_in); auto.
  intuition_in.
@@ -1478,7 +1475,7 @@ Proof.
  intuition_in.
  rewrite (H1 _ _ H8) in H9.
  rewrite H in H9; discriminate.
-Qed. 
+Qed.
 
 Lemma filter_avl : forall s, avl s -> avl (filter s). 
 Proof.
@@ -1575,11 +1572,8 @@ Proof.
  intuition_in.
  destruct acc as [acct accf]; simpl in *.
  inv bst; inv avl.
- rewrite IHs2; auto.
- destruct (f t); auto.
- apply partition_acc_avl_1; simpl; auto.
- rewrite IHs1; auto.
- destruct (f t); simpl; auto.
+ rewrite IHs2 by (destruct (f t); auto; apply partition_acc_avl_1; simpl; auto).
+ rewrite IHs1 by (destruct (f t); simpl; auto).
  case_eq (f t); simpl; intros.
  rewrite (add_in); auto.
  intuition_in.
@@ -1588,7 +1582,7 @@ Proof.
  intuition_in.
  rewrite (H1 _ _ H8) in H9.
  rewrite H in H9; discriminate.
-Qed. 
+Qed.
 
 Lemma partition_acc_in_2 : forall s acc, avl s -> avl (snd acc) -> 
  compat_bool X.eq f -> forall x : elt, 
@@ -1599,11 +1593,8 @@ Proof.
  intuition_in.
  destruct acc as [acct accf]; simpl in *.
  inv bst; inv avl.
- rewrite IHs2; auto.
- destruct (f t); auto.
- apply partition_acc_avl_2; simpl; auto.
- rewrite IHs1; auto.
- destruct (f t); simpl; auto.
+ rewrite IHs2 by (destruct (f t); auto; apply partition_acc_avl_2; simpl; auto).
+ rewrite IHs1 by (destruct (f t); simpl; auto).
  case_eq (f t); simpl; intros.
  intuition.
  intuition_in.
@@ -2816,10 +2807,10 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  unfold partition, filter, Equal, In; simpl ;intros H a.
  rewrite Raw.partition_in_2; auto.
  rewrite Raw.filter_in; intuition.
+ rewrite H2; auto.
+ destruct (f a); auto.
  red; intros.
  f_equal; auto.
- destruct (f a); auto.
- destruct (f a); auto.
  Qed.
 
  End Filter.

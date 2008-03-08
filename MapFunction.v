@@ -21,19 +21,14 @@ Module MapFunction (M:S).
  generalize (@MP.fold_1 s t Equal).
  intros H'.
  unfold Equal at 2 in H'; rewrite H'; auto.
- constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto.
  intuition.
  destruct H1 as (b,(H1,H2)).
  elim (H b); auto.
+ constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto.
 
  generalize (@MP.fold_2 s1 s2 x t Equal).
  intros H'.
  unfold Equal at 4 in H'; rewrite H'; clear H'; auto.
- constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto.
- red; intros.
- apply FM.add_m; auto.
- red; intros.
- apply add_add.
  rewrite FM.add_iff.
  rewrite IHs1.
  intuition.
@@ -49,6 +44,13 @@ Module MapFunction (M:S).
  right; right; exists b; split; auto.
  generalize (H0 b).
  intuition.
+
+ constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto.
+
+ red; intros.
+ apply FM.add_m; auto.
+ red; intros.
+ apply add_add.
 Qed.
 
 Lemma map_In : forall s a, 
