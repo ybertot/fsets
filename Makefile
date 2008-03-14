@@ -79,7 +79,8 @@ VFILES:=FSetRBT.v\
   FMapListEq.v\
   FSetListEq.v\
   MultiSets.v\
-  MultiSetsEq.v
+  MultiSetsEq.v\
+  demo.v
 VOFILES:=$(VFILES:.v=.vo)
 GLOBFILES:=$(VFILES:.v=.glob)
 VIFILES:=$(VFILES:.v=.vi)
@@ -122,15 +123,6 @@ all-gal.ps: $(VFILES)
 
 
 
-###################
-#                 #
-# Custom targets. #
-#                 #
-###################
-
-demo.vo: compute.vo demo.v
-	$(COQC) demo.v > /dev/null 
-
 ####################
 #                  #
 # Special targets. #
@@ -162,13 +154,8 @@ demo.vo: compute.vo demo.v
 %.g.html: %.v %.glob
 	$(COQDOC) -glob-from $*.glob -html -g $< -o $@
 
-%.v.d.raw: %.v
-	$(COQDEP) -slash $(COQLIBS) "$<" > "$@"\
-	  || ( RV=$$?; rm -f "$@"; exit $${RV} )
-
-%.v.d: %.v.d.raw
-	$(HIDE)sed 's/\(.*\)\.vo[[:space:]]*:/\1.vo \1.glob:/' < "$<" > "$@" \
-	  || ( RV=$$?; rm -f "$@"; exit $${RV} )
+%.v.d: %.v
+	$(COQDEP) -glob -slash $(COQLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
 byte:
 	$(MAKE) all "OPT:=-byte"
@@ -189,7 +176,6 @@ clean:
 	rm -f *.cmo *.cmi *.cmx *.o $(VOFILES) $(VIFILES) $(GFILES) *~
 	rm -f all.ps all-gal.ps all.glob $(VFILES:.v=.glob) $(HTMLFILES) $(GHTMLFILES) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) $(VFILES:.v=.v.d)
 	- rm -rf html
-	- rm -f demo.vo
 
 archclean:
 	rm -f *.cmx *.o

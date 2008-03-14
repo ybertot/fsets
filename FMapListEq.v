@@ -29,9 +29,11 @@ Module UsualEqual (U:UsualOrderedType).
   Lemma eqlistA_eq : forall (elt:Set)(l l' : list (U.t*elt)), 
    eqlistA (@O.eqke elt) l l' -> l=l'.
   Proof.
-  induction 1; auto; f_equal; auto.
+  induction 1; auto.
+  f_equal; auto.
   red in H.
-  destruct x; destruct x'; simpl in *; f_equal; intuition.
+  destruct x; destruct x'; simpl in *; destruct H.
+  f_equal; auto.
   Qed.
 
   (* Finally, for FMapList, elements is the identity. 

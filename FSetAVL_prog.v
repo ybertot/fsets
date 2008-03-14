@@ -2051,8 +2051,10 @@ Qed.
 
 (** * Subset *)
 
+Open Local Scope program_scope.
+
 Notation "a && b" := 
- (if a then if b then left else right else right).
+ (if a then if b then in_left else in_right else in_right).
 
 Obligations Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
@@ -2065,9 +2067,9 @@ Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2)
  { measure cardinal2 s }
  : { Subset s#1 s#2 } + {~Subset s#1 s#2 } :=
  match s with 
-  | (Leaf, Leaf) => left 
-  | (Leaf, Node _ _ _ _) => left
-  | (Node _ _ _ _, Leaf) => right
+  | (Leaf, Leaf) => in_left
+  | (Leaf, Node _ _ _ _) => in_left
+  | (Node _ _ _ _, Leaf) => in_right
   | (Node l1 x1 r1 h1, Node l2 x2 r2 h2) => 
      match X.compare x1 x2 with 
       | EQ _ => subset (l1,l2) && subset (r1,r2)
@@ -2599,7 +2601,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Obligations Tactic := simpl ; intros ; destruct_exists ; simpl in * ; try subst.
 
  Program Definition union (s s':t) : t :=
-   Bbst (Raw.union (s,s')) _ _.
+   Bbst (Raw.union (s.(this),s'.(this))) _ _.
 
  Next Obligation. destruct s; destruct s'; auto. Qed.
  Next Obligation. destruct_call Raw.union; simpl; tauto. Qed.
@@ -2609,7 +2611,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
   Raw.equal (exist _ _ s.(is_bst)) (exist _ _ s'.(is_bst)).
 
  Program Definition subset (s s':t) : bool := 
-  if Raw.subset (s,s') then true else false.
+  if Raw.subset (s.(this),s'.(this)) then true else false.
 
  Next Obligation. destruct s; destruct s'; auto. Qed.
 
@@ -2809,8 +2811,8 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  rewrite Raw.filter_in; intuition.
  rewrite H2; auto.
  destruct (f a); auto.
- red; intros.
- f_equal; auto.
+ red; intros; f_equal.
+ rewrite (H _ _ H0); auto.
  Qed.
 
  End Filter.

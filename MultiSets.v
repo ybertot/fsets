@@ -462,9 +462,9 @@ generalize (Mu.update_2 s1 n H).
 unfold Mu.multi; rewrite A1.
 destruct (Ma.find x (Mu.update y n s1)); intros; discriminate || auto.
 red; intros; rewrite add_o.
-unfold Mu.update; destruct n; try rewrite remove_o; try rewrite add_o; 
- rewrite A2; repeat rewrite add_o; repeat rewrite remove_o; 
- destruct (eq_dec y y0); destruct (eq_dec x y0); auto; ME.order. 
-unfold Mu.multi; rewrite A2; rewrite add_o.
+unfold Mu.update; destruct n; 
+ rewrite ?remove_o, ?add_o, A2, ?remove_o, ?add_o; 
+ destruct eq_dec; destruct eq_dec; auto; congruence.
+unfold Mu.multi; rewrite A2, add_o.
 destruct (eq_dec x y) as [H|_]; [ elim E; auto | auto ].
 Qed.

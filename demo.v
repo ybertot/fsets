@@ -150,25 +150,19 @@ Lemma raw2_bst : bst raw2. Proof. unfold raw2; auto. Qed.
 Hint Resolve raw1_bst raw1_avl raw2_bst raw2_avl.
 Lemma raw3_bst : bst raw3. Proof. unfold raw3; auto. Qed.
 
-Check (elements_sort raw3 raw3_bst).
+Check (@elements_sort raw3 raw3_bst).
 
 
 
 
 (** * union *) 
 
-(* This function isn't based on a structural recursion, but rather on 
-   a well-founded one. Hence it cannot compute in Coq. *)
-Eval compute in (R.union raw1 raw2).
-
-(* A naive additional version [union' = fold@add] that can compute. *)
-Eval compute in (R.union' raw1 raw2).
-Eval compute in (R.elements (R.union' raw1 raw2)).
-
-(* Of course, you'd better use [union] after extraction... *)
+(* This function isn't based on a structural recursion, 
+   but rather on a well-founded one (via Function's measure).
+   It happens that vm_compute works with it (but don't try compute) *)
+Eval vm_compute in (@R.union (raw1,raw2)).
 
 Extraction M.
-
 
 
 
@@ -179,9 +173,8 @@ Module MM := FSetAVL.Make(M).
 
 Definition eens1 := MM.add ens1 (MM.add ens2 (MM.empty)).
 
-(* ... that cannot be computed in Coq (due to [compare]) *)
-Eval compute in (MM.elements eens1).
-
+(* ... that can now computes in Coq (due to the new [compare]) *)
+Eval vm_compute in List.map M.elements (MM.elements eens1).
 
 
 
@@ -204,12 +197,18 @@ Time Eval compute in (M.elements (M.inter bigens1 bigens2)).
     machine (VM), that performs the same job in almost no time. *) 
 Time Eval vm_compute in (M.elements (M.inter bigens1 bigens2)).
 
-(*
-Definition bigens3 := fold_right M.add M.empty (multiples 2 0 10000%nat).
-Definition bigens4 := fold_right M.add M.empty (multiples 3 0 10000%nat).
+
+Definition bigens3 := fold_right M.add M.empty (multiples 2 0 (100*100)%nat).
+Definition bigens4 := fold_right M.add M.empty (multiples 3 0 (100*100)%nat).
 Time Eval vm_compute in (M.elements (M.inter bigens3 bigens4)).
-(* 11s for this intersection of 2 sets of 10000 elements !! *)
+(* 11s for this intersection of 2 sets of 10000 elements !! 
+   In fact, 5s per construction of each bigens, but the inter 
+   is done in no time: 
 *)
+Time Eval vm_compute in (M.elements (M.inter bigens3 bigens4)).
+(* 0.8s *)
+
+
 
 
 
