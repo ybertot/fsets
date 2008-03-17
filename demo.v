@@ -143,11 +143,9 @@ Eval compute in (R.elements raw3).
 (* ... but then there is more work for deriving properties. *)
 
 Hint Resolve inter_bst add_bst. 
-Lemma raw1_avl : avl raw1. Proof. unfold raw1; auto. Qed. 
 Lemma raw1_bst : bst raw1. Proof. unfold raw1; auto. Qed.
-Lemma raw2_avl : avl raw2. Proof. unfold raw2; auto. Qed. 
 Lemma raw2_bst : bst raw2. Proof. unfold raw2; auto. Qed.
-Hint Resolve raw1_bst raw1_avl raw2_bst raw2_avl.
+Hint Resolve raw1_bst raw2_bst.
 Lemma raw3_bst : bst raw3. Proof. unfold raw3; auto. Qed.
 
 Check (@elements_sort raw3 raw3_bst).
@@ -157,10 +155,10 @@ Check (@elements_sort raw3 raw3_bst).
 
 (** * union *) 
 
-(* This function isn't based on a structural recursion, 
-   but rather on a well-founded one (via Function's measure).
-   It happens that vm_compute works with it (but don't try compute) *)
-Eval vm_compute in (@R.union (raw1,raw2)).
+(* This function is now based on a structural recursion.
+   It used to be a well-founded one (via Function's measure), 
+   for this version see FSetFullAVL. *)
+Eval vm_compute in (@R.union raw1 raw2).
 
 Extraction M.
 
