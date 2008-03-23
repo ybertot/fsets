@@ -142,13 +142,13 @@ Eval compute in (R.elements raw3).
 
 (* ... but then there is more work for deriving properties. *)
 
-Hint Resolve inter_bst add_bst. 
+Hint Resolve Proofs.inter_bst Proofs.add_bst. 
 Lemma raw1_bst : bst raw1. Proof. unfold raw1; auto. Qed.
 Lemma raw2_bst : bst raw2. Proof. unfold raw2; auto. Qed.
 Hint Resolve raw1_bst raw2_bst.
 Lemma raw3_bst : bst raw3. Proof. unfold raw3; auto. Qed.
 
-Check (@elements_sort raw3 raw3_bst).
+Check (@Proofs.elements_sort raw3 raw3_bst).
 
 
 
