@@ -27,7 +27,7 @@ Extract Inductive option => "option" [ "Some" "None" ].
 Extract Inductive sumor => "option" [ "Some" "None" ].
 Extraction Inline Wf_nat.lt_wf_rec.
 Extraction Inline Z_lt_rec.
-Extraction Inline Acc_iter_2 well_founded_induction_type_2.
+Extraction Inline Fix_F well_founded_induction_type_2.
 
 Module NatRBT := FSetRBT.Make Nat_as_OT.
 Extraction "rbt.ml" NatRBT.empty.
