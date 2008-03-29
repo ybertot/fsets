@@ -1865,11 +1865,11 @@ Program Fixpoint union
   | (Node l1 x1 r1 h1, Node l2 x2 r2 h2) => 
         if ge_lt_dec h1 h2 then
           if eq_dec h2 1 then add x2 s#1 else
-          dest split x1 s#2 as (l2',(_,r2')) in
+          let '(l2',(_,r2')) := split x1 s#2 in
              join (union (l1,l2')) x1 (union (r1,r2'))
         else
           if eq_dec h1 1 then add x1 s#2 else
-          dest split x2 s#1 as (l1',(_,r1')) in 
+          let '(l1',(_,r1')) := split x2 s#1 in 
              join (union (l1',l2)) x2 (union (r1',r2))
  end.
 
