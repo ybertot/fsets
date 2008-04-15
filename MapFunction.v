@@ -1,151 +1,103 @@
 Require Import FSets.
 
-(** no map function over sets, so let's define one (at least for f:E.t->E.t) *)
+(** * A map function for FSet *)
 
-Module MapFunction (M:S).
- Module MP:=Properties M.
- Import MP M.
+(** The FSet interface provides no map function over sets, 
+    so let's define one. *)
+
+(** The most general case: two set structures M and M', 
+    one as source and the other one as destination. *)
+
+Module MapFunctionGen (M:S)(M':S).
+ Module PM:=Properties M.
+ Module PM':=Properties M'.
+ Module E:=M.E.
+ Module E':=M'.E.
+ Module FM := PM.FM.
+ Module FM' := PM'.FM.
  Section Map.
 
- Variable f : elt -> elt.
+ Variable f : M.elt -> M'.elt.
 
- Definition map s := fold (fun x s => add (f x) s) s empty.
+ Definition map s := M.fold (fun x s => M'.add (f x) s) s M'.empty.
 
- Hypothesis f_comp : forall x y, E.eq x y -> E.eq (f x) (f y).
+ Hypothesis f_comp : forall x y, E.eq x y -> E'.eq (f x) (f y).
 
  Lemma map_In_aux : forall s a i, 
-   In a (fold (fun x s => add (f x) s) s i) <-> 
-   In a i \/ exists b, In b s /\ E.eq (f b) a.
+   M'.In a (M.fold (fun x s => M'.add (f x) s) s i) <-> 
+   M'.In a i \/ exists b, M.In b s /\ E'.eq (f b) a.
  Proof.
- induction s using set_induction; intros.
- generalize (@MP.fold_1 s t Equal).
- intros H'.
- unfold Equal at 2 in H'; rewrite H'; auto.
- intuition.
- destruct H1 as (b,(H1,H2)).
- elim (H b); auto.
- constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto.
+ set (F := fun x s => M'.add (f x) s).
+ assert (ST := Build_Equivalence _ _ M'.eq_refl M'.eq_sym M'.eq_trans).
+ assert (C:compat_op E.eq M'.Equal F) by (red; intros; apply FM'.add_m; auto).
+ assert (T:transpose M'.Equal F) by (red; intros; apply PM'.add_add; auto).
 
- generalize (@MP.fold_2 s1 s2 x t Equal).
- intros H'.
- unfold Equal at 4 in H'; rewrite H'; clear H'; auto.
- rewrite FM.add_iff.
- rewrite IHs1.
+ induction s as [ s EM | s1 s2 IHs1 x NI AD] using PM.set_induction; intros.
+ rewrite (PM.fold_1 ST (s:=s)); firstorder.
+ rewrite (PM.fold_2 ST i C T NI AD); auto.
+ unfold F; rewrite FM'.add_iff, IHs1; clear ST C T IHs1.
+ assert (M.In x s2) by (rewrite (AD x); auto).
+ assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
  intuition.
- right; exists x; split; auto.
- red in H0; rewrite H0; auto.
- destruct H1 as (b,(H1,H2)).
- right; exists b; split; auto.
- red in H0; rewrite H0; auto.
- destruct H2 as (b,(H2,H3)).
- destruct (FM.eq_dec x b).
- left.
- apply E.eq_trans with (f b); auto.
- right; right; exists b; split; auto.
- generalize (H0 b).
- intuition.
-
- constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto.
-
- red; intros.
- apply FM.add_m; auto.
- red; intros.
- apply add_add.
+ right; exists x; auto.
+ right; destruct H1 as {b,?,?}; exists b; auto.
+ destruct H2 as {b,H1,H2}; rewrite (AD b) in H1; destruct H1.
+ left; eauto.
+ right; right; exists b; auto.
 Qed.
 
 Lemma map_In : forall s a, 
- In a (map s) <-> exists b, In b s /\ E.eq (f b) a.
+ M'.In a (map s) <-> exists b, M.In b s /\ E'.eq (f b) a.
 Proof.
-intros.
-unfold map; rewrite map_In_aux; auto.
-intuition.
-rewrite FM.empty_iff in H0; intuition.
+intros; unfold map; rewrite map_In_aux, FM'.empty_iff; intuition.
 Qed.
 
 Lemma map_cardinal_aux : forall s i, 
- (forall x y, In x s -> In y s -> E.eq (f x) (f y) -> E.eq x y) ->
- (forall x, In x s -> ~In (f x) i) -> 
- cardinal (fold (fun x s => add (f x) s) s i) = cardinal i + cardinal s.
+ (forall x y, M.In x s -> M.In y s -> E'.eq (f x) (f y) -> E.eq x y) ->
+ (forall x, M.In x s -> ~M'.In (f x) i) -> 
+ M'.cardinal (M.fold (fun x s => M'.add (f x) s) s i) = 
+ M'.cardinal i + M.cardinal s.
 Proof.
- rename f_comp into H.
- assert (Setoid_Theory t Equal) by 
-   (constructor; [apply eq_refl|apply eq_sym|eapply eq_trans]; eauto).
- set (F:=fun (x:elt) (s:t) => add (f x) s).
+ set (F := fun x s => M'.add (f x) s).
+ assert (ST := Build_Equivalence _ _ M'.eq_refl M'.eq_sym M'.eq_trans).
+ assert (C:compat_op E.eq M'.Equal F) by (red; intros; apply FM'.add_m; auto).
+ assert (T:transpose M'.Equal F) by (red; intros; apply PM'.add_add; auto).
 
- induction s using set_induction; intros.
- generalize (MP.fold_1 H0 i F H1); intros.
- rewrite (Equal_cardinal H4).
- rewrite (MP.cardinal_1 H1); auto with arith.
-
- generalize (@MP.fold_2 s1 s2 x _ _ H0 i F); intros.
- assert (compat_op E.eq Equal F).
-  red; unfold F; intros.
-  apply FM.add_m; auto.
- assert (transpose Equal F).
-  red; unfold F; intros.
-  apply add_add; auto.
- rewrite (Equal_cardinal (H5 H6 H7 H1 H2)).
- unfold F at 1.
- rewrite add_cardinal_2.
- rewrite IHs1.
- rewrite (cardinal_2 H1 H2); auto with arith.
- intros.
- apply H3; auto.
- rewrite (H2 x0).
- destruct (D.eq_dec x x0); intuition.
- rewrite (H2 y).
- destruct (D.eq_dec x y); intuition.
- intros.
- apply H4.
- rewrite (H2 x0).
- destruct (D.eq_dec x x0); intuition.
- red; intros.
- unfold F in H8; rewrite map_In_aux in H8.
- destruct H8.
- elim (H4 x); auto.
- rewrite (H2 x); auto.
- destruct H8 as (b,(H8,H9)).
- assert (E.eq b x).
-  apply H3; auto.
-  rewrite (H2 b).
-  destruct (D.eq_dec x b); intuition.
-  rewrite (H2 x); auto.
- elim H1.
- rewrite <- (FM.In_eq_iff s1 H10); auto.
+ induction s as [ s EM | s1 s2 IHs1 x NI AD] using PM.set_induction; intros.
+ rewrite (PM.fold_1 ST (s:=s)), (PM.cardinal_1 EM); auto.
+ rewrite (PM.fold_2 ST i C T NI AD); auto.
+ assert (M.In x s2) by (rewrite (AD x); auto).
+ assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
+ unfold F; rewrite PM'.add_cardinal_2, IHs1, (PM.cardinal_2 NI AD); auto.
+ rewrite map_In_aux; red; destruct 1 as [ | {b,?,?} ].
+ firstorder.
+ rewrite <- (H b x) in NI; auto.
 Qed.
 
 Lemma map_cardinal : forall s, 
- (forall x y, In x s -> In y s -> E.eq (f x) (f y) -> E.eq x y) ->
- cardinal (map s) = cardinal s.
+ (forall x y, M.In x s -> M.In y s -> E'.eq (f x) (f y) -> E.eq x y) ->
+ M'.cardinal (map s) = M.cardinal s.
 Proof.
  intros; unfold map; rewrite map_cardinal_aux; auto with set.
- rewrite empty_cardinal; auto with set.
+ rewrite PM'.empty_cardinal; auto with set.
 Qed.
 
 End Map.
 
 Lemma map_filter : forall f g s, 
- compat_bool E.eq f -> 
- (forall x y, E.eq x y -> E.eq (g x) (g y)) ->
- filter f (map g s) [=] map g (filter (fun x => f (g x)) s).
+ compat_bool E'.eq f -> 
+ (forall x y, E.eq x y -> E'.eq (g x) (g y)) ->
+ M'.Equal (M'.filter f (map g s)) (map g (M.filter (fun x => f (g x)) s)).
 Proof.
 intros.
 red; intros.
-rewrite FM.filter_iff; auto.
-rewrite map_In; auto.
-rewrite map_In; auto.
-intuition.
-destruct H2 as (b,(H2,H4)).
-exists b; split; auto.
-rewrite FM.filter_iff; auto.
-split; auto.
-rewrite <- H3; auto.
-destruct H1 as (b,(H2,H4)).
-exists b; split; auto.
-rewrite FM.filter_iff in H2; intuition.
-destruct H1 as (b,(H2,H4)).
-rewrite FM.filter_iff in H2; intuition.
-rewrite <- H3; auto.
+rewrite FM'.filter_iff, 2 map_In by auto.
+split; [intros [(b,Hb) F] | intros (b,Hb)]; try split; try exists b; 
+ try rewrite FM.filter_iff in *; intuition; eauto.
 Qed.
 
-End MapFunction.
+End MapFunctionGen.
+
+(* The particular (but common) situation: same source and destination M *)
+
+Module MapFunction (M:S) := MapFunctionGen M M.
