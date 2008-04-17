@@ -2,6 +2,9 @@ Require Import FSets MapFunction.
 Require Import Arith EqNat Euclid ArithRing ZArith.
 Set Implicit Arguments.
 
+(** First, let's define powers of 2 and binomial function 
+    for later expressing the cardinal of powersets. *)
+
 Fixpoint two_power (n:nat) : nat := match n with 
  | O => 1
  | S n => 2 * (two_power n)
@@ -139,32 +142,18 @@ Lemma map_add : forall s s' x, MM.In s' (MM'.map (M.add x) s)
 Proof.
 intros.
 rewrite MM'.map_In by (intros; rewrite H; reflexivity).
-split; intros.
-destruct H as (b,(H1,H2)).
-assert (M.In x s').
- rewrite <- H2; auto with set.
+unfold M.eq in *.
+split; [intros {b,IN,EQ} | intros (IN,[OR1|OR2]) ].
+assert (M.In x s') by (rewrite <- EQ; auto with set).
 split; auto.
-destruct (P.In_dec x b).
-left.
-assert (b[=]s').
- rewrite <- H2.
- red; intro a; F.set_iff; intuition.
- rewrite <- H3; auto.
-apply (MM.In_1 H0 H1).
-right.
-assert (b[=]M.remove x s').
- rewrite <- H2.
- symmetry.
- apply P.remove_add; auto.
-apply (MM.In_1 H0 H1).
+destruct (P.In_dec x b); [left|right]; 
+ apply MM.In_1 with (2:=IN); P.Dec.fsetdec.
+ (* sans le P.Dec.fsetdec : 
+     rewrite <- IN; red; intro a; F.set_iff; intuition.
+     eauto with set. ----> anomaly *)
 
-destruct H.
-destruct H0.
-exists s'; split; auto.
-red; intro a; F.set_iff; intuition.
-rewrite <- H2; auto.
-exists (M.remove x s'); split; auto.
-apply P.add_remove; auto.
+exists s'; split; auto; P.Dec.fsetdec.
+exists (M.remove x s'); split; auto; P.Dec.fsetdec.
 Qed.
 
 Lemma compat_op_pow :
@@ -174,6 +163,7 @@ Proof.
 red; red; intros; FF.set_iff.
 do 2 rewrite map_add; rewrite H; rewrite H0; intuition.
 Qed.
+Hint Resolve compat_op_pow : set.
 
 Lemma singleton_empty : forall s, MM.In s (MM.singleton M.empty) <-> M.Empty s.
 Proof.
@@ -184,17 +174,14 @@ Qed.
 Lemma powerset_base : forall s, M.Empty s -> powerset s [==] MM.singleton M.empty.
 Proof.
 intros; unfold powerset.
-rewrite (@P.fold_1 s MM.t MM.Equal); auto with set.
- constructor; auto with set; eapply PP.equal_trans.
+rewrite (@P.fold_1 s MM.t MM.Equal FF.Equal_ST); auto with set.
 Qed.
 
 Lemma powerset_step : forall s1 s2 x, P'.Above x s1 -> P.Add x s1 s2 -> 
  powerset s2 [==] MM.union (powerset s1) (MM'.map (M.add x) (powerset s1)). 
 Proof.
 intros; unfold powerset.
-rewrite (@P'.fold_3 s1 s2 x MM.t MM.Equal); auto with set.
- constructor; auto with set; eapply PP.equal_trans.
- apply compat_op_pow.
+rewrite (@P'.fold_3 s1 s2 x MM.t MM.Equal FF.Equal_ST); auto with set.
 Qed.
 
 Lemma powerset_is_powerset: 
@@ -209,16 +196,18 @@ rewrite (powerset_step H H0).
 FF.set_iff.
 rewrite map_add.
 do 2 rewrite IHs1; clear IHs1.
-intuition.
+split; [intros [U|[U [V|V]]]|intros U].
 firstorder.
 firstorder.
-red; intro a; generalize (H2 a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
+red; intro a; generalize (H a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
+(*eauto with set. (* Anomaly: uncaught exception Failure "Cannot print a global reference". *)*)
+apply H6; apply V; auto with set.
 destruct (P.In_dec x s'); [right|left].
 split; auto.
 right.
-red; intro a; generalize (H1 a)(H0 a); F.set_iff; intuition.
-red; intro a; generalize (H1 a)(H0 a); intuition.
-elim n; rewrite H5; auto.
+red; intro a; generalize (U a)(H0 a); F.set_iff; intuition.
+red; intro a; generalize (U a)(H0 a); intuition.
+elim n; rewrite H4; auto.
 Qed.
 
 Lemma powerset_cardinal: 
@@ -375,25 +364,28 @@ Definition powerset_k' s :=
 Lemma powerset_k'_is_powerset_k : 
  forall s s' k, MM.In s' (powerset_k' s k) <-> M.Subset s' s /\ M.cardinal s' = k.
 Proof.
+assert (ST : Setoid_Theory _ (fun g h => forall k:nat, g k [==] h k)).
+ constructor; red; auto with set.
+ intros; apply PP.equal_trans with (y k); auto with set.
+
 induction s using P'.set_induction_max; intros.
 
 intros; unfold powerset_k'.
-assert (T:=@P.fold_1 s (nat->MM.t) (fun g h => forall k, g k [==] h k)).
+assert (T:=P.fold_1 ST (s:=s)).
 simpl in T; rewrite T; clear T; auto.
 
 destruct k.
 rewrite singleton_empty.
-intuition.
+intuition idtac.
 firstorder.
+intuition.
+intuition.
 rewrite FF.empty_iff.
 intuition.
 rewrite P.cardinal_1 in H2; try discriminate; firstorder.
 
-constructor; auto with set. intros. 
-apply PP.equal_trans with (y k0); auto with set.
-
 intros; unfold powerset_k'.
-assert (T:=@P'.fold_3 s1 s2 x (nat->MM.t) (fun g h => forall k, g k [==] h k)); 
+assert (T:=P'.fold_3 ST (s:=s1) (s':=s2) (x:=x)).
 simpl in T; rewrite T; clear T; auto.
 
 change (MM.In s' (match k with 
@@ -402,7 +394,7 @@ change (MM.In s' (match k with
          end) <-> M.Subset s' s2 /\ M.cardinal s' = k).
 destruct k.
 rewrite IHs1.
-intuition.
+intuition idtac.
 red; intros.
 elim (P.cardinal_inv_1 H3 H1).
 red; intros.
@@ -414,7 +406,7 @@ split; destruct 1.
 destruct H1; split; auto.
 apply P.subset_trans with s1; auto; red; intros; rewrite (H0 a); auto.
 destruct H1.
-destruct H2; intuition.
+destruct H2; intuition idtac.
 firstorder.
 elim (@M.E.lt_not_eq x x); auto.
 red; intro a; generalize (H3 a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
@@ -431,8 +423,6 @@ left.
  split; auto.
  red; intro a; generalize (H1 a)(H0 a); intuition.
  elim n; rewrite H6; auto.
-
-constructor; auto with set. intros. apply PP.equal_trans with (y k0); auto with set.
 
 red; intros.
 destruct k0; auto.

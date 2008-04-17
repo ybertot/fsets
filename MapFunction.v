@@ -28,7 +28,7 @@ Module MapFunctionGen (M:S)(M':S).
    M'.In a i \/ exists b, M.In b s /\ E'.eq (f b) a.
  Proof.
  set (F := fun x s => M'.add (f x) s).
- assert (ST := Build_Equivalence _ _ M'.eq_refl M'.eq_sym M'.eq_trans).
+ assert (ST := FM'.Equal_ST : Setoid_Theory _ M'.Equal).
  assert (C:compat_op E.eq M'.Equal F) by (red; intros; apply FM'.add_m; auto).
  assert (T:transpose M'.Equal F) by (red; intros; apply PM'.add_add; auto).
 
@@ -59,7 +59,7 @@ Lemma map_cardinal_aux : forall s i,
  M'.cardinal i + M.cardinal s.
 Proof.
  set (F := fun x s => M'.add (f x) s).
- assert (ST := Build_Equivalence _ _ M'.eq_refl M'.eq_sym M'.eq_trans).
+ assert (ST := FM'.Equal_ST : Setoid_Theory _ M'.Equal).
  assert (C:compat_op E.eq M'.Equal F) by (red; intros; apply FM'.add_m; auto).
  assert (T:transpose M'.Equal F) by (red; intros; apply PM'.add_add; auto).
 
