@@ -35,7 +35,7 @@ Module MapFunctionGen (M:S)(M':S).
  induction s as [ s EM | s1 s2 IHs1 x NI AD] using PM.set_induction; intros.
  rewrite (PM.fold_1 ST (s:=s)); firstorder.
  rewrite (PM.fold_2 ST i C T NI AD); auto.
- unfold F; rewrite FM'.add_iff, IHs1; clear ST C T IHs1.
+ unfold F; rewrite FM'.add_iff. unfold F in IHs1. rewrite IHs1; clear ST C T IHs1.
  assert (M.In x s2) by (rewrite (AD x); auto).
  assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
  intuition.
