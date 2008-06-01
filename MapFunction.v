@@ -40,8 +40,8 @@ Module MapFunctionGen (M:S)(M':S).
  assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
  intuition.
  right; exists x; auto.
- right; destruct H1 as {b,?,?}; exists b; auto.
- destruct H2 as {b,H1,H2}; rewrite (AD b) in H1; destruct H1.
+ right; destruct H1 as (b & ? & ?); exists b; auto.
+ destruct H2 as (b & H1 & H2); rewrite (AD b) in H1; destruct H1.
  left; eauto.
  right; right; exists b; auto.
 Qed.
@@ -69,7 +69,7 @@ Proof.
  assert (M.In x s2) by (rewrite (AD x); auto).
  assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
  unfold F; rewrite PM'.add_cardinal_2, IHs1, (PM.cardinal_2 NI AD); auto.
- rewrite map_In_aux; red; destruct 1 as [ | {b,?,?} ].
+ rewrite map_In_aux; red; destruct 1 as [ | (b & ? & ?) ].
  firstorder.
  rewrite <- (H b x) in NI; auto.
 Qed.

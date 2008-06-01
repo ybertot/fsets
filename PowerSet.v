@@ -143,7 +143,7 @@ Proof.
 intros.
 rewrite MM'.map_In by (intros; rewrite H; reflexivity).
 unfold M.eq in *.
-split; [intros {b,IN,EQ} | intros (IN,[OR1|OR2]) ].
+split; [intros (b & IN & EQ) | intros (IN,[OR1|OR2]) ].
 assert (M.In x s') by (rewrite <- EQ; auto with set).
 split; auto.
 destruct (P.In_dec x b); [left|right]; 

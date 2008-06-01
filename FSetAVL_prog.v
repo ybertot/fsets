@@ -1849,7 +1849,7 @@ Obligations Tactic :=
  unfold cardinal2; simpl fst in *; simpl snd in *; 
  try match goal with u:forall s:_,{x:_|_} |- _ => clear u end; 
  try match goal with a: _ /\ _ /\ _ /\ _ |- _ => 
-   destruct a as {B1,A1,B2,A2}
+   destruct a as (B1 & A1 & B2 & A2}
  end.
 
 Program Fixpoint union
@@ -1940,7 +1940,7 @@ Qed.
 
 Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2'))) *)
   do 2 destruct_call union; simpl in *.
-  destruct H1 as {B1,A1,B2,A2}.
+  destruct H1 as (B1 & A1 & B2 & A2).
   decompose [and] a; clear a.
   decompose [and] a0; clear a0.
   subst s; clear union; simpl snd in *; simpl fst in *.
