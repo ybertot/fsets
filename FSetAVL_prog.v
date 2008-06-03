@@ -1849,7 +1849,7 @@ Obligations Tactic :=
  unfold cardinal2; simpl fst in *; simpl snd in *; 
  try match goal with u:forall s:_,{x:_|_} |- _ => clear u end; 
  try match goal with a: _ /\ _ /\ _ /\ _ |- _ => 
-   destruct a as (B1 & A1 & B2 & A2}
+   destruct a as (B1 & A1 & B2 & A2)
  end.
 
 Program Fixpoint union

@@ -35,8 +35,8 @@ Definition bigens2 := fold_right M.add M.empty (multiples 3 0 400%nat).
 Time Eval vm_compute in (M.elements (M.inter bigens1 bigens2)).
 Time Eval vm_compute in (M.elements (M.union bigens1 bigens2)).
 
-Definition bigens3 := fold_right M.add M.empty (multiples 2 0 (100*100)%nat).
-Definition bigens4 := fold_right M.add M.empty (multiples 3 0 (100*100)%nat).
+Definition bigens3 := fold_right M.add M.empty (multiples 2 0 (5*100*100)%nat).
+Definition bigens4 := fold_right M.add M.empty (multiples 3 0 (5*100*100)%nat).
 Time Eval vm_compute in (M.cardinal bigens3). (* computation of bigens3 done once and forall *)
 Time Eval vm_compute in (M.cardinal bigens4). (* computation of bigens4 done once and forall *)
 Time Eval vm_compute in (M.cardinal (M.inter bigens3 bigens4)).
@@ -48,4 +48,23 @@ Time Eval vm_compute in (M.cardinal (M.union bigens3 bigens4)
 (*   = 20000%nat
      : nat
 *)
+
+Time Eval vm_compute in M.Raw.subset bigens3 bigens3.
+
+
+Require Import FSetFullAVL.
+
+Module M' := FSetFullAVL.Make(Z_as_OT).
+
+
+Definition bigens3' := fold_right M'.add M'.empty (multiples 2 0 (100*100)%nat).
+Definition bigens4' := fold_right M'.add M'.empty (multiples 3 0 (100*100)%nat).
+Time Eval vm_compute in (M'.cardinal bigens3'). (* computation of bigens3 done once and forall *)
+Time Eval vm_compute in (M'.cardinal bigens4'). (* computation of bigens4 done once and forall *)
+
+
+
+Time Eval vm_compute in (M'.OcamlOps.AvlProofs.Raw.compare bigens3' bigens4').
+(*Time Eval vm_compute in (M'.OcamlOps.ocaml_compare bigens3' bigens3').*)
+
 
