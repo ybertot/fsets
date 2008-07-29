@@ -1844,7 +1844,7 @@ Definition cardinal2 (s:t*t) :=
 
 (** * Union *)
 
-Obligations Tactic := 
+Obligation Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
  unfold cardinal2; simpl fst in *; simpl snd in *; 
  try match goal with u:forall s:_,{x:_|_} |- _ => clear u end; 
@@ -2056,7 +2056,7 @@ Open Local Scope program_scope.
 Notation "a && b" := 
  (if a then if b then in_left else in_right else in_right).
 
-Obligations Tactic := 
+Obligation Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
  unfold cardinal2;
  simpl fst in *; simpl snd in *; 
@@ -2374,7 +2374,7 @@ Qed.
 
 Definition measure2 e := measure_e e#1 + measure_e e#2.
 
-Obligations Tactic := 
+Obligation Tactic := 
  simpl ; intros ; destruct_exists ;  
  unfold measure2; simpl in *; 
  try match goal with c:forall e:_,Compare _ _ _ _ |- _ => clear c end;
@@ -2598,7 +2598,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Opaque Raw.union Raw.subset Raw.compare.
 
- Obligations Tactic := simpl ; intros ; destruct_exists ; simpl in * ; try subst.
+ Obligation Tactic := simpl ; intros ; destruct_exists ; simpl in * ; try subst.
 
  Program Definition union (s s':t) : t :=
    Bbst (Raw.union (s.(this),s'.(this))) _ _.
