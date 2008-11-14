@@ -115,7 +115,7 @@ apply cardinal_2 with n; auto.
 unfold Add; split; intros.
 
 elim (eq_nat_dec y n); intros.
-left; auto.
+left; auto with *.
 right.
 apply filter_3; auto.
 apply remove_2; auto.
