@@ -2872,6 +2872,15 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Transparent Raw.union Raw.subset Raw.compare.
 
  End Specs.
+
+ Definition eq_dec : forall s s' : t, {eq s s'} + {~ eq s s'}.
+ Proof.
+   intros.
+   case_eq (equal s s'); intro H; [left|right].
+   apply equal_2; auto.
+   intro H'; rewrite equal_1 in H; auto; discriminate.
+ Defined.
+
 End IntMake.
 
 (* For concrete use inside Coq, we propose an instantiation of [Int] by [Z]. *)

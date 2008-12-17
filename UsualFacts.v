@@ -138,7 +138,7 @@ eapply remove_3; eauto.
 
 red; intros; simpl.
 do 2 rewrite <- elements_iff; set_iff; intuition.
-destruct (ME.eq_dec x x0); unfold E.eq; intuition.
+destruct (E.eq_dec x x0); unfold E.eq; intuition.
 subst x0.
 apply min_elt_1; auto.
 Qed.
@@ -161,8 +161,7 @@ elim (remove_1 e H0).
 split; intros.
 apply in_or_app; simpl.
 intros; rewrite <- elements_iff in *.
-(* destruct (ME.eq_dec x x0); unfold E.eq; intuition. ---> Not_found *)
-destruct (ME.eq_dec x x0); auto with set.
+destruct (E.eq_dec x x0); auto with set.
 destruct (in_app_or _ _ _ H0); clear H0.
 intros; rewrite <- elements_iff in *; eauto with set.
 simpl in H1; inversion H1; subst; auto.
@@ -371,7 +370,6 @@ Module FoldFunction (E:UsualOrderedType)(M:S with Module E:=E).
 Module Import P := Properties M.
 Module Import F := FoldEquiv E M.
 Import M.
-Import Logic. (* Function works badly if eq isn't Leibniz *)
 Section Fold.
 
 Variable A:Type.

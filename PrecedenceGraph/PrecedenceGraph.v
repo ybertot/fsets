@@ -226,7 +226,7 @@ assert (S (cardinal (remove current non_visited))  = (S n)).
  rewrite <- H; apply remove_cardinal_1; auto with set.
  inversion H2; auto.
 auto with arith.
-intros; elim (D.eq_dec current k).
+intros; elim (E.eq_dec current k).
 unfold E.eq; intros Eq; rewrite <- Eq; auto.
 apply chain_i; auto.
 intros; apply chain_t with current; auto with set; apply chain_i; auto with set.
@@ -493,3 +493,4 @@ generalize (H0 b);auto with arith.
 Qed.
 
 End Precedence.
+
