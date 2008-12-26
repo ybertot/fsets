@@ -7,6 +7,7 @@
 (***********************************************************************)
 
 Require Import FSets FMaps Arith Min Compare_dec NArith Nnat Pnat Ndec.
+Import Morphisms.
 
 Set Implicit Arguments.
 Open Scope N_scope.
@@ -348,19 +349,19 @@ Module Import NP := FMapFacts.Properties Ma.
 Import NP.F.
 Module Import NP' := FMapFacts.OrdProperties Ma.
 
-Lemma fmu_compat : compat_op (@O.eqke _) (@eq _) (fun y => fmu (fst y) (snd y)).
+Lemma fmu_compat : Morphism (Leibniz==>Leibniz==>Leibniz==>Leibniz) fmu.
 Proof.
- red; intros.
- destruct x; destruct x'; compute in H; destruct H; subst; auto.
+ repeat red; intros; subst; auto.
 Qed.
-Lemma fmu_transp : transpose (@eq _) (fun y => fmu (fst y) (snd y)).
+
+Lemma fmu_transp : transpose_neqkey Leibniz fmu.
 Proof.
  red; intros.
  unfold fmu; do 2 rewrite Nplus_assoc; f_equal; apply Nplus_comm; auto.
 Qed.
 Hint Resolve fmu_compat fmu_transp.
 
-Lemma total_multi_union: 
+Lemma total_multi_union:
  forall s s', total_multi (Mu.union s s') = total_multi s + total_multi s'.
 Proof.
 unfold total_multi, Mu.fold.
@@ -372,7 +373,7 @@ rewrite (Ma.fold_1 s); rewrite H; auto.
  rewrite (elements_o s); rewrite H; simpl.
  destruct (Ma.find y s'); auto.
 
-replace (Ma.fold fmu s2 0) with (fmu x e (Ma.fold fmu s1 0)) 
+replace (Ma.fold fmu s2 0) with (fmu x e (Ma.fold fmu s1 0))
  by (symmetry; apply fold_Add; auto).
 unfold fmu at 2; simpl snd.
 rewrite <- Nplus_assoc.
