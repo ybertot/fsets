@@ -1491,7 +1491,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (s1_0_avl : avl s1_0). inversion_clear s1_avl; trivial.
     case (Hrecs1_0 s1_0_bst s1_0_avl r2 H0 H2); clear Hrecs1_0.
     intros (inter_s1_0_r2, s1_0_r2_bst, s1_0_r2_avl); simpl in |- *;
-     intuition.
+     intro a0; intuition.
     induction  b as [| ]; simpl in |- *; intuition.
     (* b = true *)
     case (join inter_s1_1_l2 t0 inter_s1_0_r2); auto.
