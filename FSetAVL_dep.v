@@ -1486,7 +1486,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (s1_1_avl : avl s1_1). inversion_clear s1_avl; trivial.
     case (Hrecs1_1 s1_1_bst s1_1_avl l2 H H1); clear Hrecs1_1.
     intros (inter_s1_1_l2, s1_1_l2_bst, s1_1_l2_avl); simpl in |- *;
-     intuition.
+     intro a; intuition.
     assert (s1_0_bst : bst s1_0). inversion_clear s1_bst; trivial.
     assert (s1_0_avl : avl s1_0). inversion_clear s1_avl; trivial.
     case (Hrecs1_0 s1_0_bst s1_0_avl r2 H0 H2); clear Hrecs1_0.
@@ -1566,11 +1566,13 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (s1_1_bst : bst s1_1). inversion_clear s1_bst; trivial.
     assert (s1_1_avl : avl s1_1). inversion_clear s1_avl; trivial.
     case (Hrecs1_1 s1_1_bst s1_1_avl l2 H H1); clear Hrecs1_1.
-    intros (diff_s1_1_l2, s1_1_l2_bst, s1_1_l2_avl); simpl in |- *; intuition.
+    intros (diff_s1_1_l2, s1_1_l2_bst, s1_1_l2_avl); simpl in |- *; 
+      intro a; intuition.
     assert (s1_0_bst : bst s1_0). inversion_clear s1_bst; trivial.
     assert (s1_0_avl : avl s1_0). inversion_clear s1_avl; trivial.
     case (Hrecs1_0 s1_0_bst s1_0_avl r2 H0 H2); clear Hrecs1_0.
-    intros (diff_s1_0_r2, s1_0_r2_bst, s1_0_r2_avl); simpl in |- *; intuition.
+    intros (diff_s1_0_r2, s1_0_r2_bst, s1_0_r2_avl); simpl in |- *; 
+      intro a0; intuition.
     induction  b as [| ]; simpl in |- *; intuition.
     (* b = true *)
     case (concat diff_s1_1_l2 diff_s1_0_r2); auto.
@@ -1943,14 +1945,16 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (cardinal_tree l2 <= cardinal_tree (Node t3 t4 t5 z0))%nat.
     apply cardinal_subset; trivial.
     firstorder. omega.
-    intros (union_t0_l2, t0_l2_bst, t0_l2_avl); simpl in |- *; intuition.
+    intros (union_t0_l2, t0_l2_bst, t0_l2_avl); simpl in |- *; 
+      intro a; intuition.
     assert (t2_bst : bst t2). inversion_clear s1_bst; trivial.
     assert (t2_avl : avl t2). inversion_clear s1_avl0; trivial.
     case (H t2 r2); trivial.
     assert (cardinal_tree r2 <= cardinal_tree (Node t3 t4 t5 z0))%nat.
     apply cardinal_subset; trivial.
     firstorder. omega.
-    intros (union_t2_r2, t2_r2_bst, t2_r2_avl); simpl in |- *; intuition.
+    intros (union_t2_r2, t2_r2_bst, t2_r2_avl); simpl in |- *; 
+      intro a0; intuition.
     case (join union_t0_l2 t1 union_t2_r2); auto.
     inversion_clear s1_bst; firstorder.
     inversion_clear s1_bst; firstorder.
@@ -1984,14 +1988,16 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (cardinal_tree l1 <= cardinal_tree (Node t0 t1 t2 z))%nat.
     apply cardinal_subset; trivial.
     firstorder. simpl in H7; simpl in |- *; omega.
-    intros (union_l1_t3, l1_t3_bst, l1_t3_avl); simpl in |- *; intuition.
+    intros (union_l1_t3, l1_t3_bst, l1_t3_avl); simpl in |- *; 
+      intro a; intuition.
     assert (t5_bst : bst t5). inversion_clear s2_bst; trivial.
     assert (t5_avl : avl t5). inversion_clear s2_avl0; trivial.
     case (H r1 t5); trivial.
     assert (cardinal_tree r1 <= cardinal_tree (Node t0 t1 t2 z))%nat.
     apply cardinal_subset; trivial.
     firstorder. simpl in H7; simpl in |- *; omega.
-    intros (union_r1_t5, r1_t5_bst, r1_t5_avl); simpl in |- *; intuition.
+    intros (union_r1_t5, r1_t5_bst, r1_t5_avl); simpl in |- *; 
+      intro a0; intuition.
     case (join union_l1_t3 t4 union_r1_t5); auto.
     inversion_clear s2_bst; firstorder.
     inversion_clear s2_bst; firstorder.
@@ -2127,9 +2133,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros (s1, s2); intuition; exists (s1, s2); do 4 (split; trivial).
     intros HP x; generalize (H11 x) (H14 HP x) (H18 HP x); clear H11 H14 H18;
      intros.
-    decompose [and] H11; clear H11.
-    decompose [and] H14; clear H14.
-    decompose [and] H17; clear H17.
+    destruct H11 as (H18,H19).
+    destruct H14 as ((H21,H22),(H11,H23)).
+    destruct H17 as ((H24,H25),(H14,H26)).
     repeat split; intros.
     elim (H24 H17); intros.
     elim (H21 H20); intros.
@@ -2168,9 +2174,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros (s1, s2); intuition; exists (s1, s2); do 4 (split; trivial).
     intros HP x; generalize (H11 x) (H14 HP x) (H18 HP x); clear H11 H14 H18;
      intros.
-    decompose [and] H11; clear H11.
-    decompose [and] H14; clear H14.
-    decompose [and] H17; clear H17.
+    destruct H11 as (H18,H19).
+    destruct H14 as ((H21,H22),(H11,H23)).
+    destruct H17 as ((H24,H25),(H14,H26)).
     repeat split; intros.
     elim (H24 H17); intros.
     elim (H21 H20); intros.
