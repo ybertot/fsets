@@ -1940,7 +1940,6 @@ Qed.
 
 Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2'))) *)
   do 2 destruct_call union; simpl in *.
-  destruct H1 as (B1 & A1 & B2 & A2).
   decompose [and] a; clear a.
   decompose [and] a0; clear a0.
   subst s; clear union; simpl snd in *; simpl fst in *.
@@ -2022,7 +2021,6 @@ Qed.
 
 Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
  do 2 destruct_call union; simpl in *.
- destruct H1 as (B1,(A1,(B2,A2))).
  decompose [and] a; clear a.
  decompose [and] a0; clear a0.
  subst s; simpl snd in *; simpl fst in *.
