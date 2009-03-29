@@ -1854,7 +1854,7 @@ Obligation Tactic :=
 
 Program Fixpoint union
  (s : t * t | bst s#1 /\ avl s#1 /\ bst s#2 /\ avl s#2) 
- { measure cardinal2 s } : 
+ { measure (cardinal2 s) } : 
  { s' : t | bst s' /\ avl s' /\ 
            forall x, In x s' <-> In x s#1 \/ In x s#2 }
  :=
@@ -2047,6 +2047,8 @@ Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd 
  case (X.compare y r); intuition_in.
 Qed.
 
+Next Obligation. auto with arith. Defined.
+
 (** * Subset *)
 
 Open Local Scope program_scope.
@@ -2062,7 +2064,7 @@ Obligation Tactic :=
  try match goal with a:_ /\ _ |- _ => destruct a as (B1,B2) end.
 
 Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2) 
- { measure cardinal2 s }
+ { measure (cardinal2 s) }
  : { Subset s#1 s#2 } + {~Subset s#1 s#2 } :=
  match s with 
   | (Leaf, Leaf) => in_left
@@ -2191,6 +2193,10 @@ Next Obligation. (* post GT + right + _ *)
  assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
  inv bst; intuition_in; order.
 Qed.
+
+Next Obligation. (* well-founded *)
+  auto with arith.
+Defined.
 
 (** * Comparison *)
 
@@ -2381,7 +2387,7 @@ Obligation Tactic :=
 
 Program Fixpoint compare_aux 
  (e:enumeration*enumeration|sorted_e e#1 /\ sorted_e e#2)
- { measure measure2 e } : 
+ { measure (measure2 e) } : 
  Compare L.lt L.eq (flatten_e e#1) (flatten_e e#2) 
  :=
  match e with 
@@ -2462,6 +2468,10 @@ Qed.
 Next Obligation. (* post X.compare x1 x2 = GT *)
  simpl; auto.
 Qed.
+
+Next Obligation. (* well-founded *)
+  auto with arith.
+Defined.
 
 Opaque compare_aux.
 
