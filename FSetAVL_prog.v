@@ -22,6 +22,7 @@ Require Import FSetInterface.
 Require Import FSetList.
 Require Import ZArith.
 Require Import Int.
+Require Import ROmega.
 
 Set Firstorder Depth 3.
 
@@ -30,6 +31,8 @@ Import I.
 Module II:=MoreInt(I).
 Import II.
 Open Scope Int_scope.
+
+Ltac omega_max := i2z_refl; romega with Z.
 
 Module MX := OrderedTypeFacts X.
 
