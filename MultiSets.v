@@ -349,7 +349,7 @@ Module Import NP := FMapFacts.Properties Ma.
 Import NP.F.
 Module Import NP' := FMapFacts.OrdProperties Ma.
 
-Lemma fmu_compat : Morphism (Leibniz==>Leibniz==>Leibniz==>Leibniz) fmu.
+Lemma fmu_compat : Proper (Leibniz==>Leibniz==>Leibniz==>Leibniz) fmu.
 Proof.
  repeat red; intros; subst; auto.
 Qed.

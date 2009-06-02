@@ -273,7 +273,7 @@ Variable A:Type.
 Variable f:elt->A->A.
 
 Program Fixpoint fold_direct_prog (s:t)(i:A)
- { measure cardinal s } : A := 
+ { measure (cardinal s) } : A := 
   match max_elt s with 
   | None => i
   | Some x => f x (fold_direct_prog (remove x s) i)
@@ -284,8 +284,10 @@ Next Obligation.
  rewrite <- (@MP.remove_cardinal_1 s x); auto with arith set.
 Qed.
 
+Next Obligation. auto with *. Defined.
+
 Program Fixpoint fold_tail_prog (s:t)(i:A)
- { measure cardinal s } : A := 
+ { measure (cardinal s) } : A := 
   match min_elt s with 
   | None => i
   | Some x => fold_tail_prog (remove x s) (f x i)
@@ -296,13 +298,15 @@ Next Obligation.
  rewrite <- (@MP.remove_cardinal_1 s x); auto with arith set.
 Qed.
 
+Next Obligation. auto with *. Defined.
+
 Lemma fold_direct_prog_1 : 
  forall s i, fold_direct_prog s i = fold f s i.
 Proof.
 intros s; remember (cardinal s) as n; revert s Heqn.
 induction n using Wf_nat.lt_wf_ind; intros.
 unfold fold_direct_prog.
-rewrite fix_sub_measure_eq_ext; auto.
+rewrite fix_sub_eq_ext; auto.
 simpl.
 generalize (@max_elt_1 s) (@max_elt_2 s) (@max_elt_3 s) (@elements_max s).
 destruct (max_elt s); intros.
@@ -330,7 +334,7 @@ Lemma fold_tail_prog_1_aux :
 Proof.
 induction n using Wf_nat.lt_wf_ind; intros.
 unfold fold_tail_prog.
-rewrite fix_sub_measure_eq_ext; auto.
+rewrite fix_sub_eq_ext; auto.
 simpl.
 generalize (@min_elt_1 s') (@min_elt_2 s') (@min_elt_3 s') (@elements_min s').
 destruct (min_elt s'); intros.
