@@ -91,10 +91,10 @@ apply filter_3; auto.
 apply remove_2.
 unfold E.eq; red; intros.
 rewrite H4 in H1; rewrite H3 in H1; discriminate H1.
-eapply filter_1; eauto.
+eapply filter_1; eauto. auto. (* TODO: why this extra auto after eauto ? *)
 apply filter_3; intuition.
 apply remove_3 with n; auto.
-eapply filter_1; eauto.
+eapply filter_1; eauto. auto. (* TODO idem *)
 change ((fun m0 => to G m m0) a = true).
 eapply filter_2; eauto.
 Qed.
@@ -110,7 +110,7 @@ assert (~ In n (filter (fun m0 => to G m m0) (remove n G))).
 intro.
 elim remove_1 with G n n; auto.
 red; auto.
-eapply filter_1; eauto.
+eapply filter_1; eauto. auto. (* TODO idem *)
 apply cardinal_2 with n; auto.
 unfold Add; split; intros.
 
@@ -119,14 +119,14 @@ left; auto with *.
 right.
 apply filter_3; auto.
 apply remove_2; auto.
-eapply filter_1; eauto.
+eapply filter_1; eauto. auto. (* TODO idem *)
 change ((fun m0 => to G m m0) y = true); eapply filter_2; eauto.
 
 elim (eq_nat_dec y n); intros.
 rewrite a; apply filter_3; auto.
 elim H3; intros; [absurd (y=n) | apply filter_3 ]; auto.
 apply remove_3 with n; auto.
-eapply filter_1; eauto.
+eapply filter_1; eauto. auto. (* TODO idem *)
 change ((fun m0 => to G m m0) y =true); eapply filter_2; eauto.
 Qed.
 
@@ -336,13 +336,13 @@ intros j Hj _; generalize (Hj j (refl_equal _)); clear Hj; intro Hj.
 apply le_trans with (plus (nb_succ G i) (nb_linked G j)). 
 unfold double; apply plus_le_compat;auto.
 lapply (H0 j);auto.
-unfold set_succ, is_succ  in Hj; eapply filter_1; eauto.
+unfold set_succ, is_succ  in Hj; eapply filter_1; eauto. auto. (* TODO idem *)
 unfold nb_succ, nb_linked, nb_nodes;simpl.
 rewrite <- union_cardinal;auto.
 apply subset_cardinal.
 apply subset_1; unfold Subset; intros.
-elim (union_1 H4); unfold set_succ, is_succ, set_linked, is_linked; intros; 
-  eapply filter_1; eauto.
+elim (union_1 H4); unfold set_succ, is_succ, set_linked, is_linked; intros;
+  eapply filter_1; eauto; congruence. (* TODO idem *)
 unfold set_succ, is_succ in Hj; intros.
 assert (compat_bool E.eq (fun m=>to G i m)); auto.
 generalize (filter_1 H4 Hj) (filter_2 H4 Hj); clear H4 Hj; intros Hj1 Hj2.
