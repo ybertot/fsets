@@ -1849,7 +1849,7 @@ Definition cardinal2 (s:t*t) :=
 
 Obligation Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
- unfold cardinal2; simpl fst in *; simpl snd in *; 
+ unfold cardinal2; simpl @fst in *; simpl @snd in *; 
  try match goal with u:forall s:_,{x:_|_} |- _ => clear u end; 
  try match goal with a: _ /\ _ /\ _ /\ _ |- _ => 
    destruct a as (B1 & A1 & B2 & A2)
@@ -1945,7 +1945,7 @@ Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2
   do 2 destruct_call union; simpl in *.
   decompose [and] a; clear a.
   decompose [and] a0; clear a0.
-  subst s; clear union; simpl snd in *; simpl fst in *.
+  subst s; clear union; simpl @snd in *; simpl @fst in *.
   rename x into l; rename x2 into r. 
   assert (l2' = (split x1 (Node l2 r r2 h2))#1 
     /\ r2' = (split x1 (Node l2 r r2 h2))#2#2).
@@ -2026,7 +2026,7 @@ Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd 
  do 2 destruct_call union; simpl in *.
  decompose [and] a; clear a.
  decompose [and] a0; clear a0.
- subst s; simpl snd in *; simpl fst in *.
+ subst s; simpl @snd in *; simpl @fst in *.
  clear union; rename x into l; rename x2 into r.
  assert (l1' = (split r (Node l1 x1 r1 h1))#1 
       /\ r1' = (split r (Node l1 x1 r1 h1))#2#2).
@@ -2062,7 +2062,7 @@ Notation "a && b" :=
 Obligation Tactic := 
  simpl ; intros ; destruct_exists ; simpl in * ; try subst; 
  unfold cardinal2;
- simpl fst in *; simpl snd in *; 
+ simpl @fst in *; simpl @snd in *; 
  try match goal with u:forall s:_,{_}+{_} |- _ => clear u end;
  try match goal with a:_ /\ _ |- _ => destruct a as (B1,B2) end.
 
