@@ -2436,7 +2436,7 @@ Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = EQ *)
  clear Heq_anonymous0 Heq_anonymous compare_aux.
- destruct H as (S1,S2); subst; simpl in *.
+ subst; simpl in *.
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
@@ -2446,7 +2446,7 @@ Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
  clear Heq_anonymous0 Heq_anonymous compare_aux.
- destruct H as (S1,S2); subst; simpl in *.
+ subst; simpl in *.
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
@@ -2456,7 +2456,7 @@ Qed.
 
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = GT *)
  clear Heq_anonymous0 Heq_anonymous compare_aux.
- destruct H as (S1,S2); subst; simpl in *.
+ subst; simpl in *.
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(_,H)); auto.
  destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
