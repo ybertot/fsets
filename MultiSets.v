@@ -349,12 +349,12 @@ Module Import NP := FMapFacts.Properties Ma.
 Import NP.F.
 Module Import NP' := FMapFacts.OrdProperties Ma.
 
-Lemma fmu_compat : Proper (Leibniz==>Leibniz==>Leibniz==>Leibniz) fmu.
+Lemma fmu_compat : Proper (eq==>eq==>eq==>eq) fmu.
 Proof.
  repeat red; intros; subst; auto.
 Qed.
 
-Lemma fmu_transp : transpose_neqkey Leibniz fmu.
+Lemma fmu_transp : transpose_neqkey eq fmu.
 Proof.
  red; intros.
  unfold fmu; do 2 rewrite Nplus_assoc; f_equal; apply Nplus_comm; auto.
