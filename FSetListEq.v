@@ -45,7 +45,7 @@ Module UsualEqual (U:UsualOrderedType).
    intros; generalize (eqlistA_eq _ _ (Equal_elements_eqlistA _ _ H)); clear H.
    destruct s as [s Hs]; destruct s' as [s' Hs']; simpl.
    intros.
-   rewrite proof_irrelevance with (p1:=Hs') (p2:=eq_rect s (sort E.lt) Hs s' H). 
+   rewrite proof_irrelevance with (p1:=Hs') (p2:=eq_rect s _ Hs s' H).
    elim H using eq_indd.
    reflexivity.
   Qed.

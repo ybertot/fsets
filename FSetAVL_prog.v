@@ -19,7 +19,7 @@
 
 Require Import Coq.Program.Program.
 Require Import FSetInterface.
-Require Import FSetList.
+Require Import FSetList0.
 Require Import ZArith.
 Require Import Int.
 Require Import ROmega.
@@ -1709,7 +1709,7 @@ End F.
 
 (** * Fold *)
 
-Module L := FSetList.Raw X.
+Module L := FSetList0.Raw X.
 
 Fixpoint fold (A : Type) (f : elt -> A -> A)(s : tree) {struct s} : A -> A := 
  fun a => match s with
@@ -2374,9 +2374,9 @@ Lemma l_eq_cons :
 Proof.
  unfold L.eq, L.Equal in |- *; intuition.
  inversion_clear H1; generalize (H0 a); clear H0; intuition.
- apply InA_eqA with x; eauto.
+ apply InA_eqA with x; eauto with *.
  inversion_clear H1; generalize (H0 a); clear H0; intuition.
- apply InA_eqA with y; eauto.
+ apply InA_eqA with y; eauto with *.
 Qed.
 
 Definition measure2 e := measure_e e#1 + measure_e e#2.
@@ -2822,7 +2822,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  rewrite Raw.filter_in; intuition.
  rewrite H2; auto.
  destruct (f a); auto.
- red; intros; f_equal.
+ repeat red; intros; f_equal.
  rewrite (H _ _ H0); auto.
  Qed.
 

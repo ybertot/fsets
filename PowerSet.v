@@ -160,7 +160,7 @@ Lemma compat_op_pow :
  compat_op M.E.eq MM.Equal
   (fun x0 ss => MM.union ss (MM'.map (M.add x0) ss)).
 Proof.
-red; red; intros; FF.set_iff.
+repeat red; intros; FF.set_iff.
 do 2 rewrite map_add; rewrite H; rewrite H0; intuition.
 Qed.
 Hint Resolve compat_op_pow : set.
@@ -168,7 +168,7 @@ Hint Resolve compat_op_pow : set.
 Lemma singleton_empty : forall s, MM.In s (MM.singleton M.empty) <-> M.Empty s.
 Proof.
 intros.
-rewrite FF.singleton_iff; split; auto with set.
+rewrite FF.singleton_iff; split; unfold M.eq; auto with set.
 Qed.
 
 Lemma powerset_base : forall s, M.Empty s -> powerset s [==] MM.singleton M.empty.
@@ -299,12 +299,12 @@ red; destruct 1.
 case_eq (M.cardinal (M.add x a)); intros.
 elim (@P.cardinal_inv_1 _ H5 x); F.set_iff; auto.
 rewrite H5 in H4; simpl in H4; inversion H4.
-red; intros; f_equal; rewrite H3; auto.
+repeat red; intros; f_equal; rewrite H3; auto.
 assert (MM.filter (fun x0 => beq_nat (M.cardinal (M.add x x0)) (S k)) (powerset s1)
    [==] MM.filter (fun x0 => beq_nat (M.cardinal x0) k) (powerset s1)).
 red; intros.
-rewrite FF.filter_iff by (red; intros; f_equal; rewrite H3; auto).
-rewrite FF.filter_iff by (red; intros; f_equal; rewrite H3; auto).
+rewrite FF.filter_iff by (repeat red; intros; f_equal; rewrite H3; auto).
+rewrite FF.filter_iff by (repeat red; intros; f_equal; rewrite H3; auto).
 rewrite powerset_is_powerset.
 intuition.
 assert (~M.In x a).
@@ -339,8 +339,8 @@ elim H8; apply M.In_1 with a; auto.
 elim H8; apply M.In_1 with a; auto.
 elim H9; apply M.In_1 with a; auto.
 elim H9; apply M.In_1 with a; auto.
-red; intros; f_equal; rewrite H7; auto.
-red; intros; f_equal; rewrite H6; auto.
+repeat red; intros; f_equal; rewrite H7; auto.
+repeat red; intros; f_equal; rewrite H6; auto.
 
 intros.
 rewrite !FF.filter_iff by (red; intros; subst; auto).
@@ -424,7 +424,7 @@ left.
  red; intro a; generalize (H1 a)(H0 a); intuition.
  elim n; rewrite H6; auto.
 
-red; intros.
+unfold compat_op, Proper, respectful; intros.
 destruct k0; auto.
 red; intros; FF.set_iff.
 rewrite !map_add, !H2, H1; split; auto.

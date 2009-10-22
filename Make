@@ -1,4 +1,9 @@
 -R . FSets
+# copies of files from stdlib before MSets transition
+FSetList0.v
+FSetAVL0.v
+FSetFullAVL.v
+# older files
 FSetRBT.v 
 FSetAVL_dep.v
 FSetAVL_prog.v
@@ -13,5 +18,5 @@ FSetListEq.v
 MultiSets.v
 MultiSetsEq.v 
 demo.v
-
-
+demo_msets.v
+MSetAVL_test.v

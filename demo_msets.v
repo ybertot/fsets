@@ -1,7 +1,4 @@
-Require Import FSets.
-Require Import FSetAVL.
-Require Import ZArith.
-Require Import Omega.
+Require Import MSets MSetAVL ZArith Omega.
 Open Scope Z_scope.
 Set Implicit Arguments.
 
@@ -23,27 +20,40 @@ module type OrderedType =
 (* The corresponding OrderedType in Coq: *)
 
 (*excerpt from OrderedType.v *)
-Inductive Compare (X : Type) (lt eq : X -> X -> Prop) (x y : X) : Type :=
-  | LT : lt x y -> Compare lt eq x y
-  | EQ : eq x y -> Compare lt eq x y
-  | GT : lt y x -> Compare lt eq x y.
+Print comparison.
+(* Inductive comparison := Eq | Lt | Gt. *)
 
-Extraction Compare.
+Print Cmp.
+(*
+Definition Cmp {A} (eq lt : relation A) c := match c with
+   | Eq => eq
+   | Lt => lt
+   | Gt => flip lt
+end.
+*)
 
 Module Type OrderedType.
 
+  (* The "Ocaml part" *)
+
   Parameter t : Type.
+  Parameter compare : t -> t -> comparison.
+
+  (* The logical specification:
+     [compare] is required to give correct answers with respect to some
+     particular equivalence relation [eq] and strict order [lt]. *)
 
   Parameter eq : t -> t -> Prop.
   Parameter lt : t -> t -> Prop.
+  Instance eq_equiv : Equivalence eq. (* reflexive, symmetric, transitive *)
+  Instance lt_strorder : StrictOrder lt. (* irreflexive, transitive *)
+  Instance lt_compat : Proper (eq==>eq==>iff) lt. (* rewriting w.r.t. eq in lt *)
+  Axiom compare_spec : forall x y : t, Cmp eq lt (compare x y) x y.
 
-  Axiom eq_refl : forall x : t, eq x x.
-  Axiom eq_sym : forall x y : t, eq x y -> eq y x.
-  Axiom eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-  Axiom lt_trans : forall x y z : t, lt x y -> lt y z -> lt x z.
-  Axiom lt_not_eq : forall x y : t, lt x y -> ~ eq x y.
+  (* Artificially, we asks for another function, for OrderedType to be
+     coercible to another interface (see DecidableType).  *)
 
-  Parameter compare : forall x y : t, Compare lt eq x y.
+  Parameter eq_dec : forall x y, { eq x y }+{ ~eq x y }.
 
 End OrderedType.
 (*/excerpt*)
@@ -57,36 +67,30 @@ End OrderedType.
 Module Z_as_OT <: OrderedType.
 
   Definition t := Z.
-  Definition eq (x y:Z) := (x=y).
-  Definition lt (x y:Z) := (x<y).
+  Definition compare := Zcompare.
 
-  Section xyz.
-  Variables x y z : Z.
-
-  Lemma eq_refl : x=x .  
-  Proof. auto. Qed.
-
-  Lemma eq_sym : x=y -> y=x.
-  Proof. auto. Qed.
-
-  Lemma eq_trans : x=y -> y=z -> x=z.
-  Proof. auto with zarith. Qed.
-
-  Lemma lt_trans : x<y -> y<z -> x<z.
-  Proof. auto with zarith. Qed.
-
-  Lemma lt_not_eq : x<y -> ~ x=y.
-  Proof. auto with zarith. Qed.
-
-  Definition compare : Compare lt eq x y.
+  Definition eq := @eq Z.
+  Definition lt := Zlt.
+  Instance eq_equiv : Equivalence eq.
+  Instance lt_strorder : StrictOrder lt.
+  Instance lt_compat : Proper (eq==>eq==>iff) lt.
+  Proof. intros x x' Hx y y' Hy; rewrite Hx, Hy; split; auto. Qed.
+  Lemma compare_spec : forall x y, Cmp eq lt (compare x y) x y.
   Proof.
-    case_eq (x ?= y); intros.
-    apply EQ; unfold eq; apply Zcompare_Eq_eq; auto.
-    apply LT; unfold lt, Zlt; auto.
-    apply GT; unfold lt, Zlt; rewrite <- Zcompare_Gt_Lt_antisym; auto.
-  Defined.
+   unfold compare. intros. destruct (Zcompare x y) as [ ]_eqn:H; simpl.
+   apply Zcompare_Eq_eq; auto.
+   auto.
+   repeat red. rewrite <- Zcompare_Gt_Lt_antisym. assumption.
+  Qed.
 
-  End xyz.
+  Definition eq_dec : forall x y, { eq x y }+{ ~eq x y }.
+  Proof.
+   intros x y; generalize (compare_spec x y); destruct (compare x y); simpl.
+   left; auto.
+   right; intro N; rewrite N in *; apply (StrictOrder_Irreflexive y); auto.
+   right; intro N; rewrite N in *; apply (StrictOrder_Irreflexive y); auto.
+  Qed.
+
 End Z_as_OT.
 (* /excerpt *)
 
@@ -96,11 +100,9 @@ End THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
 
 
 
-
-
 (** * Let's now build some sets of [Z] integers ... *)
 
-Module M := FSetAVL.Make(Z_as_OT).
+Module M := MSetAVL.Make(Z_as_OT).
 
 (* This module M provides plenty of functions on Z-sets *)
 Check M.add.
@@ -113,7 +115,12 @@ Eval compute in (M.mem 2 ens3).
 Eval compute in (M.elements ens3).
 
 (* M also provides some basic properties, for instance: *)
-Check (M.elements_3 ens3). 
+
+Check (M.elements_spec1 ens3).
+(* elements returns a lists with the same content
+   as the initial set. *)
+
+Check (M.elements_spec2 ens3).
 (* elements always returns a sorted list
    with respect to the underlying order. *)
 
@@ -122,7 +129,7 @@ Check (M.elements_3 ens3).
    An M.t can and should always be inspected by using [mem], [elements], etc.
    But for once, let's have a look at the raw aspect of a set: *)
 Set Printing Implicit.
-Import M.MSet.Raw.
+Import M.Raw.
 Eval compute in ens1.
 (* Here for FSetAVL, a set is a pair of a tree (see 1st line) and some proofs *)
 Eval compute in ens3. (* The proofs parts can grow quite fast *)
@@ -131,7 +138,7 @@ Unset Printing Implicit.
 (* Here, in order to avoid the continuous expansion of proofs parts, 
    we can work on "pure" or "raw" datatypes 
    (i.e. without built-in invariants). *)
-Module R:=M.MSet.Raw.
+Module R:=M.Raw.
 
 Definition raw1 := R.add 3 (R.add 0 (R.add 2 R.empty)).
 Definition raw2 := R.add 0 (R.add 2 (R.add 4 R.empty)).
@@ -142,21 +149,19 @@ Eval compute in (R.elements raw3).
 
 (* ... but then there is more work for deriving properties. *)
 
-Instance : Ok raw3.
-Proof. unfold raw3; auto with *. Qed.
+Instance raw3_ok : Ok raw3. Proof. unfold raw3, raw1, raw2; auto with *. Qed.
 
-Check (elements_spec1 raw3).
-Check (@elements_spec2 raw3 _).
-
+Check (@R.elements_spec2 raw3 raw3_ok).
 
 
 
 (** * union *)
 
 (* This function is now based on a structural recursion.
-   It used to be a well-founded one (via Function's measure), 
+   It used to be a well-founded one (via Function's measure),
    for this version see FSetFullAVL. *)
 Eval vm_compute in (@R.union raw1 raw2).
+
 
 Extraction M.
 
@@ -165,7 +170,7 @@ Extraction M.
 
 (** * Some sets of sets ... *)
 
-Module MM := FSetAVL.Make(M).
+Module MM := MSetAVL.Make(M).
 
 Definition eens1 := MM.add ens1 (MM.add ens2 (MM.empty)).
 
@@ -218,15 +223,16 @@ Time Eval vm_compute in (M.elements (M.inter bigens3 bigens4)).
    Now, lots of additional facts can be derived from this common interface. *) 
 
 (* Simple ones are locating in the functor FSetFacts.Facts *)
-Module MF := FSetFacts.Facts M.
+Module MF := MSetFacts.Facts M.
 
 (* It contains mainly rephrasing of the specifications in alternative styles 
   like equivalences or boolean *)
+Check MF.add_1.
 Check MF.add_iff.
 Check MF.add_b.
 
 (* More complex properties are located in the functors FSetProperties.Properties *)
-Module MP := FSetProperties.Properties M.
+Module MP := MSetProperties.Properties M.
 
 (* For instance: usual stuff about set operations: *)
 Check MP.union_inter_1.
@@ -242,7 +248,7 @@ Check MP.union_inter_cardinal.
 
 
 
-
+(* TODO: MAPS NOT READY YET
 
 
 (** * What about maps ? it's the same ! *)
@@ -289,7 +295,7 @@ Check F.equal.
    FSets, see file FMapFacts.v *)
 
 
-
+*)
 
 
 
@@ -376,7 +382,7 @@ End Int.
    FMapWeak counterparts of FSets and FMap provides such structures. 
 *)
   
-Module W := FSetWeakList.Make (Z_as_DT).
+Module W := MSetWeakList.Make (Z_as_DT).
 
 (* Of course, we cannot provide efficient functions anymore : the 
    underlying structure is unsorted lists (but without redundancies). *)

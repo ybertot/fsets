@@ -74,6 +74,8 @@ Definition nb_edges (G:Graph) := (sum (nb_succ G) G).
 
 (** edge number of a graph with one node removed *)
 
+Hint Unfold compat_bool.
+
 Lemma node_remove_1 :
 forall (G:Graph)(n m:nat),
 (In n G)->(In m G)->(is_pred G n m)=false -> 
@@ -86,15 +88,14 @@ unfold Equal; split; intros.
 assert (to G m a = true).
  change ((fun m0 =>to G m m0) a = true).
  eapply filter_2; eauto.
-(* apply filter_3; intuition. ---> Not found *)
 apply filter_3; auto.
 apply remove_2.
 unfold E.eq; red; intros.
 rewrite H4 in H1; rewrite H3 in H1; discriminate H1.
-eapply filter_1; eauto. auto. (* TODO: why this extra auto after eauto ? *)
+eapply filter_1; eauto. auto. (* TODO: auto after eauto ?!? *)
 apply filter_3; intuition.
 apply remove_3 with n; auto.
-eapply filter_1; eauto. auto. (* TODO idem *)
+eapply filter_1; eauto. auto.
 change ((fun m0 => to G m m0) a = true).
 eapply filter_2; eauto.
 Qed.
@@ -155,14 +156,12 @@ unfold f2; rewrite sum_filter; auto.
 unfold nb_pred.
 unfold set_pred.
 unfold sum.
-rewrite (@fold_2 (remove n G) G n _ _  (gen_st nat) 0 (fun x => plus (f1 x))); auto with set.
+rewrite (@fold_2 (remove n G) G n _ _  (gen_st nat) 0 (fun x => plus (f1 x))); auto with *.
 assert (f1 n  = nb_succ G n).
 unfold f1, nb_succ, set_succ, node_remove, is_succ; simpl.
 apply Equal_cardinal.
 eapply add_filter_2; unfold Add; eauto with set.
 rewrite H1; omega.
-unfold transpose; intros; omega.
-apply remove_1; red; auto.
 unfold g, f1, f2; intros; apply node_remove_3; auto.
 Qed.
 
@@ -350,13 +349,12 @@ apply (bool_eq_ind (mem x (set_succ G i))); simpl; auto; intros.
 apply (bool_eq_ind (mem x (set_linked G j))); simpl; auto; intros.
 unfold set_succ, is_succ in H4; rewrite filter_mem in H4; auto;
   elim (andb_prop _ _ H4); clear H4; intros.
-unfold set_linked, is_linked in H5; rewrite filter_mem in H5; auto.
+unfold set_linked, is_linked in H5; rewrite filter_mem in H5; auto with *.
 elim (andb_prop _ _ H5); clear H5; intros.
 elim (orb_prop _ _ H7); clear H7; intros.
 unfold is_pred in H7.
 rewrite (@Hprec G i x j) in Hj2; auto with set; discriminate Hj2.
 rewrite (@Hprec G i j x) in H6; auto with set; discriminate H6.
-unfold E.eq, compat_bool; intros; rewrite H7; auto.
 intros _ A.
 unfold nb_succ in H3; rewrite cardinal_1 in H3; auto.
 inversion H3.
@@ -374,19 +372,17 @@ set (s := filter (fun k => if le_lt_dec (nb_linked G k) p then true else false) 
 generalize (@choose_1 s) (@choose_2 s).
 case (choose s).
 unfold s; intros x Hx _; generalize (mem_1 (Hx x (refl_equal _))); clear Hx; 
-  rewrite filter_mem.
+  rewrite filter_mem; auto with *.
 intros Hx; elim (andb_prop _ _ Hx); clear Hx; intros.
 exists x; split; intros; auto with set.
 generalize H2; case (le_lt_dec (nb_linked G x) p); auto with set; intros; discriminate H3.
-unfold E.eq, compat_bool; intros; rewrite H1; auto.
 intros _ A; generalize (A (refl_equal _)); clear A; unfold Empty, s; intros A.
 absurd (double (S p)  <= nb_nodes G); auto with arith.
 apply low_arity; auto.
 intros.
 elim (le_lt_dec (nb_linked G n) p); intros; auto.
 elim (A n).
-apply filter_3; auto. 
-unfold E.eq, compat_bool; intros; rewrite H2; auto.
+apply filter_3; auto with *.
 generalize a; case (le_lt_dec (nb_linked G n) p); auto with arith.
 intros; absurd (nb_linked G n <= p); auto with arith.
 Qed.

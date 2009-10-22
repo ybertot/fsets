@@ -16,7 +16,7 @@
 (** This module implements sets using red-black trees *)
 
 Require Import FSetInterface.
-Require Import FSetList.
+Require Import FSetList0.
 Require Import FSetBridge.
 
 Require Import Omega.
@@ -1810,7 +1810,7 @@ Unset Implicit Arguments.
 
   (** * Isomorphism with [FSetList] *)
 
-  Module Lists := FSetList.Make X.
+  Module Lists := FSetList0.Make X.
 
   Definition of_slist :
     forall l : Lists.t, {s : t | forall x : elt, Lists.In x l <-> In x s}. 

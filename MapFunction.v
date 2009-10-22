@@ -29,7 +29,7 @@ Module MapFunctionGen (M:S)(M':S).
  Proof.
  set (F := fun x s => M'.add (f x) s).
  assert (ST := FM'.Equal_ST : Setoid_Theory _ M'.Equal).
- assert (C:compat_op E.eq M'.Equal F) by (red; intros; apply FM'.add_m; auto).
+ assert (C:compat_op E.eq M'.Equal F) by (repeat red; intros; apply FM'.add_m; auto).
  assert (T:transpose M'.Equal F) by (red; intros; apply PM'.add_add; auto).
 
  induction s as [ s EM | s1 s2 IHs1 x NI AD] using PM.set_induction; intros.
@@ -60,7 +60,7 @@ Lemma map_cardinal_aux : forall s i,
 Proof.
  set (F := fun x s => M'.add (f x) s).
  assert (ST := FM'.Equal_ST : Setoid_Theory _ M'.Equal).
- assert (C:compat_op E.eq M'.Equal F) by (red; intros; apply FM'.add_m; auto).
+ assert (C:compat_op E.eq M'.Equal F) by (repeat red; intros; apply FM'.add_m; auto).
  assert (T:transpose M'.Equal F) by (red; intros; apply PM'.add_add; auto).
 
  induction s as [ s EM | s1 s2 IHs1 x NI AD] using PM.set_induction; intros.
@@ -93,7 +93,7 @@ intros.
 red; intros.
 rewrite FM'.filter_iff, 2 map_In by auto.
 split; [intros [(b,Hb) F] | intros (b,Hb)]; try split; try exists b; 
- try rewrite FM.filter_iff in *; intuition; eauto.
+ try rewrite FM.filter_iff in *; intuition; unfold compat_bool in *; eauto.
 Qed.
 
 End MapFunctionGen.

@@ -18,7 +18,7 @@
     It follows the implementation from Ocaml's standard library. *)
 
 Require Import FSetInterface.
-Require Import FSetList.
+Require Import FSetList0.
 
 Require Import ZArith.
 Open Scope Z_scope.
@@ -2394,7 +2394,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      (* P t0 *)
      case Hrecs1; clear Hrecs1; intro.
      case Hrecs0; clear Hrecs0; [ left | right ]; intuition.
-     inversion_clear H2; firstorder.
+     inversion_clear H2; repeat red in H; firstorder.
      clear Hrecs0; right; firstorder.
      (* ~(P t0) *)
      clear Hrecs0 Hrecs1; right; intros; firstorder.
@@ -2782,9 +2782,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     unfold L.eq, L.Equal in |- *; intuition.
     inversion_clear H1; generalize (H0 a); clear H0; intuition.
-    apply InA_eqA with x; eauto.
+    apply InA_eqA with x; eauto with *.
     inversion_clear H1; generalize (H0 a); clear H0; intuition.
-    apply InA_eqA with y; eauto.
+    apply InA_eqA with y; eauto with *.
   Qed.
 
   Hint Resolve lt_nil_elements_tree_Node lt_app lt_app_eq lt_eq_1 lt_eq_2

@@ -149,7 +149,7 @@ Lemma elements_max : forall s x,
 Proof.
 intros.
 apply list_unique; auto with set.
-apply SortA_app with M.E.eq; try red; auto with set.
+apply SortA_app with M.E.eq; try red; auto with *.
 intros z y H0; revert y; rewrite <- Inf_alt; auto; constructor.
 rewrite <- MF.elements_iff in H0.
 assert (H1:=@max_elt_2 _ _ z H).
