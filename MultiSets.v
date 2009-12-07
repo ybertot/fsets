@@ -375,7 +375,7 @@ rewrite (Ma.fold_1 s); rewrite H; auto.
 
 replace (Ma.fold fmu s2 0) with (fmu x e (Ma.fold fmu s1 0))
  by (symmetry; apply fold_Add; auto).
-unfold fmu at 2; simpl snd.
+unfold fmu at 2; simpl @snd.
 rewrite <- Nplus_assoc.
 rewrite <- IHs1.
 case_eq (Ma.find x s'); intros.

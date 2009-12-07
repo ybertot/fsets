@@ -305,7 +305,7 @@ Lemma fold_direct_prog_1 :
 Proof.
 intros s; remember (cardinal s) as n; revert s Heqn.
 induction n using Wf_nat.lt_wf_ind; intros.
-unfold fold_direct_prog.
+unfold fold_direct_prog, fold_direct_prog_func.
 rewrite fix_sub_eq_ext; auto.
 simpl.
 generalize (@max_elt_1 s) (@max_elt_2 s) (@max_elt_3 s) (@elements_max s).
@@ -333,7 +333,7 @@ Lemma fold_tail_prog_1_aux :
   fold_tail_prog s' (fold_left (fun x y => f y x) l i) = fold f s i.
 Proof.
 induction n using Wf_nat.lt_wf_ind; intros.
-unfold fold_tail_prog.
+unfold fold_tail_prog, fold_tail_prog_func.
 rewrite fix_sub_eq_ext; auto.
 simpl.
 generalize (@min_elt_1 s') (@min_elt_2 s') (@min_elt_3 s') (@elements_min s').

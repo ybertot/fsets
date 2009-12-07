@@ -23,14 +23,9 @@ module type OrderedType =
 Print comparison.
 (* Inductive comparison := Eq | Lt | Gt. *)
 
-Print Cmp.
-(*
-Definition Cmp {A} (eq lt : relation A) c := match c with
-   | Eq => eq
-   | Lt => lt
-   | Gt => flip lt
-end.
-*)
+Print CompSpec.
+
+
 
 Module Type OrderedType.
 
@@ -48,7 +43,7 @@ Module Type OrderedType.
   Instance eq_equiv : Equivalence eq. (* reflexive, symmetric, transitive *)
   Instance lt_strorder : StrictOrder lt. (* irreflexive, transitive *)
   Instance lt_compat : Proper (eq==>eq==>iff) lt. (* rewriting w.r.t. eq in lt *)
-  Axiom compare_spec : forall x y : t, Cmp eq lt (compare x y) x y.
+  Axiom compare_spec : forall x y : t, CompSpec eq lt x y (compare x y).
 
   (* Artificially, we asks for another function, for OrderedType to be
      coercible to another interface (see DecidableType).  *)
@@ -75,21 +70,11 @@ Module Z_as_OT <: OrderedType.
   Instance lt_strorder : StrictOrder lt.
   Instance lt_compat : Proper (eq==>eq==>iff) lt.
   Proof. intros x x' Hx y y' Hy; rewrite Hx, Hy; split; auto. Qed.
-  Lemma compare_spec : forall x y, Cmp eq lt (compare x y) x y.
-  Proof.
-   unfold compare. intros. destruct (Zcompare x y) as [ ]_eqn:H; simpl.
-   apply Zcompare_Eq_eq; auto.
-   auto.
-   repeat red. rewrite <- Zcompare_Gt_Lt_antisym. assumption.
-  Qed.
+  Lemma compare_spec : forall x y, CompSpec eq lt x y (compare x y).
+  Proof. exact Zcompare_spec. Qed.
 
   Definition eq_dec : forall x y, { eq x y }+{ ~eq x y }.
-  Proof.
-   intros x y; generalize (compare_spec x y); destruct (compare x y); simpl.
-   left; auto.
-   right; intro N; rewrite N in *; apply (StrictOrder_Irreflexive y); auto.
-   right; intro N; rewrite N in *; apply (StrictOrder_Irreflexive y); auto.
-  Qed.
+  Proof. exact Z_eq_dec. Qed.
 
 End Z_as_OT.
 (* /excerpt *)

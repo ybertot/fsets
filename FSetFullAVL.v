@@ -749,6 +749,8 @@ Proof.
  apply (@ocaml_compare_aux_Cmp (cons s1 End, cons s2 End)).
 Qed.
 
+Import Proofs. (* Hidden by some Function devilry *)
+
 Lemma ocaml_compare_alt : forall s1 s2, bst s1 -> bst s2 ->
  ocaml_compare s1 s2 = compare s1 s2.
 Proof.
