@@ -40,9 +40,9 @@ Module Type OrderedType.
 
   Parameter eq : t -> t -> Prop.
   Parameter lt : t -> t -> Prop.
-  Instance eq_equiv : Equivalence eq. (* reflexive, symmetric, transitive *)
-  Instance lt_strorder : StrictOrder lt. (* irreflexive, transitive *)
-  Instance lt_compat : Proper (eq==>eq==>iff) lt. (* rewriting w.r.t. eq in lt *)
+  Declare Instance eq_equiv : Equivalence eq. (* reflexive, symmetric, transitive *)
+  Declare Instance lt_strorder : StrictOrder lt. (* irreflexive, transitive *)
+  Declare Instance lt_compat : Proper (eq==>eq==>iff) lt. (* rewriting w.r.t. eq in lt *)
   Axiom compare_spec : forall x y : t, CompSpec eq lt x y (compare x y).
 
   (* Artificially, we asks for another function, for OrderedType to be
