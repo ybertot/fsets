@@ -1908,68 +1908,24 @@ Next Obligation. (* 5: precondition for (union (l1,l2')) *)
   inv avl; inv bst; intuition.
 Qed.
 
+Next Obligation. (* 6: decreasing of (union (l1,l2')) *)
+  assert (l2' = (split x1 (Node l2 x2 r2 h2))#1).
+    rewrite <- Heq_anonymous; auto.
+  clear Heq_anonymous.
+  assert (cardinal l2' <= cardinal (Node l2 x2 r2 h2))%nat.
+    subst l2'.
+    apply cardinal_subset; auto.
+    destruct (split_bst _ x1 B2 A2); auto.
+    intros y; rewrite (split_in_1 _ x1 y B2 A2); tauto.
+  simpl (cardinal (Node l1 x1 r1 h1)).
+ omega.
+Qed.
+
 Next Obligation. (* 7: precondition for (union (r1,r2')) *)
   generalize (split_avl _ x1 A2).
   generalize (split_bst _ x1 B2 A2).
   rewrite <- Heq_anonymous; simpl.
   inv avl; inv bst; intuition.
-Qed.
-
-Next Obligation. (* 10: postcondition about (add x1 s2) *)
- split.
- apply add_bst; auto.
- split; auto.
- intros.
- rewrite add_in; auto.
- inv avl; inv bst.
- avl_nn l1; avl_nn r1.
- rewrite (height_0 _ H5); [ | omega_max].
- rewrite (height_0 _ H6); [ | omega_max].
- intuition_in.
-Qed.
-
-Next Obligation. (* 11: precondition for (union (l1',l2)) *)
- generalize (split_avl _ x2 A1).
- generalize (split_bst _ x2 B1 A1).
- rewrite <- Heq_anonymous; simpl.
- inv avl; inv bst; intuition.
-Qed.
-
-Next Obligation. (* 13: precondition for (union (r1',r2)) *)
- generalize (split_avl _ x2 A1).
- generalize (split_bst _ x2 B1 A1).
- rewrite <- Heq_anonymous; simpl.
- inv avl; inv bst; intuition.
-Qed.
-
-Next Obligation. (* Well_foundedness *)
-auto with arith.
-Defined.
-
-Next Obligation. (* 14: decreasing of (union (r1',r2)) *)
- assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
-   rewrite <- Heq_anonymous; auto.
- clear Heq_anonymous.
- assert (cardinal r1' <= cardinal (Node l1 x1 r1 h1))%nat.
-  subst r1'.
-  apply cardinal_subset; auto.
-  destruct (split_bst _ x2 B1 A1); auto.
-  intros y; rewrite (split_in_2 _ x2 y B1 A1); tauto.
- simpl (cardinal (Node l2 x2 r2 h2)).
- omega.
-Qed.
-
-Next Obligation. (* 12: decreasing of (union (l1',l2)) *)
- assert (l1' = (split x2 (Node l1 x1 r1 h1))#1).
-   rewrite <- Heq_anonymous; auto.
- clear Heq_anonymous.
- assert (cardinal l1' <= cardinal (Node l1 x1 r1 h1))%nat.
-  subst l1'.
-  apply cardinal_subset; auto.
-  destruct (split_bst _ x2 B1 A1); auto.
-  intros y; rewrite (split_in_1 _ x2 y B1 A1); tauto.
- simpl (cardinal (Node l2 x2 r2 h2)).
- omega.
 Qed.
 
 Next Obligation. (* 8: decreasing of (union (r1,r2')) *)
@@ -1984,20 +1940,6 @@ Next Obligation. (* 8: decreasing of (union (r1,r2')) *)
   simpl (cardinal (Node l1 x1 r1 h1)).
   omega.
 Qed.
-
-Next Obligation. (* 6: decreasing of (union (l1,l2')) *)
-  assert (l2' = (split x1 (Node l2 x2 r2 h2))#1).
-    rewrite <- Heq_anonymous; auto.
-  clear Heq_anonymous.
-  assert (cardinal l2' <= cardinal (Node l2 x2 r2 h2))%nat.
-    subst l2'.
-    apply cardinal_subset; auto.
-    destruct (split_bst _ x1 B2 A2); auto.
-    intros y; rewrite (split_in_1 _ x1 y B2 A2); tauto.
-  simpl (cardinal (Node l1 x1 r1 h1)).
- omega.
-Qed.
-
 
 Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2'))) *)
   do 2 destruct_call union. simpl in a, a0 |- *.
@@ -2025,6 +1967,59 @@ Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2
   rewrite H4; rewrite H7; clear H4 H7.
   rewrite (split_in_1 _ x1 y B2 A2); rewrite (split_in_2 _ x1 y B2 A2).
   case (X.compare y x1); intuition_in.
+Qed.
+
+Next Obligation. (* 10: postcondition about (add x1 s2) *)
+ split.
+ apply add_bst; auto.
+ split; auto.
+ intros.
+ rewrite add_in; auto.
+ inv avl; inv bst.
+ avl_nn l1; avl_nn r1.
+ rewrite (height_0 _ H5); [ | omega_max].
+ rewrite (height_0 _ H6); [ | omega_max].
+ intuition_in.
+Qed.
+
+Next Obligation. (* 11: precondition for (union (l1',l2)) *)
+ generalize (split_avl _ x2 A1).
+ generalize (split_bst _ x2 B1 A1).
+ rewrite <- Heq_anonymous; simpl.
+ inv avl; inv bst; intuition.
+Qed.
+
+Next Obligation. (* 12: decreasing of (union (l1',l2)) *)
+ assert (l1' = (split x2 (Node l1 x1 r1 h1))#1).
+   rewrite <- Heq_anonymous; auto.
+ clear Heq_anonymous.
+ assert (cardinal l1' <= cardinal (Node l1 x1 r1 h1))%nat.
+  subst l1'.
+  apply cardinal_subset; auto.
+  destruct (split_bst _ x2 B1 A1); auto.
+  intros y; rewrite (split_in_1 _ x2 y B1 A1); tauto.
+ simpl (cardinal (Node l2 x2 r2 h2)).
+ omega.
+Qed.
+
+Next Obligation. (* 13: precondition for (union (r1',r2)) *)
+ generalize (split_avl _ x2 A1).
+ generalize (split_bst _ x2 B1 A1).
+ rewrite <- Heq_anonymous; simpl.
+ inv avl; inv bst; intuition.
+Qed.
+
+Next Obligation. (* 14: decreasing of (union (r1',r2)) *)
+ assert (r1' = (split x2 (Node l1 x1 r1 h1))#2#2).
+   rewrite <- Heq_anonymous; auto.
+ clear Heq_anonymous.
+ assert (cardinal r1' <= cardinal (Node l1 x1 r1 h1))%nat.
+  subst r1'.
+  apply cardinal_subset; auto.
+  destruct (split_bst _ x2 B1 A1); auto.
+  intros y; rewrite (split_in_2 _ x2 y B1 A1); tauto.
+ simpl (cardinal (Node l2 x2 r2 h2)).
+ omega.
 Qed.
 
 Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
@@ -2055,6 +2050,10 @@ Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd 
  case (X.compare y r); intuition_in.
 Qed.
 
+Next Obligation. (* Well_foundedness *)
+auto with arith.
+Defined.
+
 (** * Subset *)
 
 Open Local Scope program_scope.
@@ -2083,7 +2082,7 @@ Program Fixpoint subset (s:t*t|bst s#1 /\ bst s#2)
       | GT _ => subset (Node Leaf x1 r1 0, r2) && subset (l1,s#2)
      end
  end.
-           
+
 Next Obligation. (* post Leaf,Leaf *)
  red; auto.
 Qed.
@@ -2100,61 +2099,12 @@ Next Obligation. (* pre subset (l1,l2) *)
  inv bst; auto.
 Qed.
 
-Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
- inv bst; auto.
-Qed.
-
-Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
- split; auto; inv bst; auto.
-Qed.
-
-Next Obligation. (* well-founded *)
-  auto with arith.
-Defined.
-
-Next Obligation. (* post GT + right + _ *)
- clear Heq_anonymous.
- unfold Subset in *; contradict H; intros.
- assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
- inv bst; intuition_in; order.
-Qed.
-
-Next Obligation. (* pre subset (l1,s2) *)
- split; auto; inv bst; auto.
-Qed.
-
-Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
+Next Obligation. (* decr subset (l1,l2) *)
  simpl; omega.
-Qed.
-
-Next Obligation. (* post LT + right + _ *)
- clear Heq_anonymous.
- unfold Subset in *; contradict H; intros. 
- assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
- inv bst; intuition_in; order.
 Qed.
 
 Next Obligation. (* pre subset (r1,r2) *)
  inv bst; auto.
-Qed.
-
-Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
- simpl; omega.
-Qed.
-
-Next Obligation. (* post EQ + right + _ *)
- clear Heq_anonymous.
- unfold Subset in *; contradict H; intros.
- assert (In a (Node l2 x2 r2 h2)) by auto.
- inv bst; intuition_in; order.
-Qed.
-
-Next Obligation. (* pre subset (r1,s2) *)
- split; auto; inv bst; auto.
-Qed.
-
-Next Obligation. (* decr subset (l1,l2) *)
- simpl; omega.
 Qed.
 
 Next Obligation. (* decr subset (r1,r2) *)
@@ -2174,6 +2124,25 @@ Next Obligation. (* post EQ + left + right *)
  inv bst; intuition_in; order.
 Qed.
 
+Next Obligation. (* post EQ + right + _ *)
+ clear Heq_anonymous.
+ unfold Subset in *; contradict H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by auto.
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node l1 x1 Leaf 0, l2) *)
+ inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node l1 x1 Leaf 0, l2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (r1,s2) *)
+ split; auto; inv bst; auto.
+Qed.
+
 Next Obligation. (* decr subset (r1,s2) *)
  simpl; omega.
 Qed.
@@ -2190,6 +2159,25 @@ Next Obligation. (* post LT + left + right *)
  inv bst; intuition_in; order.
 Qed.
 
+Next Obligation. (* post LT + right + _ *)
+ clear Heq_anonymous.
+ unfold Subset in *; contradict H; intros. 
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* pre subset (Node Leaf x1 r1 0, r2) *)
+ split; auto; inv bst; auto.
+Qed.
+
+Next Obligation. (* decr subset (Node Leaf x1 r1 0, r2) *)
+ simpl; omega.
+Qed.
+
+Next Obligation. (* pre subset (l1,s2) *)
+ split; auto; inv bst; auto.
+Qed.
+
 Next Obligation. (* decr subset (l1,s2) *)
  simpl; omega.
 Qed.
@@ -2203,6 +2191,17 @@ Next Obligation. (* post GT + left + right *)
  unfold Subset in *; contradict H0; intros.
  inv bst; intuition_in; order.
 Qed.
+
+Next Obligation. (* post GT + right + _ *)
+ clear Heq_anonymous.
+ unfold Subset in *; contradict H; intros.
+ assert (In a (Node l2 x2 r2 h2)) by (inv In; auto).
+ inv bst; intuition_in; order.
+Qed.
+
+Next Obligation. (* well-founded *)
+  auto with arith.
+Defined.
 
 
 (** * Comparison *)
@@ -2431,18 +2430,6 @@ Next Obligation. (* pre compare_aux (cons r1 e1, cons r2 e2) *)
   destruct (cons_1 r2 e2) as (H',_); auto.
 Qed.
 
-Next Obligation. (* post X.compare x1 x2 = LT *)
- simpl; auto.
-Qed.
-
-Next Obligation. (* post X.compare x1 x2 = GT *)
- simpl; auto.
-Qed.
-
-Next Obligation. (* well-founded *)
-  auto with arith.
-Defined.
-
 Next Obligation. (* decr compare_aux (cons r1 e1, cons r2 e2) *)
  inversion S1; inversion S2; subst.
  destruct (cons_1 r1 e1) as (_,(H,_)); auto.
@@ -2460,6 +2447,16 @@ Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = EQ *)
  apply l_eq_cons; auto.
 Qed.
 
+Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
+ clear Heq_anonymous0 Heq_anonymous compare_aux.
+ subst; simpl in *.
+ inversion S1; inversion S2; subst.
+ destruct (cons_1 r1 e1) as (_,(_,H)); auto.
+ destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
+ rewrite <- H; rewrite <- H0; simpl.
+ apply L.lt_cons_eq; auto.
+Qed.
+
 Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = GT *)
  clear Heq_anonymous0 Heq_anonymous compare_aux.
  subst; simpl in *.
@@ -2470,15 +2467,17 @@ Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = GT *)
  apply L.lt_cons_eq; auto.
 Qed.
 
-Next Obligation. (* post compare_aux (cons r1 e1, cons r2 e2) = LT *)
- clear Heq_anonymous0 Heq_anonymous compare_aux.
- subst; simpl in *.
- inversion S1; inversion S2; subst.
- destruct (cons_1 r1 e1) as (_,(_,H)); auto.
- destruct (cons_1 r2 e2) as (_,(_,H0)); auto.
- rewrite <- H; rewrite <- H0; simpl.
- apply L.lt_cons_eq; auto.
+Next Obligation. (* post X.compare x1 x2 = LT *)
+ simpl; auto.
 Qed.
+
+Next Obligation. (* post X.compare x1 x2 = GT *)
+ simpl; auto.
+Qed.
+
+Next Obligation. (* well-founded *)
+  auto with arith.
+Defined.
 
 Opaque compare_aux.
 
@@ -2495,6 +2494,13 @@ Next Obligation. (* pre compare_aux *)
  destruct (cons_1 s2 End); auto; try inversion 2.
 Qed.
 
+Next Obligation. (* post EQ *)
+ destruct (cons_1 s1 End) as (_,(_,H')); auto; try inversion 2.
+ destruct (cons_1 s2 End) as (_,(_,H0')); auto; try inversion 2.
+ simpl in *; rewrite <- app_nil_end in *.
+ apply L_eq_eq; rewrite <- H0'; rewrite <- H'; auto.
+Qed.
+
 Next Obligation. (* post LT *)
  destruct (cons_1 s1 End) as (_,(_,H')); auto; try inversion 2.
  destruct (cons_1 s2 End) as (_,(_,H0')); auto; try inversion 2.
@@ -2507,13 +2513,6 @@ Next Obligation. (* post GT *)
  destruct (cons_1 s2 End) as (_,(_,H0')); auto; try inversion 2.
  simpl in *; rewrite <- app_nil_end in *.
  red; intros; rewrite <- H0'; rewrite <- H'; auto.
-Qed.
-
-Next Obligation. (* post EQ *)
- destruct (cons_1 s1 End) as (_,(_,H')); auto; try inversion 2.
- destruct (cons_1 s2 End) as (_,(_,H0')); auto; try inversion 2.
- simpl in *; rewrite <- app_nil_end in *.
- apply L_eq_eq; rewrite <- H0'; rewrite <- H'; auto.
 Qed.
 
 Transparent compare_aux.
