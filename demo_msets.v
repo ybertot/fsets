@@ -148,8 +148,8 @@ Check (@R.elements_spec2 raw3 raw3_ok).
 Eval vm_compute in (@R.union raw1 raw2).
 
 
-Extraction M.
-
+(*TODO: assert failure
+  Extraction M. *)
 
 
 
