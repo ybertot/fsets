@@ -284,8 +284,6 @@ Next Obligation.
  rewrite <- (@MP.remove_cardinal_1 s x); auto with arith set.
 Qed.
 
-Next Obligation. auto with *. Defined.
-
 Program Fixpoint fold_tail_prog (s:t)(i:A)
  { measure (cardinal s) } : A := 
   match min_elt s with 
@@ -297,8 +295,6 @@ Next Obligation.
  symmetry in Heq_anonymous.
  rewrite <- (@MP.remove_cardinal_1 s x); auto with arith set.
 Qed.
-
-Next Obligation. auto with *. Defined.
 
 Lemma fold_direct_prog_1 : 
  forall s i, fold_direct_prog s i = fold f s i.
