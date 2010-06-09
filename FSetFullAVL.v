@@ -894,7 +894,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Definition compare (s s':t) : Compare lt eq s s'.
  Proof.
-  intros (s,b,a) (s',b',a').
+  destruct s as (s,b,a), s' as (s',b',a').
   generalize (compare_Cmp s s').
   destruct Raw.compare; intros; [apply EQ|apply LT|apply GT]; red; auto.
   change (Raw.Equal s s'); auto.
@@ -902,7 +902,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Definition ocaml_compare (s s':t) : Compare lt eq s s'.
  Proof.
-  intros (s,b,a) (s',b',a').
+  destruct s as (s,b,a), s' as (s',b',a').
   generalize (ocaml_compare_Cmp s s').
   destruct ocaml_compare; intros; [apply EQ|apply LT|apply GT]; red; auto.
   change (Raw.Equal s s'); auto.
@@ -910,7 +910,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Definition eq_dec (s s':t) : { eq s s' } + { ~ eq s s' }.
  Proof.
-  intros (s,b,a) (s',b',a'); unfold eq; simpl.
+  destruct s as (s,b,a), s' as (s',b',a'); unfold eq; simpl.
   case_eq (Raw.equal s s'); intro H; [left|right].
   apply equal_2; auto.
   intro H'; rewrite equal_1 in H; auto; discriminate.
