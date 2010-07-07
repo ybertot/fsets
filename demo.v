@@ -7,7 +7,7 @@ Set Implicit Arguments.
 
 (** For the purpose of the demo, let's show how basic things are defined, 
     without interfering with Coq's stdlib, thanks to the following module. *)
-Module THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
+Module LOCAL.
 
 (** * Ordered types *)
 
@@ -90,11 +90,11 @@ Module Z_as_OT <: OrderedType.
 End Z_as_OT.
 (* /excerpt *)
 
-Extraction Z_as_OT.
+(* Extraction Z_as_OT. Extraction under a module that dont work for the moment *)
 
-End THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
+End LOCAL.
 
-
+Extraction LOCAL.Z_as_OT.
 
 
 
