@@ -66,8 +66,8 @@ Module Z_as_OT <: OrderedType.
 
   Definition eq := @eq Z.
   Definition lt := Zlt.
-  Instance eq_equiv : Equivalence eq.
-  Instance lt_strorder : StrictOrder lt.
+  Instance eq_equiv : Equivalence eq := {}.
+  Instance lt_strorder : StrictOrder lt := {}.
   Instance lt_compat : Proper (eq==>eq==>iff) lt.
   Proof. intros x x' Hx y y' Hy; rewrite Hx, Hy; split; auto. Qed.
   Lemma compare_spec : forall x y, CompSpec eq lt x y (compare x y).
