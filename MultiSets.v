@@ -214,7 +214,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   destruct (M.find x s); destruct (M.find x s'); auto.
   unfold Nmin, Pmin, Nle.
   simpl.
-  destruct (Pcompare p0 p1 Eq); auto.
+  destruct (Pos.compare p0 p1); auto.
   Qed.
 
   (** Specification of [diff] *)

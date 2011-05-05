@@ -513,7 +513,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros Hl Hr Hh.
     set (hl := height l) in *.
     set (hr := height r) in *.
-    case (Z_gt_le_dec hl (hr + 2)); intro.
+    case (Z_gt_le_dec hl (hr + 2)); intro z.
     (* hl > hr + 2 *)
     destruct l as [| t0 t1 t2 z0].
     (* l = Leaf => absurd *)
@@ -522,7 +522,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     generalize (height_non_negative avl_r).
     unfold hl, hr in |- *; omega.
     (* l = Node t0 t1 t2 z0 *)
-    case (Z_ge_lt_dec (height t0) (height t2)); intro.
+    case (Z_ge_lt_dec (height t0) (height t2)); intro z1.
     (* height t0 >= height t2 *)
     case (create t2 x r); auto.
     inversion_clear bst_l; trivial. 
@@ -615,7 +615,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H10; intuition.
     inversion_clear H14; intuition.
     (* hl <= hr + 2 *)
-    case (Z_gt_le_dec hr (hl + 2)); intro.
+    case (Z_gt_le_dec hr (hl + 2)); intro z0.
     (* hr > hl + 2 *)
     destruct r as [| t0 t1 t2 z1].
     (* r = Leaf => absurd *)
@@ -623,7 +623,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     absurd (hr > hl + 2); trivial.
     AVL avl_l; unfold hl, hr in |- *; omega.
     (* r = Node t0 t1 t2 z0 *)
-    case (Z_ge_lt_dec (height t2) (height t0)); intro.
+    case (Z_ge_lt_dec (height t2) (height t0)); intro z2.
     (* height t2 >= height t0 *)
     case (create l x t0); auto.
     inversion_clear bst_r; trivial. 

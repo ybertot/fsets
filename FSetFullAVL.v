@@ -234,9 +234,9 @@ Proof.
 
  inversion_clear H0.
  assert (height (Node ll lx lr lh) = lh); auto.
- set (l := Node ll lx lr lh) in *; clearbody l.
+ set (l' := Node ll lx lr lh) in *; clearbody l'.
  destruct (Hrl H H1); clear Hrl Hlr.
- set (j := join l x rl) in *; clearbody j.
+ set (j := join l' x rl) in *; clearbody j.
  simpl.
  assert (-(3) <= height j - height rr <= 3) by omega_max.
  split.
@@ -246,9 +246,9 @@ Proof.
  clear Hrl Hlr.
  assert (height (Node ll lx lr lh) = lh); auto.
  assert (height (Node rl rx rr rh) = rh); auto.
- set (l := Node ll lx lr lh) in *; clearbody l.
+ set (l' := Node ll lx lr lh) in *; clearbody l'.
  set (r := Node rl rx rr rh) in *; clearbody r.
- assert (-(2) <= height l - height r <= 2) by omega_max.
+ assert (-(2) <= height l' - height r <= 2) by omega_max.
  split.
  apply create_avl; auto.
  rewrite create_height; auto; omega_max.
