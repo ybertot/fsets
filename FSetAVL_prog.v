@@ -2397,18 +2397,18 @@ Program Fixpoint compare_aux
  Compare L.lt L.eq (flatten_e e#1) (flatten_e e#2) 
  :=
  match e with 
- | (End,End) => EQ _ _
- | (End,More _ _ _) => LT _ _ 
- | (More _ _ _, End) => GT _ _ 
+ | (End,End) => EQ _
+ | (End,More _ _ _) => LT _ 
+ | (More _ _ _, End) => GT _ 
  | (More x1 r1 e1, More x2 r2 e2) => 
        match X.compare x1 x2 with 
         | EQ _ => match compare_aux (cons r1 e1, cons r2 e2) with 
-             | EQ _ => EQ _ _
-             | LT _ => LT _ _
-             | GT _ => GT _ _
+             | EQ _ => EQ _
+             | LT _ => LT _
+             | GT _ => GT _
              end
-        | LT _ => LT _ _ 
-        | GT _ => GT _ _ 
+        | LT _ => LT _ 
+        | GT _ => GT _ 
        end
  end.
 
@@ -2484,9 +2484,9 @@ Opaque compare_aux.
 Program Definition compare (s1:t|bst s1)(s2:t|bst s2) : 
  Compare lt eq s1 s2 := 
  match compare_aux (cons s1 End, cons s2 End) with 
-  | EQ _ => EQ _ _ 
-  | LT _ => LT _ _ 
-  | GT _ => GT _ _ 
+  | EQ _ => EQ _ 
+  | LT _ => LT _ 
+  | GT _ => GT _ 
  end.
 
 Next Obligation. (* pre compare_aux *)
@@ -2634,9 +2634,9 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Program Definition compare (s s':t) : Compare lt eq s s' := 
   match Raw.compare (s:Raw.t) (s':Raw.t) with 
-   | LT _ => LT _ _ 
-   | EQ _ => EQ _ _ 
-   | GT _ => GT _ _
+   | LT _ => LT _ 
+   | EQ _ => EQ _ 
+   | GT _ => GT _
   end.
 
  Next Obligation. destruct s; auto. Qed. 
