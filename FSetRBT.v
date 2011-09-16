@@ -1540,7 +1540,6 @@ Unset Implicit Arguments.
     generalize H0; pattern k at 1 in |- *; rewrite (Zsucc_pred k).
     rewrite two_p_S; auto with zarith.
     rewrite two_p_S; auto with zarith.
-    apply Zorder.Zlt_0_le_0_pred; auto.
   Qed.
 
   Definition of_list_aux :
