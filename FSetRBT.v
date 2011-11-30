@@ -66,7 +66,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     inversion 1; auto.
   Qed.
-  Hint Resolve In_color.
 
   (** * Binary search trees *)
 
@@ -153,8 +152,6 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     intros; red in |- *; intros; apply H; auto.
   Qed.
-
-  Hint Resolve (*lt_node_lt gt_node_gt*) lt_left lt_right gt_left gt_right.
 
   Lemma lt_tree_not_in :
    forall (x : elt) (t : tree), lt_tree x t -> ~ In_tree x t.
