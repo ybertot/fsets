@@ -104,7 +104,7 @@ Proof.
  avl_nns. simpl in *; exfalso; omega_max.
 Qed.
 
-(** * Results about [avl] *)
+(** Results about [avl] *)
 
 Lemma avl_node :
  forall x l r `{Avl l, Avl r},
@@ -114,6 +114,173 @@ Proof.
   auto_tc.
 Qed.
 Hint Resolve avl_node.
+
+(** * AVL trees have indeed logarithmic depth *)
+
+Module LogDepth.
+
+Local Open Scope nat_scope.
+
+(** The minimal cardinal of an AVL tree of a given height.
+    NB: this minimal cardinal is optimal, i.e. for any height,
+    we could build an AVL tree of this cardinal. *)
+
+Fixpoint mincard n :=
+ match n with
+ | O => O
+ | 1 => 1
+ | 2 => 2
+ | S (S (S n) as p) => S (mincard n + mincard p)
+ end.
+
+(** First, some basic properties of [mincard] *)
+
+Lemma mincard_eqn n :
+ mincard (S (S (S n))) = S (mincard n + mincard (2+n)).
+Proof.
+ reflexivity.
+Qed.
+
+Lemma mincard_incr n : mincard n < mincard (S n).
+Proof.
+ induction n using lt_wf_ind.
+ do 3 (destruct n; auto).
+ rewrite 2 mincard_eqn.
+ apply -> Nat.succ_lt_mono.
+ apply Nat.add_lt_mono; eauto.
+Qed.
+
+Lemma mincard_lt_mono n m : n < m -> mincard n < mincard m.
+Proof.
+ induction m; inversion_clear 1.
+ - apply mincard_incr.
+ - transitivity (mincard m); auto using mincard_incr.
+Qed.
+
+Lemma mincard_le_mono n m : n <= m -> mincard n <= mincard m.
+Proof.
+ induction 1; auto.
+ transitivity (mincard m); auto using mincard_incr with arith.
+Qed.
+
+Lemma mincard_bound n m : m <= 2+n ->
+ mincard (S m) <= S (mincard n + mincard m).
+Proof.
+ intros H.
+ destruct m as [|[|m]].
+ - simpl. auto with arith.
+ - simpl. auto with arith.
+ - rewrite mincard_eqn.
+   apply -> Nat.succ_le_mono.
+   apply Nat.add_le_mono; eauto.
+   apply mincard_le_mono; omega.
+Qed.
+
+(** [mincard] has an exponential behavior *)
+
+Lemma mincard_twice n : 2 * mincard n < mincard (2+n).
+Proof.
+ induction n as [n IH] using lt_wf_ind.
+ do 3 (destruct n; [simpl; auto with arith|]).
+ change (2 + S (S (S n))) with (S (S (S (2+n)))).
+ rewrite 2 mincard_eqn.
+ generalize (IH n) (IH (2+n)). omega.
+Qed.
+
+Lemma mincard_even n : n<>0 -> 2^n <= mincard (2*n).
+Proof.
+ induction n.
+ - now destruct 1.
+ - intros _.
+   destruct (Nat.eq_dec n 0).
+   * subst; simpl; auto.
+   * rewrite Nat.pow_succ_r', Nat.mul_succ_r, Nat.add_comm.
+     transitivity (2 * mincard (2*n)).
+     + apply Nat.mul_le_mono_l; auto.
+     + apply Nat.lt_le_incl. apply mincard_twice.
+Qed.
+
+Lemma mincard_odd n : 2^n <= mincard (2*n+1).
+Proof.
+ destruct (Nat.eq_dec n 0).
+ - subst; auto.
+ - transitivity (mincard (2*n)).
+   * now apply mincard_even.
+   * apply mincard_le_mono. omega.
+Qed.
+
+Lemma mincard_log n : n <= 2 * log2 (mincard n) + 1.
+Proof.
+ rewrite (Nat.div2_odd n).
+ set (m := Div2.div2 n); clearbody m.
+ destruct (odd n); simpl Nat.b2n; rewrite ?Nat.add_0_r; clear n.
+ + apply Nat.add_le_mono_r, Nat.mul_le_mono_l.
+   apply Nat.log2_le_pow2.
+   apply (mincard_lt_mono 0); auto with arith.
+   apply mincard_odd.
+ + destruct (Nat.eq_dec m 0); [subst; simpl; auto|].
+   transitivity (2*log2 (mincard (2*m))); [|omega].
+   apply Nat.mul_le_mono_l.
+   apply Nat.log2_le_pow2.
+   apply (mincard_lt_mono 0); omega.
+   now apply mincard_even.
+Qed.
+
+(** We now prove that [mincard] gives indeed a lower bound
+    of the cardinal of AVL trees. *)
+
+Lemma maxdepth_heigth s : Avl s ->
+ Z.of_nat (maxdepth s) = i2z (height s).
+Proof.
+ induction 1.
+ simpl. omega_max.
+ simpl maxdepth. simpl height. subst h.
+ rewrite Nat2Z.inj_succ, Nat2Z.inj_max. omega_max.
+Qed.
+
+Lemma mincard_maxdepth s :
+ Avl s -> mincard (maxdepth s) <= cardinal s.
+Proof.
+ induction 1.
+ - simpl; auto.
+ - simpl maxdepth. simpl cardinal. subst h.
+   destruct (Nat.max_spec (maxdepth l) (maxdepth r)) as [(U,->)|(U,->)].
+   * rewrite mincard_bound.
+     apply -> Nat.succ_le_mono.
+     apply Nat.add_le_mono; eauto.
+     apply Nat2Z.inj_le. rewrite Nat2Z.inj_add.
+     rewrite 2 maxdepth_heigth by auto. simpl Z.of_nat.
+     i2z. omega.
+   * rewrite Nat.add_comm, mincard_bound.
+     apply -> Nat.succ_le_mono.
+     apply Nat.add_le_mono; eauto.
+     apply Nat2Z.inj_le. rewrite Nat2Z.inj_add.
+     rewrite 2 maxdepth_heigth by auto. simpl Z.of_nat.
+     i2z. omega.
+Qed.
+
+(** We can now prove that the depth of an AVL tree is
+    logarithmic in its size. *)
+
+Lemma maxdepth_upperbound s : Avl s ->
+ maxdepth s <= 2 * log2 (cardinal s) + 1.
+Proof.
+ intros.
+ transitivity (2 * log2 (mincard (maxdepth s)) + 1).
+ apply mincard_log.
+ apply Nat.add_le_mono_r, Nat.mul_le_mono_l, Nat.log2_le_mono.
+ now apply mincard_maxdepth.
+Qed.
+
+Lemma maxdepth_lowerbound s : s<>Leaf ->
+ log2 (cardinal s) < maxdepth s.
+Proof.
+ apply maxdepth_log_cardinal.
+Qed.
+
+End LogDepth.
+
+(** * The AVL invariant is preserved by set operations *)
 
 (** empty *)
 
