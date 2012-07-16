@@ -25,6 +25,7 @@ Require Import ZArith.
 Open Scope Z_scope.
 
 Set Firstorder Depth 3.
+Set Asymmetric Patterns.
 
 Module Make (X: OrderedType) : Sdep with Module E := X.
 

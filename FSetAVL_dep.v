@@ -23,6 +23,7 @@ Require Import FSetList0.
 Require Import ZArith.
 Open Scope Z_scope.
 
+Global Set Asymmetric Patterns.
 Set Firstorder Depth 3.
 
 Module Make (X: OrderedType) : Sdep with Module E := X.

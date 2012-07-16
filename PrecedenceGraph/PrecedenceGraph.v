@@ -22,6 +22,7 @@ Require Import Omega.
 Require Import ArithRing.
 Open Scope nat_scope.
 
+Set Asymmetric Patterns.
 Set Implicit Arguments.
 
 (** We choose natural numbers to label the nodes. 
