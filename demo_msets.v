@@ -297,28 +297,28 @@ Check F.equal.
 *)
 
 Print R.tree.
-Eval compute in Int.Z_as_Int.int.
+Eval compute in Int.Z_as_Int.t.
 
 
 (*excerpt from Int.v*)
 Module Type Int.
 
- Parameter int : Set. 
+ Parameter t : Set.
 
- Parameter i2z : int -> Z.
+ Parameter i2z : t -> Z.
 
- Parameter _0 : int. 
- Parameter _1 : int. 
- Parameter plus : int -> int -> int. 
- Parameter opp : int -> int.
- Parameter minus : int -> int -> int. 
- Parameter mult : int -> int -> int.
- Parameter max : int -> int -> int. 
+ Parameter _0 : t.
+ Parameter _1 : t.
+ Parameter plus : t -> t -> t.
+ Parameter opp : t -> t.
+ Parameter minus : t -> t -> t.
+ Parameter mult : t -> t -> t.
+ Parameter max : t -> t -> t.
 
 (* Concerning logical relations, there is no need for additional 
    parameters: we take directly advantage of the [Z] ones, via 
    [i2z]. This simplifies the writing of translation tactics from  
-   [int] to [Z].  *)
+   [t] to [Z].  *)
 
  Notation "x == y" := (i2z x = i2z y)
    (at level 70, y at next level, no associativity) : Int_scope.
@@ -330,12 +330,12 @@ Module Type Int.
  (* We also need some decidability facts. *) 
 
  Open Scope Int_scope.
- Parameter gt_le_dec : forall x y: int, {x > y} + {x <= y}.
- Parameter ge_lt_dec :  forall x y : int, {x >= y} + {x < y}.
- Parameter eq_dec : forall x y : int, { x == y } + {~ x==y }.
+ Parameter gt_le_dec : forall x y: t, {x > y} + {x <= y}.
+ Parameter ge_lt_dec :  forall x y : t, {x >= y} + {x < y}.
+ Parameter eq_dec : forall x y : t, { x == y } + {~ x==y }.
  Open Scope Z_scope.
 
- (* Specification of [int] parameters. *)
+ (* Specification of previous parameters. *)
 
  (* First, [i2z] is an injection. *)
 
@@ -351,7 +351,7 @@ Module Type Int.
  Axiom i2z_mult : forall n p, i2z (mult n p) = i2z n * i2z p.
  Axiom i2z_max : forall n p, i2z (max n p) = Zmax (i2z n) (i2z p).
 
-End Int. 
+End Int.
 (*/excerpt*)
 
 

@@ -31,6 +31,7 @@ Import I.
 Module II:=MoreInt(I).
 Import II.
 Open Scope Int_scope.
+Local Notation int := I.t.
 
 Ltac omega_max := i2z_refl; romega with Z.
 
@@ -1083,7 +1084,7 @@ Proof.
  destruct s1;try contradiction;clear y;intuition.
  inversion_clear H5.
  destruct s1;try contradiction;clear y; intros. 
- rewrite (join_in  (Node s1_1 t s1_2 i) m s2' y H0).
+ rewrite (join_in _ m s2' y H0).
  generalize (remove_min_in l2 x2 r2 h2 y H2); rewrite e1; simpl.
  intro EQ; rewrite EQ; intuition.
  generalize (remove_min_avl l2 x2 r2 h2 H2); rewrite e1; simpl; auto.
