@@ -52,6 +52,7 @@ Module Raw (Import I:Int)(X:OrderedType).
 Open Local Scope pair_scope.
 Open Local Scope lazy_bool_scope.
 Open Local Scope Int_scope.
+Local Notation int := I.t.
 
 Definition elt := X.t.
 
