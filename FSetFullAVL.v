@@ -511,7 +511,7 @@ Qed.
 Definition cardinal2 (s:t*t) := (cardinal s#1 + cardinal s#2)%nat.
 
 Ltac ocaml_union_tac :=
- intros; unfold cardinal2; simpl fst in *; simpl snd in *;
+ intros; unfold cardinal2; simpl @fst in *; simpl @snd in *;
  match goal with H: split ?x ?s = _ |- _ =>
   generalize (split_cardinal_1 x s) (split_cardinal_2 x s);
   rewrite H; simpl; romega with *
@@ -544,7 +544,7 @@ Lemma ocaml_union_in : forall s y,
  (In y (ocaml_union s) <-> In y s#1 \/ In y s#2).
 Proof.
  intros s; functional induction ocaml_union s; intros y B1 A1 B2 A2;
-  simpl fst in *; simpl snd in *; try clear e0 e1.
+  simpl @fst in *; simpl @snd in *; try clear e0 e1.
  intuition_in.
  intuition_in.
  intuition_in.
@@ -582,7 +582,7 @@ Lemma ocaml_union_bst : forall s,
  bst s#1 -> avl s#1 -> bst s#2 -> avl s#2 -> bst (ocaml_union s).
 Proof.
  intros s; functional induction ocaml_union s; intros B1 A1 B2 A2;
-  simpl fst in *; simpl snd in *; try clear e0 e1;
+  simpl @fst in *; simpl @snd in *; try clear e0 e1;
   try apply add_bst; auto.
  (* join (union (l1,l2')) x1 (union (r1,r2')) *)
  clear _x _x0; factornode l2 x2 r2 h2 as s2.
@@ -610,7 +610,7 @@ Lemma ocaml_union_avl : forall s,
  avl s#1 -> avl s#2 -> avl (ocaml_union s).
 Proof.
  intros s; functional induction ocaml_union s;
-  simpl fst in *; simpl snd in *; auto.
+  simpl @fst in *; simpl @snd in *; auto.
  intros A1 A2; generalize (split_avl x1 A2); rewrite e2; simpl.
  inv avl; destruct 1; auto.
  intros A1 A2; generalize (split_avl x2 A1); rewrite e2; simpl.

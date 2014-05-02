@@ -662,7 +662,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Instance lt_strorder : StrictOrder lt.
  Proof. constructor ; unfold lt; red.
-   unfold complement. red. intros. apply (irreflexivity H).
+   unfold complement. red. intros. apply (irreflexivity _ H).
    intros. transitivity y; auto.
  Qed.
 
@@ -876,10 +876,10 @@ Lemma ocaml_union_in : forall s y,
  (InT y (ocaml_union s) <-> InT y s#1 \/ InT y s#2).
 Proof.
  intros s; functional induction ocaml_union s; intros y B1 A1 B2 A2;
-  simpl fst in *; simpl snd in *; try clear e0 e1.
+  simpl (@fst) in *; simpl (@snd) in *; try clear e0 e1.
  - intuition_in.
- - intuition_in.
- - intuition_in.
+ - intuition_in. 
+ - intuition_in. 
  - (* add x2 s#1 *)
    inv_avl.
    rewrite (height_0 l2) by (avl_nn' l2; omega_max).
@@ -916,7 +916,7 @@ Lemma ocaml_union_bst : forall s,
  Ok s#1 -> Avl s#1 -> Ok s#2 -> Avl s#2 -> Ok (ocaml_union s).
 Proof.
  intros s; functional induction ocaml_union s; intros B1 A1 B2 A2;
-  simpl fst in *; simpl snd in *; try clear e0 e1;
+  simpl @fst in *; simpl @snd in *; try clear e0 e1;
   try apply add_ok; auto.
  - (* join (union (l1,l2')) x1 (union (r1,r2')) *)
  clear _x _x0; factornode s2.
@@ -944,7 +944,7 @@ Lemma ocaml_union_avl : forall s,
  Avl s#1 -> Avl s#2 -> Avl (ocaml_union s).
 Proof.
  intros s; functional induction ocaml_union s;
-  simpl fst in *; simpl snd in *; auto_tc.
+  simpl @fst in *; simpl @snd in *; auto_tc.
  intros A1 A2; generalize (@split_avl _ x1 A2); rewrite e2; simpl.
  inv_avl; destruct 1; auto_tc.
  intros A1 A2; generalize (@split_avl _ x2 A1); rewrite e2; simpl.
