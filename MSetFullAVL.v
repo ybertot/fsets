@@ -662,7 +662,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Instance lt_strorder : StrictOrder lt.
  Proof. constructor ; unfold lt; red.
-   unfold complement. red. intros. apply (irreflexivity _ H).
+   unfold complement. red. intros. apply (irreflexivity H).
    intros. transitivity y; auto.
  Qed.
 
