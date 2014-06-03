@@ -26,6 +26,7 @@ Open Scope Z_scope.
 
 Set Firstorder Depth 3.
 Set Asymmetric Patterns.
+Unset Standard Proposition Elimination Names.
 
 Module Make (X: OrderedType) : Sdep with Module E := X.
 

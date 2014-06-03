@@ -1,6 +1,7 @@
 Require Import FSets MapFunction.
 Require Import Arith EqNat Euclid ArithRing ZArith.
 Set Implicit Arguments.
+Unset Standard Proposition Elimination Names.
 
 (** First, let's define powers of 2 and binomial function 
     for later expressing the cardinal of powersets. *)

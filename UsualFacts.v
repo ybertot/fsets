@@ -3,6 +3,7 @@ Require Import OrderedTypeEx FSetFacts FSetProperties.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Standard Proposition Elimination Names.
 
 Module UsualFacts (E:UsualOrderedType)(M:S with Module E:=E).
 Module ME := OrderedTypeFacts E.  

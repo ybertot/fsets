@@ -10,6 +10,7 @@ Require Import FSets FMaps Arith Min Compare_dec NArith Nnat Pnat Ndec.
 Import Morphisms.
 
 Set Implicit Arguments.
+Unset Standard Proposition Elimination Names.
 Open Scope N_scope.
 
 Module Type S.

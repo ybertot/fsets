@@ -16,6 +16,7 @@
 Require Export FSetInterface.
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Standard Proposition Elimination Names.
 
 (** * Functions over lists
 

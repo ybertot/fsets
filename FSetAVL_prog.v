@@ -25,6 +25,7 @@ Require Import Int.
 Require Import ROmega.
 
 Set Firstorder Depth 3.
+Unset Standard Proposition Elimination Names.
 
 Module Raw (I:Int)(X:OrderedType).
 Import I.
