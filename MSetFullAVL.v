@@ -209,17 +209,17 @@ Proof.
    * apply mincard_le_mono. omega.
 Qed.
 
-Lemma mincard_log n : n <= 2 * log2 (mincard n) + 1.
+Lemma mincard_log n : n <= 2 * Nat.log2 (mincard n) + 1.
 Proof.
  rewrite (Nat.div2_odd n).
- set (m := Div2.div2 n); clearbody m.
- destruct (odd n); simpl Nat.b2n; rewrite ?Nat.add_0_r; clear n.
+ set (m := Nat.div2 n); clearbody m.
+ destruct (Nat.odd n); simpl Nat.b2n; rewrite ?Nat.add_0_r; clear n.
  + apply Nat.add_le_mono_r, Nat.mul_le_mono_l.
    apply Nat.log2_le_pow2.
    apply (mincard_lt_mono 0); auto with arith.
    apply mincard_odd.
  + destruct (Nat.eq_dec m 0); [subst; simpl; auto|].
-   transitivity (2*log2 (mincard (2*m))); [|omega].
+   transitivity (2*Nat.log2 (mincard (2*m))); [|omega].
    apply Nat.mul_le_mono_l.
    apply Nat.log2_le_pow2.
    apply (mincard_lt_mono 0); omega.
@@ -263,17 +263,17 @@ Qed.
     logarithmic in its size. *)
 
 Lemma maxdepth_upperbound s : Avl s ->
- maxdepth s <= 2 * log2 (cardinal s) + 1.
+ maxdepth s <= 2 * Nat.log2 (cardinal s) + 1.
 Proof.
  intros.
- transitivity (2 * log2 (mincard (maxdepth s)) + 1).
+ transitivity (2 * Nat.log2 (mincard (maxdepth s)) + 1).
  apply mincard_log.
  apply Nat.add_le_mono_r, Nat.mul_le_mono_l, Nat.log2_le_mono.
  now apply mincard_maxdepth.
 Qed.
 
 Lemma maxdepth_lowerbound s : s<>Leaf ->
- log2 (cardinal s) < maxdepth s.
+ Nat.log2 (cardinal s) < maxdepth s.
 Proof.
  apply maxdepth_log_cardinal.
 Qed.
