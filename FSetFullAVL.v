@@ -481,7 +481,7 @@ Proof.
   romega with *.
  generalize (bal_cardinal ll lx (join lr x (Node rl rx rr rh)))
   (Hlr x (Node rl rx rr rh)); simpl; romega with *.
- simpl S in *; generalize (bal_cardinal (join (Node ll lx lr lh) x rl) rx rr).
+ simpl (S _) in *; generalize (bal_cardinal (join (Node ll lx lr lh) x rl) rx rr).
  romega with *.
 Qed.
 
