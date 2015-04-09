@@ -63,6 +63,12 @@ Local Hint Constructors avl.
 Ltac clearf :=
  match goal with
   | H : (@Logic.eq (sumbool _ _) _ _) |- _ => clear H; clearf
+  | H : (_ =? _) = true |- _ => rewrite II.eqb_eq in H; clearf
+  | H : (_ <? _) = true |- _ => rewrite II.ltb_lt in H; clearf
+  | H : (_ <=? _) = true |- _ => rewrite II.leb_le in H; clearf
+  | H : (_ =? _) = false |- _ => rewrite II.eqb_neq in H; clearf
+  | H : (_ <? _) = false |- _ => rewrite II.ltb_nlt in H; clearf
+  | H : (_ <=? _) = false |- _ => rewrite II.leb_nle in H; clearf
   | _ => idtac
  end.
 
@@ -391,7 +397,7 @@ Lemma join_avl_1 : forall l x r `{Avl l, Avl r},
  Avl (join l x r) /\
  0<= height (join l x r) - max (height l) (height r) <= 1.
 Proof.
- join_tac.
+ join_tac; clearf.
 
  - simpl. destruct (add_avl_1 r x). split; trivial.
    avl_nns; omega_max.
@@ -803,7 +809,7 @@ Qed.
 Lemma join_cardinal : forall l x r,
  cardinal (join l x r) <= S (cardinal l + cardinal r).
 Proof.
- join_tac; auto with arith.
+ join_tac; clearf; auto with arith.
  - simpl; apply add_cardinal.
  - simpl; destruct X.compare; simpl.
    * auto with arith.
