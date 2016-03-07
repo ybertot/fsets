@@ -559,7 +559,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* t2 = Leaf => absurd *)
     simpl in z1.
     absurd (height t0 < 0); trivial.
-    inversion_clear avl_l; AVL ipattern:H; omega.
+    inversion_clear avl_l; AVL ipattern:(H); omega.
     (* t2 = Node t2 t3 t4 z2 *)
     case (create t4 x r); auto.
     inversion_clear bst_l; inversion_clear H0; auto.
@@ -657,7 +657,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* t0 = Leaf => absurd *)
     simpl in z2.
     absurd (height t2 < 0); trivial.
-    inversion_clear avl_r; AVL ipattern:H0; omega.
+    inversion_clear avl_r; AVL ipattern:(H0); omega.
     (* t0 = Node t0 t3 t4 z2 *)
     case (create l x t0); auto.
     inversion_clear bst_r; inversion_clear H; auto.
@@ -922,7 +922,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     exists (t2, t1); intuition.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
-    AVL H2; simpl in H; inversion_clear H2; AVL ipattern:H5; intuition; omega.
+    AVL H2; simpl in H; inversion_clear H2; AVL ipattern:(H5); intuition; omega.
     inversion_clear H1; apply H6; auto.
     inversion_clear H; auto; inversion_clear H0.
     (* t0 = Node t0 t3 t4 *)
@@ -979,7 +979,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     exists (t0, t1); intuition.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
-    AVL H2; simpl in H; inversion_clear H2; AVL ipattern:H4; intuition; omega.
+    AVL H2; simpl in H; inversion_clear H2; AVL ipattern:(H4); intuition; omega.
     inversion_clear H1; apply H5; auto.
     inversion_clear H; auto; inversion_clear H0.
     (* t2 = Node t2 t3 t4 *)
@@ -1929,10 +1929,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     generalize (s'_y x0); clear s'_y; intuition.
     inversion_clear H5; intuition.
     assert (height t3 = 0).
-    inversion s2_avl0; AVL s2_avl0; AVL ipattern:H9; AVL ipattern:H10; omega.
+    inversion s2_avl0; AVL s2_avl0; AVL ipattern:(H9); AVL ipattern:(H10); omega.
     inversion_clear s2_avl0; elim (height_0 H6 H5 H3).
     assert (height t5 = 0).
-    inversion s2_avl0; AVL s2_avl0; AVL ipattern:H9; AVL ipattern:H10; omega.
+    inversion s2_avl0; AVL s2_avl0; AVL ipattern:(H9); AVL ipattern:(H10); omega.
     inversion_clear s2_avl0; elim (height_0 H7 H5 H3).
     (* z0 <> 1 *)
     intros.
@@ -1972,10 +1972,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     generalize (s'_y x0); clear s'_y; intuition.
     inversion_clear H6; intuition.
     assert (height t0 = 0).
-    inversion s1_avl0; AVL s1_avl0; AVL ipattern:H10; AVL ipattern:H11; omega.
+    inversion s1_avl0; AVL s1_avl0; AVL ipattern:(H10); AVL ipattern:(H11); omega.
     inversion_clear s1_avl0; elim (height_0 H7 H6 H4).
     assert (height t2 = 0).
-    inversion s1_avl0; AVL s1_avl0; AVL ipattern:H10; AVL ipattern:H11; omega.
+    inversion s1_avl0; AVL s1_avl0; AVL ipattern:(H10); AVL ipattern:(H11); omega.
     inversion_clear s1_avl0; elim (height_0 H8 H6 H4).
     (* z <> 1 *)
     intros.
