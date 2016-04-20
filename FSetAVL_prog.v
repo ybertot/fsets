@@ -570,6 +570,7 @@ Fixpoint join (l:t) : elt -> t -> t :=
   end.
 
 Ltac join_tac := 
+ let l := fresh "l" in
  intro l; induction l as [| ll _ lx lr Hlr lh]; 
    [ | intros x r; induction r as [| rl Hrl rx rr _ rh]; unfold join;
      [ | destruct (gt_le_dec lh (rh+2)); 
