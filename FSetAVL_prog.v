@@ -25,6 +25,10 @@ Require Import Int.
 Require Import ROmega.
 
 Set Firstorder Depth 3.
+
+Set Firstorder Solver auto.
+Ltac intuition ::= intuition auto.
+
 Unset Standard Proposition Elimination Names.
 
 Module Raw (I:Int)(X:OrderedType).
@@ -1793,7 +1797,7 @@ Proof.
  absurd (InA X.eq t nil); intuition.
  inversion_clear H2.
  inversion_clear H1.
- destruct l0; simpl in |- *; intuition.
+ destruct l0; simpl in |- *; intuition auto with arith.
  inversion_clear H0.
  apply le_n_S.
  case (X.compare t a); intro.
@@ -2695,7 +2699,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Lemma add_3 : ~ E.eq x y -> In y (add x s) -> In y s. 
  Proof. 
- unfold add, In; simpl; rewrite Raw.add_in; intuition.
+ unfold add, In; simpl; rewrite Raw.add_in; intuition auto with exfalso sets.
  Qed.
 
  Lemma remove_1 : E.eq x y -> ~ In y (remove x s).
