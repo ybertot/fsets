@@ -612,6 +612,8 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
 
  Existing Instance is_bst.
  Existing Instance is_avl.
+ Existing Class bst.
+ Existing Class avl.
 
  (** Functions *)
 
