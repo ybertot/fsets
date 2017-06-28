@@ -662,7 +662,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Proof.
   intros (s,Bs,As) (s',Bs',As').
   change ({Raw.Equal s s'}+{~Raw.Equal s s'}).
-  destruct (Raw.equal s s') as [ ]_eqn:H; [left|right];
+  destruct (Raw.equal s s') as [ ] eqn:H; [left|right];
    rewrite <- equal_spec; congruence.
  Defined.
 
