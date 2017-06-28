@@ -34,6 +34,7 @@
 *)
 
 Require Import FSetInterface FSetList0 ZArith Int.
+Require Import FunInd.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

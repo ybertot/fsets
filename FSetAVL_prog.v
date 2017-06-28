@@ -23,6 +23,7 @@ Require Import FSetList0.
 Require Import ZArith.
 Require Import Int.
 Require Import ROmega.
+Require Import FunInd.
 
 Set Firstorder Depth 3.
 

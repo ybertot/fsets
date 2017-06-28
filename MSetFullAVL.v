@@ -23,6 +23,7 @@
 *)
 
 Require Import ZArith Int ROmega MSetInterface MSetAVL NPeano.
+Require Import FunInd.
 
 Module AvlProofs (Import I:Int)(X:OrderedType).
 Include MSetAVL.MakeRaw I X.
