@@ -32,8 +32,8 @@ Module AvlProofs (Import I:Int)(X:OrderedType).
 Module Import Raw := Raw I X.
 Import Raw.Proofs.
 Module Import II := MoreInt I.
-Open Local Scope pair_scope.
-Open Local Scope Int_scope.
+Local Open Scope pair_scope.
+Local Open Scope Int_scope.
 
 Ltac omega_max := i2z_refl; romega with Z.
 
@@ -450,8 +450,8 @@ Module Import AvlProofs := AvlProofs I X.
 Import Raw.
 Import Raw.Proofs.
 Import II.
-Open Local Scope pair_scope.
-Open Local Scope nat_scope.
+Local Open Scope pair_scope.
+Local Open Scope nat_scope.
 
 (** Properties of cardinal *)
 

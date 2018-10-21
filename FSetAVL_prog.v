@@ -2062,7 +2062,7 @@ Defined.
 
 (** * Subset *)
 
-Open Local Scope program_scope.
+Local Open Scope program_scope.
 
 Notation "a && b" := 
  (if a then if b then in_left else in_right else in_right).
