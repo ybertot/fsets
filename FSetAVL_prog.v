@@ -30,8 +30,6 @@ Set Firstorder Depth 3.
 Set Firstorder Solver auto.
 Ltac intuition ::= intuition auto.
 
-Unset Standard Proposition Elimination Names.
-
 Module Raw (I:Int)(X:OrderedType).
 Import I.
 Module II:=MoreInt(I).
