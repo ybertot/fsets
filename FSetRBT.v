@@ -26,7 +26,6 @@ Open Scope Z_scope.
 
 Set Firstorder Depth 3.
 Set Asymmetric Patterns.
-Unset Standard Proposition Elimination Names.
 
 Module Make (X: OrderedType) : Sdep with Module E := X.
 
@@ -207,7 +206,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros x l r c H; inversion H; auto.
   Qed.
 
-  Implicit Arguments bst_left. Implicit Arguments bst_right.
+  Arguments bst_left : default implicits. Arguments bst_right : default implicits.
   Hint Resolve bst_left bst_right.
 
   Lemma bst_color :
@@ -297,7 +296,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros x l r c (n, Hn); inversion_clear Hn; intuition eauto.
   Qed.
 
-  Implicit Arguments rbtree_left. Implicit Arguments rbtree_right.
+  Arguments rbtree_left : default implicits. Arguments rbtree_right : default implicits.
   Hint Resolve rbtree_left rbtree_right.
 
   (** * Sets as red-black trees *)
@@ -1527,11 +1526,11 @@ Unset Implicit Arguments.
   Lemma power_invariant :
    forall n k : Z,
    0 < k ->
-   two_p k <= n + 1 <= two_p (Zsucc k) ->
+   two_p k <= n + 1 <= two_p (Z.succ k) ->
    let (nn, _) := Zeven.Zsplit2 (n - 1) in
    let (n1, n2) := nn in
-   two_p (Zpred k) <= n1 + 1 <= two_p k /\
-   two_p (Zpred k) <= n2 + 1 <= two_p k.
+   two_p (Z.pred k) <= n1 + 1 <= two_p k /\
+   two_p (Z.pred k) <= n2 + 1 <= two_p k.
   Proof.
     intros.
     case (Zeven.Zsplit2 (n - 1)).
@@ -1545,7 +1544,7 @@ Unset Implicit Arguments.
     forall k : Z,
     0 <= k ->
     forall n : Z,
-    two_p k <= n + 1 <= two_p (Zsucc k) ->
+    two_p k <= n + 1 <= two_p (Z.succ k) ->
     forall l : list elt,
     sort E.lt l ->
     n <= Zlength l ->
@@ -1553,7 +1552,7 @@ Unset Implicit Arguments.
     let (r, l') := rl' in of_list_aux_Invariant k n l l' r}.
   Proof.
   intros k Hk; pattern k in |- *; apply natlike_rec3; try assumption.
-  intro n; case (Z_eq_dec 0 n).
+  intro n; case (Z.eq_dec 0 n).
   (* k=0 n=0 *)
   intros Hn1 Hn2 l Hl1 Hl2; exists (Leaf, l); intuition. 
   apply make_olai; intuition.
@@ -1566,7 +1565,7 @@ Unset Implicit Arguments.
   rewrite H.
   intro l; case l.
    (* l = nil, absurd case. *)
-   intros Hl1 Hl2; unfold Zlength, Zlt in Hl2; elim Hl2; trivial.
+   intros Hl1 Hl2; unfold Zlength, Z.lt in Hl2; elim Hl2; trivial.
    (* l = x::l' *)
    intros x l' Hl1 Hl2; exists (Node red Leaf x Leaf, l'); intuition.
    apply make_olai; intuition.
@@ -1585,7 +1584,7 @@ Unset Implicit Arguments.
   generalize (power_invariant n k Hk).
   elim (Zeven.Zsplit2 (n - 1)); intros (n1, n2) (A, B) C.  
   elim (C Hn); clear C; intros Hn1 Hn2.
-  (* First recursive call : (of_list_aux (Zpred k) n1 l) gives (lft,l') *)
+  (* First recursive call : (of_list_aux (Z.pred k) n1 l) gives (lft,l') *)
   elim (Hrec n1 Hn1 l Hl1). 
   intro p; case p; clear p; intros lft l'; case l'.
    (* l' = nil, absurd case. *)
@@ -1595,15 +1594,15 @@ Unset Implicit Arguments.
    assert (n1 = Zlength l). omega. clear X.
    rewrite <- H in Hl2.
    assert (n <= n2).
-     apply Zle_trans with n1; auto; inversion H; omega.
+     apply Z.le_trans with n1; auto; inversion H; omega.
    assert (0 < n + 1).
-    apply Zlt_le_trans with (two_p k).
+    apply Z.lt_le_trans with (two_p k).
     generalize (two_p_gt_ZERO k); omega.
     inversion_clear Hn; trivial.
    omega. 
    (* l' = x :: l'' *)
    intros x l'' o1.
-   (* Second recursive call : (of_list_aux (Zpred k) n2 l'') gives (rht,l''') *)
+   (* Second recursive call : (of_list_aux (Z.pred k) n2 l'') gives (rht,l''') *)
    elim (Hrec n2 Hn2 l''); clear Hrec.
    intro p; case p; clear p; intros rht l''' o2.
    exists (Node black lft x rht, l''').   
@@ -1637,7 +1636,7 @@ Unset Implicit Arguments.
    rewrite (olai_length o2).
    rewrite (Zpred_succ (Zlength l'')).
    rewrite <- (Zlength_cons x l'').
-   rewrite (olai_length o1); unfold Zpred in |- *; omega.
+   rewrite (olai_length o1); unfold Z.pred in |- *; omega.
    (* inv5 : same *)
    intro y; generalize (olai_same o1 y); generalize (olai_same o2 y).
    assert (InA E.eq y (x :: l'') <-> E.eq y x \/ InA E.eq y l'').
@@ -1660,7 +1659,7 @@ Unset Implicit Arguments.
   assert (sorted := olai_sort o1); inversion_clear sorted; trivial.
   rewrite (Zpred_succ (Zlength l'')).
   rewrite <- (Zlength_cons x l'').
-  rewrite (olai_length o1); unfold Zpred in |- *; omega.
+  rewrite (olai_length o1); unfold Z.pred in |- *; omega.
   omega. 
   Qed.
 
@@ -1673,11 +1672,11 @@ Unset Implicit Arguments.
   set (k := N_digits n) in *.
   assert (0 <= n). 
    unfold n in |- *; rewrite Zlength_correct; auto with zarith.
-  assert (two_p k <= n + 1 <= two_p (Zsucc k)).
+  assert (two_p k <= n + 1 <= two_p (Z.succ k)).
     unfold k in |- *; generalize H0; case n; intros.
     rewrite two_p_S; simpl in |- *; omega.
     unfold N_digits in |- *; generalize (log_inf_correct p); omega.
-    unfold Zle in H1; elim H1; auto.
+    unfold Z.le in H1; elim H1; auto.
   elim (of_list_aux k (ZERO_le_N_digits n) n H1 l); auto.
   intros (r, l') o.
   assert (exists n : nat, rbtree n r).
@@ -1922,11 +1921,11 @@ Set Firstorder Depth 5.
     | Leaf => a
     | Node _ l x r => fold_tree A f r (f x (fold_tree A f l a))
     end.
-  Implicit Arguments fold_tree [A].
+  Arguments fold_tree [A].
 
   Definition fold_tree' (A : Type) (f : elt -> A -> A) 
     (s : tree) := Lists.Raw.fold f (elements_tree s).
-  Implicit Arguments fold_tree' [A].
+  Arguments fold_tree' [A].
 
   Lemma fold_tree_equiv_aux :
    forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),

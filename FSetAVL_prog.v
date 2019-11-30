@@ -224,7 +224,7 @@ Proof.
  induction s; simpl; intros; auto with zarith.
  inv avl; intuition; omega_max.
 Qed.
-Implicit Arguments height_non_negative. 
+Arguments height_non_negative : default implicits. 
 
 (** When [H:avl r], typing [avl_nn H] or [avl_nn r] adds [height r>=0] *)
 
@@ -1722,11 +1722,11 @@ Fixpoint fold (A : Type) (f : elt -> A -> A)(s : tree) {struct s} : A -> A :=
   | Leaf => a
   | Node l x r _ => fold A f r (f x (fold A f l a))
  end.
-Implicit Arguments fold [A].
+Arguments fold [A].
 
 Definition fold' (A : Type) (f : elt -> A -> A)(s : tree) := 
   L.fold f (elements s).
-Implicit Arguments fold' [A].
+Arguments fold' [A].
 
 Lemma fold_equiv_aux :
  forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),

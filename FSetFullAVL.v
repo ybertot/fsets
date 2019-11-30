@@ -70,7 +70,7 @@ Proof.
  induction s; simpl; intros; auto with zarith.
  inv avl; intuition; omega_max.
 Qed.
-Implicit Arguments height_non_negative.
+Arguments height_non_negative : default implicits.
 
 (** When [H:avl r], typing [avl_nn H] or [avl_nn r] adds [height r>=0] *)
 

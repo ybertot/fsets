@@ -387,7 +387,7 @@ Fixpoint fold (A : Type) (f : elt -> A -> A)(s : tree) : A -> A :=
   | Leaf => a
   | Node l x r _ => fold f r (f x (fold f l a))
  end.
-Implicit Arguments fold [A].
+Arguments fold [A].
 
 
 (** * Subset *)
@@ -1510,7 +1510,7 @@ End F.
 
 Definition fold' (A : Type) (f : elt -> A -> A)(s : tree) :=
   L.fold f (elements s).
-Implicit Arguments fold' [A].
+Arguments fold' [A].
 
 Lemma fold_equiv_aux :
  forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),

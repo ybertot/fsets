@@ -25,7 +25,6 @@ Open Scope Z_scope.
 
 Global Set Asymmetric Patterns.
 Set Firstorder Depth 3.
-Unset Standard Proposition Elimination Names.
 
 Module Make (X: OrderedType) : Sdep with Module E := X.
 
@@ -214,7 +213,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros x l r h H; inversion H; auto.
   Qed.
 
-  Implicit Arguments bst_left. Implicit Arguments bst_right.
+  Arguments bst_left : default implicits. Arguments bst_right : default implicits.
   Hint Resolve bst_left bst_right.
 
   Lemma bst_height :
@@ -273,7 +272,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros x l r c H; inversion_clear H; intuition.
   Qed.
 
-  Implicit Arguments avl_left. Implicit Arguments avl_right.
+  Arguments avl_left : default implicits. Arguments avl_right : default implicits.
   Hint Resolve avl_left avl_right.
 
   Ltac MaxCase x y :=
@@ -310,8 +309,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion 1; intuition.
   Qed.
 
-  Implicit Arguments height_non_negative. 
-  Implicit Arguments height_equation.
+  Arguments height_non_negative : default implicits.
+  Arguments height_equation : default implicits.
 
   (** If [h] is a proof of [avl (Node l x r h)], then tactic
       [AVL h] is adding all information about [h] to the context *)
@@ -1872,7 +1871,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     unfold height_of_node in H3.
     AVL H; AVL H0; AVL H1; simpl in H4; omega.
   Qed.
-  Implicit Arguments height_0.
+  Arguments height_0 : default implicits.
 
   (** * Union
 
@@ -1920,7 +1919,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* x' = Node t3 t4 t5 *)
     case (Z_ge_lt_dec z z0); intro.
     (* z >= z0 *)
-    case (Z_eq_dec z0 1); intro.
+    case (Z.eq_dec z0 1); intro.
     (* z0 = 1 *)
     clear H.
     case (add_tree t4 (Node t0 t1 t2 z)); simpl in |- *; auto.
@@ -1964,7 +1963,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H21; intuition.
     case (X.compare x0 t1); intuition.
     (* z < z0 *)
-    case (Z_eq_dec z 1); intro.
+    case (Z.eq_dec z 1); intro.
     (* z = 1 *)
     case (add_tree t1 (Node t3 t4 t5 z0)); simpl in |- *; auto.
     intros s' (s'_bst, (s'_avl, (s'_h, s'_y))).
@@ -2432,11 +2431,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     | Leaf => a
     | Node l x r _ => fold_tree A f r (f x (fold_tree A f l a))
     end.
-  Implicit Arguments fold_tree [A].
+  Arguments fold_tree [A].
 
   Definition fold_tree' (A : Type) (f : elt -> A -> A) 
     (s : tree) := L.fold f (elements_tree s).
-  Implicit Arguments fold_tree' [A].
+  Arguments fold_tree' [A].
 
   Lemma fold_tree_equiv_aux :
    forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
@@ -2711,7 +2710,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      Wf_nat.well_founded_lt_compat
       with
         (f := fun xx' : list tree * list tree =>
-              Zabs_nat (measure_l (fst xx') + measure_l (snd xx'))).
+              Z.abs_nat (measure_l (fst xx') + measure_l (snd xx'))).
     intros; apply Zabs.Zabs_nat_lt.
     Measure_l_0 (fst x0); Measure_l_0 (snd x0); Measure_l_0 (fst y);
      Measure_l_0 (snd y); intros; omega.
@@ -3264,7 +3263,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
      Wf_nat.well_founded_lt_compat
       with
         (f := fun xx' : enumeration * enumeration =>
-              Zabs_nat (measure_e (fst xx') + measure_e (snd xx'))).
+              Z.abs_nat (measure_e (fst xx') + measure_e (snd xx'))).
     intros; apply Zabs.Zabs_nat_lt.
     Measure_e_0 (fst x0); Measure_e_0 (snd x0); Measure_e_0 (fst y);
      Measure_e_0 (snd y); intros; omega.
