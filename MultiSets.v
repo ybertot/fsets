@@ -81,7 +81,7 @@ Module Type S.
   Parameter union_1 : multi x (union s s') = multi x s + multi x s'.
 
   (** Specification of [inter] *)
-  Parameter inter_1 : multi x (inter s s') = Nmin (multi x s) (multi x s').
+  Parameter inter_1 : multi x (inter s s') = N.min (multi x s) (multi x s').
 
   (** Specification of [diff] *)
   Parameter diff_1 : multi x (diff s s') = multi x s - multi x s'.
@@ -135,7 +135,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
  Definition inter := M.map2 
    (fun o o' => 
       match o,o' with 
-        | Some p, Some p' => Some (Pmin p p')
+        | Some p, Some p' => Some (Pos.min p p')
         | _, _ => None
       end).
 
@@ -154,7 +154,7 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
 
  Definition elements := @M.elements positive.
 
- Definition equal := M.equal Peqb.
+ Definition equal := M.equal Pos.eqb.
 
  Definition subset s s' := equal (diff s s') empty.
 
@@ -208,12 +208,12 @@ Module Multi (X:OrderedType)(M:FMapInterface.S with Module E:=X)
   Qed.
 
   (** Specification of [inter] *)
-  Lemma inter_1 : multi x (inter s s') = Nmin (multi x s) (multi x s').
+  Lemma inter_1 : multi x (inter s s') = N.min (multi x s) (multi x s').
   Proof.
   unfold inter, multi; intros.
   rewrite F.map2_1bis; auto.
   destruct (M.find x s); destruct (M.find x s'); auto.
-  unfold Nmin, Pmin, Nle.
+  unfold N.min, Pos.min, N.le.
   simpl.
   destruct (Pos.compare p0 p1); auto.
   Qed.
