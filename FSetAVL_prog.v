@@ -1895,6 +1895,8 @@ Next Obligation. (* 3: postcondition about s1 *)
 Qed.
 
 Next Obligation. (* 4: postcondition about (add x2 s1) *)
+  try rename g into H. (* compatibility 8.9 *)
+  try rename e into H0. (* compatibility 8.9 *)
   split.
   apply add_bst; auto.
   split; auto.
@@ -1948,6 +1950,8 @@ Next Obligation. (* 8: decreasing of (union (r1,r2')) *)
 Qed.
 
 Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2'))) *)
+  try rename g into H. (* compatibility 8.9 *)
+  try rename n into H0. (* compatibility 8.9 *)
   do 2 destruct_call union. simpl in a, a0 |- *.
   decompose [and] a; clear a.
   decompose [and] a0; clear a0.
@@ -1976,6 +1980,8 @@ Next Obligation. (* 9: postcondition for (join (union (l1,l2')) x1 (union (r1,r2
 Qed.
 
 Next Obligation. (* 10: postcondition about (add x1 s2) *)
+ try rename l into H. (* compatibility 8.9 *)
+ try rename e into H0. (* compatibility 8.9 *)
  split.
  apply add_bst; auto.
  split; auto.
@@ -2029,6 +2035,8 @@ Next Obligation. (* 14: decreasing of (union (r1',r2)) *)
 Qed.
 
 Next Obligation. (* 15: postcondition for (join (union (l1',l2)) x2 (union (snd pr1',r2))) *)
+ try rename l into H. (* compatibility 8.9 *)
+ try rename n into H0. (* compatibility 8.9 *)
  do 2 destruct_call union; simpl in a, a0 |- *.
  decompose [and] a; clear a.
  decompose [and] a0; clear a0.
