@@ -250,7 +250,7 @@ Lemma powerset_k_is_powerset_k : forall k s s',
  MM.In s' (powerset_k s k) <-> M.Subset s' s /\ M.cardinal s' = k.
 Proof.
 unfold powerset_k; intros.
-rewrite FF.filter_iff by (red; intros; f_equal; auto).
+rewrite FF.filter_iff by (red; intros; f_equal; auto with fset).
 rewrite powerset_is_powerset. 
 intuition.
 apply beq_nat_eq; auto.
@@ -261,7 +261,7 @@ Lemma powerset_k_cardinal : forall s k,
  MM.cardinal (powerset_k s k) = binomial (M.cardinal s) k.
 Proof.
 assert (forall k, compat_bool M.Equal (fun s0 => beq_nat (M.cardinal s0) k)).
- red; intros; f_equal; auto.
+ red; intros; f_equal; auto with fset.
 induction s using P'.set_induction_max; unfold powerset_k; intros.
 
 rewrite P.cardinal_1; auto.
@@ -275,7 +275,7 @@ rewrite <- (@PP.Equal_cardinal (MM.singleton M.empty)).
  intuition.
  rewrite P.cardinal_1; auto.
 rewrite <- (@PP.Equal_cardinal MM.empty).
- apply PP.cardinal_1; auto.
+ apply PP.cardinal_1; auto with fset.
  red; intros.
  rewrite FF.empty_iff; rewrite FF.filter_iff; auto.
  rewrite powerset_base; auto.
@@ -285,7 +285,7 @@ rewrite <- (@PP.Equal_cardinal MM.empty).
 
 assert (H2 := powerset_step H0 H1).
 rewrite (FF.filter_equal (H k) H2).
-rewrite PEP.filter_union; auto.
+rewrite PEP.filter_union; auto with fset.
 rewrite PP.union_cardinal; auto.
 unfold powerset_k in IHs1.
 rewrite IHs1.
@@ -331,23 +331,23 @@ rewrite powerset_is_powerset in H4.
 assert (~M.In x x0).
  red; intros; elim (@ME.lt_antirefl x); auto.
 assert (~M.In x y).
- red; intros; elim (@ME.lt_antirefl x); auto.
+ red; intros; elim (@ME.lt_antirefl x); auto with fset.
 red; red; intros.
 generalize (H5 a); clear H5; do 2 rewrite F.add_iff.
 intuition.
-elim H8; apply M.In_1 with a; auto.
-elim H8; apply M.In_1 with a; auto.
-elim H9; apply M.In_1 with a; auto.
-elim H9; apply M.In_1 with a; auto.
-repeat red; intros; f_equal; rewrite H7; auto.
-repeat red; intros; f_equal; rewrite H6; auto.
+elim H8; apply M.In_1 with a; auto with fset.
+elim H8; apply M.In_1 with a; auto with fset.
+elim H9; apply M.In_1 with a; auto with fset.
+elim H9; apply M.In_1 with a; auto with fset.
+repeat red; intros; f_equal; rewrite H7; auto with fset.
+repeat red; intros; f_equal; rewrite H6; auto with fset.
 
 intros.
-rewrite !FF.filter_iff by (red; intros; subst; auto).
+rewrite !FF.filter_iff by (red; intros; subst; auto with fset).
 rewrite map_add.
 rewrite !powerset_is_powerset.
 intros ((A,_),((B,_),_)).
-elim (@ME.lt_antirefl x); auto.
+elim (@ME.lt_antirefl x); auto with fset.
 Qed.
 
 (** A more "direct" definition *)

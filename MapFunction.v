@@ -93,7 +93,7 @@ intros.
 red; intros.
 rewrite FM'.filter_iff, 2 map_In by auto.
 split; [intros [(b,Hb) F] | intros (b,Hb)]; try split; try exists b; 
- try rewrite FM.filter_iff in *; intuition; unfold compat_bool in *; eauto.
+ try rewrite FM.filter_iff in *; intuition; unfold compat_bool in *; eauto with fset.
 Qed.
 
 End MapFunctionGen.
