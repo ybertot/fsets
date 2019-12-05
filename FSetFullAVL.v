@@ -23,7 +23,7 @@
    similar to the one of [FSetAVL], but richer.
 *)
 
-Require Import Recdef FSetInterface FSetList0 ZArith Int FSetAVL0 ROmega.
+Require Import Recdef FSetInterface FSetList0 ZArith Int FSetAVL0 Lia.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -35,7 +35,7 @@ Module Import II := MoreInt I.
 Local Open Scope pair_scope.
 Local Open Scope Int_scope.
 
-Ltac omega_max := i2z_refl; romega with Z.
+Ltac omega_max := i2z_refl; lia; auto with Z.
 
 (** * AVL trees *)
 
@@ -459,14 +459,14 @@ Lemma bal_cardinal : forall l x r,
  cardinal (bal l x r) = S (cardinal l + cardinal r).
 Proof.
  intros l x r; functional induction bal l x r; intros; clearf;
- simpl; auto with arith; romega with *.
+ simpl; auto with arith; lia.
 Qed.
 
 Lemma add_cardinal : forall x s,
  cardinal (add x s) <= S (cardinal s).
 Proof.
  intros; functional induction add x s; simpl; auto with arith;
- rewrite bal_cardinal; romega with *.
+ rewrite bal_cardinal; lia.
 Qed.
 
 Lemma join_cardinal : forall l x r,
@@ -476,13 +476,13 @@ Proof.
  simpl; apply add_cardinal.
  simpl; destruct X.compare; simpl; auto with arith.
  generalize (bal_cardinal (add x ll) lx lr) (add_cardinal x ll);
-  romega with *.
+  lia.
  generalize (bal_cardinal ll lx (add x lr)) (add_cardinal x lr);
-  romega with *.
+  lia.
  generalize (bal_cardinal ll lx (join lr x (Node rl rx rr rh)))
-  (Hlr x (Node rl rx rr rh)); simpl; romega with *.
+  (Hlr x (Node rl rx rr rh)); simpl; lia.
  simpl (S _) in *; generalize (bal_cardinal (join (Node ll lx lr lh) x rl) rx rr).
- romega with *.
+ lia.
 Qed.
 
 Lemma split_cardinal_1 : forall x s,
@@ -490,10 +490,10 @@ Lemma split_cardinal_1 : forall x s,
 Proof.
  intros x s; functional induction split x s; simpl; auto.
  rewrite e1 in IHt; simpl in *.
- romega with *.
- romega with *.
+ lia.
+ lia.
  rewrite e1 in IHt; simpl in *.
- generalize (@join_cardinal l y rl); romega with *.
+ generalize (@join_cardinal l y rl); lia.
 Qed.
 
 Lemma split_cardinal_2 : forall x s,
@@ -501,9 +501,9 @@ Lemma split_cardinal_2 : forall x s,
 Proof.
  intros x s; functional induction split x s; simpl; auto.
  rewrite e1 in IHt; simpl in *.
- generalize (@join_cardinal rl y r); romega with *.
- romega with *.
- rewrite e1 in IHt; simpl in *; romega with *.
+ generalize (@join_cardinal rl y r); lia.
+ lia.
+ rewrite e1 in IHt; simpl in *; lia.
 Qed.
 
 (** * [ocaml_union], an union faithful to the original ocaml code *)
@@ -514,7 +514,7 @@ Ltac ocaml_union_tac :=
  intros; unfold cardinal2; simpl @fst in *; simpl @snd in *;
  match goal with H: split ?x ?s = _ |- _ =>
   generalize (split_cardinal_1 x s) (split_cardinal_2 x s);
-  rewrite H; simpl; romega with *
+  rewrite H; simpl; lia
  end.
 
 Function ocaml_union (s : t * t) { measure cardinal2 s } : t  :=
@@ -639,12 +639,12 @@ Function ocaml_subset (s:t*t) { measure cardinal2 s } : bool :=
  end.
 
 Proof.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
 Defined.
 
 Lemma ocaml_subset_12 : forall s,
@@ -722,7 +722,7 @@ Function ocaml_compare_aux
 
 Proof.
 intros; unfold cardinal_e_2; simpl;
-abstract (do 2 rewrite cons_cardinal_e; romega with *).
+abstract (do 2 rewrite cons_cardinal_e; lia).
 Defined.
 
 Definition ocaml_compare s1 s2 :=

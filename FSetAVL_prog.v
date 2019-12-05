@@ -22,7 +22,7 @@ Require Import FSetInterface.
 Require Import FSetList0.
 Require Import ZArith.
 Require Import Int.
-Require Import ROmega.
+Require Import Lia.
 Require Import FunInd.
 
 Set Firstorder Depth 3.
@@ -37,7 +37,7 @@ Import II.
 Open Scope Int_scope.
 Local Notation int := I.t.
 
-Ltac omega_max := i2z_refl; romega with Z.
+Ltac omega_max := i2z_refl; lia; auto with Z.
 
 Module MX := OrderedTypeFacts X.
 
