@@ -22,7 +22,7 @@
    structural recursive code.
 *)
 
-Require Import ZArith Int ROmega MSetInterface MSetAVL NPeano.
+Require Import ZArith Int Lia MSetInterface MSetAVL NPeano.
 Require Import FunInd.
 
 Module AvlProofs (Import I:Int)(X:OrderedType).
@@ -31,7 +31,7 @@ Module Import II := MoreInt I.
 Local Open Scope pair_scope.
 Local Open Scope Int_scope.
 
-Ltac omega_max := i2z_refl; romega with Z.
+Ltac omega_max := i2z_refl; lia; auto with Z.
 Ltac mysubst :=
  match goal with
    | E : _=_ |- _ => rewrite E in *; clear E; mysubst
@@ -799,14 +799,14 @@ Lemma bal_cardinal : forall l x r,
  cardinal (bal l x r) = S (cardinal l + cardinal r).
 Proof.
  intros l x r; functional induction bal l x r; intros; clearf;
- simpl; auto with arith; romega with *.
+ simpl; auto with arith; lia; auto with *.
 Qed.
 
 Lemma add_cardinal : forall x s,
  cardinal (add x s) <= S (cardinal s).
 Proof.
  induct s x; simpl; auto with arith;
- rewrite bal_cardinal; romega with *.
+ rewrite bal_cardinal; lia; auto with *.
 Qed.
 
 Lemma join_cardinal : forall l x r,
@@ -817,34 +817,34 @@ Proof.
  - simpl; destruct X.compare; simpl.
    * auto with arith.
    * generalize (bal_cardinal (add x ll) lx lr) (add_cardinal x ll);
-     romega with *.
+     lia; auto with *.
    * generalize (bal_cardinal ll lx (add x lr)) (add_cardinal x lr);
-     romega with *.
+     lia; auto with *.
  - generalize (bal_cardinal ll lx (join lr x (Node rh rl rx rr)))
-  (Hlr x (Node rh rl rx rr)); simpl; romega with *.
+  (Hlr x (Node rh rl rx rr)); simpl; lia; auto with *.
  - simpl (S _) in *; generalize (bal_cardinal (join (Node lh ll lx lr) x rl) rx rr).
-   romega with *.
+   lia; auto with *.
 Qed.
 
 Lemma split_cardinal_1 : forall x s,
  (cardinal (split x s)#l <= cardinal s)%nat.
 Proof.
  intros x s; functional induction split x s; simpl; auto.
- - romega with *.
+ - lia; auto with *.
  - rewrite e1 in IHt0; simpl in *.
-   romega with *.
+   lia; auto with *.
  - rewrite e1 in IHt0; simpl in *.
-   generalize (@join_cardinal l y rl); romega with *.
+   generalize (@join_cardinal l y rl); lia; auto with *.
 Qed.
 
 Lemma split_cardinal_2 : forall x s,
  (cardinal (split x s)#r <= cardinal s)%nat.
 Proof.
  intros x s; functional induction split x s; simpl; auto.
- - romega with *.
+ - lia; auto with *.
  - rewrite e1 in IHt0; simpl in *.
-   generalize (@join_cardinal rl y r); romega with *.
- - rewrite e1 in IHt0; simpl in *; romega with *.
+   generalize (@join_cardinal rl y r); lia; auto with *.
+ - rewrite e1 in IHt0; simpl in *; lia; auto with *.
 Qed.
 
 (** * [ocaml_union], an union faithful to the original ocaml code *)
@@ -855,7 +855,7 @@ Ltac ocaml_union_tac :=
  intros; unfold cardinal2; simpl fst in *; simpl snd in *;
  match goal with H: split ?x ?s = _ |- _ =>
   generalize (split_cardinal_1 x s) (split_cardinal_2 x s);
-  rewrite H; simpl; romega with *
+  rewrite H; simpl; lia; auto with *
  end.
 
 Function ocaml_union (s : t * t) { measure cardinal2 s } : t  :=
@@ -982,12 +982,12 @@ Function ocaml_subset (s:t*t) { measure cardinal2 s } : bool :=
  end.
 
 Proof.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
+ intros; unfold cardinal2; simpl; abstract lia; auto with *.
+ intros; unfold cardinal2; simpl; abstract lia; auto with *.
+ intros; unfold cardinal2; simpl; abstract lia; auto with *.
+ intros; unfold cardinal2; simpl; abstract lia; auto with *.
+ intros; unfold cardinal2; simpl; abstract lia; auto with *.
+ intros; unfold cardinal2; simpl; abstract lia; auto with *.
 Defined.
 
 Ltac ocaml_subset_tac :=
@@ -1062,7 +1062,7 @@ Function ocaml_compare_aux
 
 Proof.
 intros; unfold cardinal_e_2; simpl;
-abstract (do 2 rewrite cons_cardinal_e; romega with * ).
+abstract (do 2 rewrite cons_cardinal_e; lia; auto with * ).
 Defined.
 
 Definition ocaml_compare s1 s2 :=
