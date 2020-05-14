@@ -75,7 +75,7 @@ Definition nb_edges (G:Graph) := (sum (nb_succ G) G).
 
 (** edge number of a graph with one node removed *)
 
-Hint Unfold compat_bool.
+Hint Unfold compat_bool : core.
 
 Lemma node_remove_1 :
 forall (G:Graph)(n m:nat),
@@ -88,17 +88,21 @@ intros; apply Equal_cardinal.
 unfold Equal; split; intros.
 assert (to G m a = true).
  change ((fun m0 =>to G m m0) a = true).
- eapply filter_2; eauto.
-apply filter_3; auto.
+ now eapply filter_2; eauto with *.
+apply filter_3; auto with *.
 apply remove_2.
 unfold E.eq; red; intros.
 rewrite H4 in H1; rewrite H3 in H1; discriminate H1.
-eapply filter_1; eauto. auto. (* TODO: auto after eauto ?!? *)
+match goal with id : In _ _ |- _ => 
+  solve [apply filter_1 with (2 := id); auto with *]
+end.
 apply filter_3; intuition.
 apply remove_3 with n; auto.
-eapply filter_1; eauto. auto.
+match goal with id : In _ _ |- _ => 
+  solve [apply filter_1 with (2 := id); auto with *]
+end.
 change ((fun m0 => to G m m0) a = true).
-eapply filter_2; eauto.
+eapply filter_2; eauto with *.
 Qed.
 
 Lemma node_remove_2 :
@@ -112,24 +116,30 @@ assert (~ In n (filter (fun m0 => to G m m0) (remove n G))).
 intro.
 elim remove_1 with G n n; auto.
 red; auto.
-eapply filter_1; eauto. auto. (* TODO idem *)
+match goal with id : In _ _ |- _ => 
+  solve [apply filter_1 with (2 := id); auto with *]
+end.
 apply cardinal_2 with n; auto.
 unfold Add; split; intros.
 
 elim (eq_nat_dec y n); intros.
 left; auto with *.
 right.
-apply filter_3; auto.
+apply filter_3; auto with *.
 apply remove_2; auto.
-eapply filter_1; eauto. auto. (* TODO idem *)
-change ((fun m0 => to G m m0) y = true); eapply filter_2; eauto.
+match goal with id : In _ _ |- _ => 
+  solve [apply filter_1 with (2 := id); auto with *]
+end.
+change ((fun m0 => to G m m0) y = true); eapply filter_2; eauto with *.
 
 elim (eq_nat_dec y n); intros.
-rewrite a; apply filter_3; auto.
-elim H3; intros; [absurd (y=n) | apply filter_3 ]; auto.
+rewrite a; apply filter_3; auto with *.
+elim H3; intros; [absurd (y=n) | apply filter_3 ]; auto with *.
 apply remove_3 with n; auto.
-eapply filter_1; eauto. auto. (* TODO idem *)
-change ((fun m0 => to G m m0) y =true); eapply filter_2; eauto.
+match goal with id : In _ _ |- _ => 
+  solve [apply filter_1 with (2 := id); auto with *]
+end.
+change ((fun m0 => to G m m0) y =true); eapply filter_2; eauto with *.
 Qed.
 
 Lemma node_remove_3:
@@ -151,9 +161,9 @@ set (f1 := fun m => nb_succ (node_remove G n) m).
 replace (nb_succ (node_remove G n)) with f1; auto.
 set (f2 := fun m => if (is_pred G n m) then 1 else 0).
 set (g := fun m => f1 m + f2 m).
-rewrite sum_compat with (nb_succ G) g G; auto.
-unfold g; rewrite sum_plus; auto.
-unfold f2; rewrite sum_filter; auto.
+rewrite sum_compat with (nb_succ G) g G; auto with *.
+unfold g; rewrite sum_plus; auto with *.
+unfold f2; rewrite sum_filter; auto with *.
 unfold nb_pred.
 unfold set_pred.
 unfold sum.
@@ -161,7 +171,7 @@ rewrite (@fold_2 (remove n G) G n _ _  (gen_st nat) 0 (fun x => plus (f1 x))); a
 assert (f1 n  = nb_succ G n).
 unfold f1, nb_succ, set_succ, node_remove, is_succ; simpl.
 apply Equal_cardinal.
-eapply add_filter_2; unfold Add; eauto with set.
+now eapply add_filter_2; unfold Add; eauto with *.
 rewrite H1; omega.
 unfold g, f1, f2; intros; apply node_remove_3; auto.
 Qed.
@@ -191,11 +201,11 @@ rewrite union_cardinal; auto.
 intros.
 assert (mem x (set_pred G n) = true -> (mem x (set_succ G n))=true -> False).
   intros; unfold set_pred, is_pred, set_succ, is_succ in H0, H1.
-  rewrite filter_mem in H0; rewrite filter_mem in H1; auto.
+  rewrite filter_mem in H0; rewrite filter_mem in H1; auto with *.
   elim (andb_prop _ _  H0); elim (andb_prop _ _ H1); intros.
-  elim (@Hacyclic G n); apply chain_t with x; apply chain_i; auto with set.
-generalize H0; case (mem x (set_pred G n)); case (mem x (set_succ G n)); intuition.
-unfold set_linked, is_linked, set_pred, set_succ; apply eq_sym; apply union_filter; auto.
+  now elim (@Hacyclic G n); apply chain_t with x; apply chain_i; auto with set.
+generalize H0; case (mem x (set_pred G n)); case (mem x (set_succ G n)); intuition auto with *.
+unfold set_linked, is_linked, set_pred, set_succ; apply eq_sym; apply union_filter; auto with *.
 Qed.
 
 (** Any acyclic graph has an initial element *)
@@ -215,7 +225,7 @@ case (choose (set_pred G current)).
 intros newcurrent Hnc _.
 generalize (Hnc newcurrent (refl_equal _)); clear Hnc; intro Hnc.
 unfold set_pred, is_pred in Hnc.
-assert (Hc: compat_bool E.eq (fun m => to G m current)). auto.
+assert (Hc: compat_bool E.eq (fun m => to G m current)). auto with *.
 generalize (filter_1 Hc Hnc) (filter_2 Hc Hnc); clear Hnc Hc; intros Hnc1 Hnc2.
 assert (Hc: In current non_visited).
  apply mem_2; generalize (X current) (@mem_1 non_visited current).
@@ -336,7 +346,8 @@ intros j Hj _; generalize (Hj j (refl_equal _)); clear Hj; intro Hj.
 apply le_trans with (plus (nb_succ G i) (nb_linked G j)). 
 unfold double; apply plus_le_compat;auto.
 lapply (H0 j);auto.
-unfold set_succ, is_succ  in Hj; eapply filter_1; eauto. auto. (* TODO idem *)
+unfold set_succ, is_succ  in Hj.
+now apply filter_1 with (2 := Hj); auto with *.
 unfold nb_succ, nb_linked, nb_nodes;simpl.
 rewrite <- union_cardinal;auto.
 apply subset_cardinal.
@@ -344,11 +355,11 @@ apply subset_1; unfold Subset; intros.
 elim (union_1 H4); unfold set_succ, is_succ, set_linked, is_linked; intros;
   eapply filter_1; eauto; congruence. (* TODO idem *)
 unfold set_succ, is_succ in Hj; intros.
-assert (compat_bool E.eq (fun m=>to G i m)); auto.
+assert (compat_bool E.eq (fun m=>to G i m)); auto with *.
 generalize (filter_1 H4 Hj) (filter_2 H4 Hj); clear H4 Hj; intros Hj1 Hj2.
-apply (bool_eq_ind (mem x (set_succ G i))); simpl; auto; intros.
+apply (bool_eq_ind (mem x (set_succ G i))); simpl; auto with *; intros.
 apply (bool_eq_ind (mem x (set_linked G j))); simpl; auto; intros.
-unfold set_succ, is_succ in H4; rewrite filter_mem in H4; auto;
+unfold set_succ, is_succ in H4; rewrite filter_mem in H4; auto with *;
   elim (andb_prop _ _ H4); clear H4; intros.
 unfold set_linked, is_linked in H5; rewrite filter_mem in H5; auto with *.
 elim (andb_prop _ _ H5); clear H5; intros.

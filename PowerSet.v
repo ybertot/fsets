@@ -1,7 +1,6 @@
 Require Import FSets MapFunction.
 Require Import Arith EqNat Euclid ArithRing ZArith.
 Set Implicit Arguments.
-Unset Standard Proposition Elimination Names.
 
 (** First, let's define powers of 2 and binomial function 
     for later expressing the cardinal of powersets. *)
@@ -145,7 +144,7 @@ intros.
 rewrite MM'.map_In by (intros; rewrite H; reflexivity).
 unfold M.eq in *.
 split; [intros (b & IN & EQ) | intros (IN,[OR1|OR2]) ].
-assert (M.In x s') by (rewrite <- EQ; auto with set).
+assert (M.In x s') by (rewrite <- EQ; auto with *).
 split; auto.
 destruct (P.In_dec x b); [left|right]; 
  apply MM.In_1 with (2:=IN); P.Dec.fsetdec.
@@ -202,7 +201,7 @@ firstorder.
 firstorder.
 red; intro a; generalize (H a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
 (*eauto with set. (* Anomaly: uncaught exception Failure "Cannot print a global reference". *)*)
-apply H6; apply V; auto with set.
+apply H6; apply V; auto with *.
 destruct (P.In_dec x s'); [right|left].
 split; auto.
 right.
@@ -227,16 +226,16 @@ rewrite IHs1.
 rewrite (@P.cardinal_2 s1 s2 x); auto.
 simpl; auto.
 red; intros.
-elim (@M.E.lt_not_eq x x); auto.
+elim (@M.E.lt_not_eq x x); auto with *.
 intros; rewrite H1; reflexivity.
 intros u v; do 2 rewrite powerset_is_powerset.
 red; red; intros.
 generalize (H3 a) (H1 a) (H2 a); F.set_iff; clear H3 H1 H2.
-intuition; elim (@M.E.lt_not_eq a x); auto.
+intuition; elim (@M.E.lt_not_eq a x); auto with *.
 intros u (A,B).
 rewrite powerset_is_powerset in A.
 rewrite map_add in B; destruct B as (B,_).
-elim (@M.E.lt_not_eq x x); auto.
+elim (@M.E.lt_not_eq x x); auto with *.
 Qed.
 
 (** Computing the set of all subsets of cardinal k for a particular set [s] *)
@@ -251,7 +250,7 @@ Lemma powerset_k_is_powerset_k : forall k s s',
  MM.In s' (powerset_k s k) <-> M.Subset s' s /\ M.cardinal s' = k.
 Proof.
 unfold powerset_k; intros.
-rewrite FF.filter_iff by (red; intros; f_equal; auto).
+rewrite FF.filter_iff by (red; intros; f_equal; auto with *).
 rewrite powerset_is_powerset. 
 intuition.
 apply beq_nat_eq; auto.
@@ -262,7 +261,7 @@ Lemma powerset_k_cardinal : forall s k,
  MM.cardinal (powerset_k s k) = binomial (M.cardinal s) k.
 Proof.
 assert (forall k, compat_bool M.Equal (fun s0 => beq_nat (M.cardinal s0) k)).
- red; intros; f_equal; auto.
+ red; intros; f_equal; auto with *.
 induction s using P'.set_induction_max; unfold powerset_k; intros.
 
 rewrite P.cardinal_1; auto.
@@ -276,7 +275,7 @@ rewrite <- (@PP.Equal_cardinal (MM.singleton M.empty)).
  intuition.
  rewrite P.cardinal_1; auto.
 rewrite <- (@PP.Equal_cardinal MM.empty).
- apply PP.cardinal_1; auto.
+ apply PP.cardinal_1; auto with *.
  red; intros.
  rewrite FF.empty_iff; rewrite FF.filter_iff; auto.
  rewrite powerset_base; auto.
@@ -286,7 +285,7 @@ rewrite <- (@PP.Equal_cardinal MM.empty).
 
 assert (H2 := powerset_step H0 H1).
 rewrite (FF.filter_equal (H k) H2).
-rewrite PEP.filter_union; auto.
+rewrite PEP.filter_union; auto with *.
 rewrite PP.union_cardinal; auto.
 unfold powerset_k in IHs1.
 rewrite IHs1.
@@ -298,7 +297,7 @@ destruct (M.cardinal s1); destruct (M.cardinal s2); auto.
 red; intro a; rewrite FF.filter_iff.
 red; destruct 1.
 case_eq (M.cardinal (M.add x a)); intros.
-elim (@P.cardinal_inv_1 _ H5 x); F.set_iff; auto.
+elim (@P.cardinal_inv_1 _ H5 x); F.set_iff; auto with *.
 rewrite H5 in H4; simpl in H4; inversion H4.
 repeat red; intros; f_equal; rewrite H3; auto.
 assert (MM.filter (fun x0 => beq_nat (M.cardinal (M.add x x0)) (S k)) (powerset s1)
@@ -330,21 +329,21 @@ destruct H4.
 rewrite powerset_is_powerset in H3.
 rewrite powerset_is_powerset in H4.
 assert (~M.In x x0).
- red; intros; elim (@ME.lt_antirefl x); auto.
+ red; intros; elim (@ME.lt_antirefl x); auto with *.
 assert (~M.In x y).
  red; intros; elim (@ME.lt_antirefl x); auto.
 red; red; intros.
 generalize (H5 a); clear H5; do 2 rewrite F.add_iff.
 intuition.
-elim H8; apply M.In_1 with a; auto.
-elim H8; apply M.In_1 with a; auto.
-elim H9; apply M.In_1 with a; auto.
-elim H9; apply M.In_1 with a; auto.
+now elim H8; apply M.In_1 with a; auto with *.
+now elim H8; apply M.In_1 with a; auto with *.
+now elim H9; apply M.In_1 with a; auto with *.
+now elim H9; apply M.In_1 with a; auto.
 repeat red; intros; f_equal; rewrite H7; auto.
 repeat red; intros; f_equal; rewrite H6; auto.
 
 intros.
-rewrite !FF.filter_iff by (red; intros; subst; auto).
+rewrite !FF.filter_iff by (red; intros; subst; auto with *).
 rewrite map_add.
 rewrite !powerset_is_powerset.
 intros ((A,_),((B,_),_)).
@@ -409,7 +408,7 @@ apply P.subset_trans with s1; auto; red; intros; rewrite (H0 a); auto.
 destruct H1.
 destruct H2; intuition idtac.
 firstorder.
-elim (@M.E.lt_not_eq x x); auto.
+elim (@M.E.lt_not_eq x x); auto with *.
 red; intro a; generalize (H3 a)(H0 a); F.set_iff; destruct (F.eq_dec a x); intuition.
 rewrite <- H4.
 symmetry; apply P.remove_cardinal_1; auto.

@@ -23,7 +23,7 @@
    similar to the one of [FSetAVL], but richer.
 *)
 
-Require Import Recdef FSetInterface FSetList0 ZArith Int FSetAVL0 ROmega.
+Require Import Recdef FSetInterface FSetList0 ZArith Int FSetAVL0 Lia.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -35,7 +35,7 @@ Module Import II := MoreInt I.
 Local Open Scope pair_scope.
 Local Open Scope Int_scope.
 
-Ltac omega_max := i2z_refl; romega with Z.
+Ltac omega_max := i2z_refl; lia.
 
 (** * AVL trees *)
 
@@ -52,7 +52,7 @@ Inductive avl : tree -> Prop :=
 
 (** * Automation and dedicated tactics *)
 
-Hint Constructors avl.
+Hint Constructors avl : core.
 
 (** A tactic for cleaning hypothesis after use of functional induction. *)
 
@@ -70,7 +70,7 @@ Proof.
  induction s; simpl; intros; auto with zarith.
  inv avl; intuition; omega_max.
 Qed.
-Implicit Arguments height_non_negative.
+Arguments height_non_negative [s].
 
 (** When [H:avl r], typing [avl_nn H] or [avl_nn r] adds [height r>=0] *)
 
@@ -110,7 +110,7 @@ Lemma avl_node :
 Proof.
   intros; auto.
 Qed.
-Hint Resolve avl_node.
+Hint Resolve avl_node : core.
 
 
 (** empty *)
@@ -203,7 +203,7 @@ Lemma add_avl : forall s x, avl s -> avl (add x s).
 Proof.
  intros; destruct (add_avl_1 x H); auto.
 Qed.
-Hint Resolve add_avl.
+Hint Resolve add_avl : core.
 
 (** join *)
 
@@ -258,7 +258,7 @@ Lemma join_avl : forall l x r, avl l -> avl r -> avl (join l x r).
 Proof.
  intros; destruct (join_avl_1 x H H0); auto.
 Qed.
-Hint Resolve join_avl.
+Hint Resolve join_avl : core.
 
 (** remove_min *)
 
@@ -339,7 +339,7 @@ Lemma remove_avl : forall s x, avl s -> avl (remove x s).
 Proof.
  intros; destruct (remove_avl_1 x H); auto.
 Qed.
-Hint Resolve remove_avl.
+Hint Resolve remove_avl : core.
 
 (** concat *)
 
@@ -349,7 +349,7 @@ Proof.
  intros; apply join_avl; auto.
  generalize (remove_min_avl H0); rewrite e1; simpl; auto.
 Qed.
-Hint Resolve concat_avl.
+Hint Resolve concat_avl : core.
 
 (** split *)
 
@@ -399,7 +399,7 @@ Proof.
  inv avl.
  destruct (f t); auto.
 Qed.
-Hint Resolve filter_acc_avl.
+Hint Resolve filter_acc_avl : core.
 
 Lemma filter_avl : forall f s, avl s -> avl (filter f s).
 Proof.
@@ -459,14 +459,14 @@ Lemma bal_cardinal : forall l x r,
  cardinal (bal l x r) = S (cardinal l + cardinal r).
 Proof.
  intros l x r; functional induction bal l x r; intros; clearf;
- simpl; auto with arith; romega with *.
+ simpl; auto with arith; lia.
 Qed.
 
 Lemma add_cardinal : forall x s,
  cardinal (add x s) <= S (cardinal s).
 Proof.
  intros; functional induction add x s; simpl; auto with arith;
- rewrite bal_cardinal; romega with *.
+ rewrite bal_cardinal; lia.
 Qed.
 
 Lemma join_cardinal : forall l x r,
@@ -476,13 +476,13 @@ Proof.
  simpl; apply add_cardinal.
  simpl; destruct X.compare; simpl; auto with arith.
  generalize (bal_cardinal (add x ll) lx lr) (add_cardinal x ll);
-  romega with *.
+  lia.
  generalize (bal_cardinal ll lx (add x lr)) (add_cardinal x lr);
-  romega with *.
+  lia.
  generalize (bal_cardinal ll lx (join lr x (Node rl rx rr rh)))
-  (Hlr x (Node rl rx rr rh)); simpl; romega with *.
+  (Hlr x (Node rl rx rr rh)); simpl; lia.
  simpl (S _) in *; generalize (bal_cardinal (join (Node ll lx lr lh) x rl) rx rr).
- romega with *.
+ lia.
 Qed.
 
 Lemma split_cardinal_1 : forall x s,
@@ -490,10 +490,10 @@ Lemma split_cardinal_1 : forall x s,
 Proof.
  intros x s; functional induction split x s; simpl; auto.
  rewrite e1 in IHt; simpl in *.
- romega with *.
- romega with *.
+ lia.
+ lia.
  rewrite e1 in IHt; simpl in *.
- generalize (@join_cardinal l y rl); romega with *.
+ generalize (@join_cardinal l y rl); lia.
 Qed.
 
 Lemma split_cardinal_2 : forall x s,
@@ -501,9 +501,9 @@ Lemma split_cardinal_2 : forall x s,
 Proof.
  intros x s; functional induction split x s; simpl; auto.
  rewrite e1 in IHt; simpl in *.
- generalize (@join_cardinal rl y r); romega with *.
- romega with *.
- rewrite e1 in IHt; simpl in *; romega with *.
+ generalize (@join_cardinal rl y r); lia.
+ lia.
+ rewrite e1 in IHt; simpl in *; lia.
 Qed.
 
 (** * [ocaml_union], an union faithful to the original ocaml code *)
@@ -514,7 +514,7 @@ Ltac ocaml_union_tac :=
  intros; unfold cardinal2; simpl @fst in *; simpl @snd in *;
  match goal with H: split ?x ?s = _ |- _ =>
   generalize (split_cardinal_1 x s) (split_cardinal_2 x s);
-  rewrite H; simpl; romega with *
+  rewrite H; simpl; lia
  end.
 
 Function ocaml_union (s : t * t) { measure cardinal2 s } : t  :=
@@ -639,12 +639,12 @@ Function ocaml_subset (s:t*t) { measure cardinal2 s } : bool :=
  end.
 
 Proof.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
 Defined.
 
 Lemma ocaml_subset_12 : forall s,
@@ -656,7 +656,7 @@ Proof.
  intuition.
  red; auto; inversion 1.
  split; intros; try discriminate.
- assert (H': In _x0 Leaf) by auto; inversion H'.
+ assert (H': In _x0 Leaf) by auto with *; inversion H'.
  (**)
  simpl in *; inv bst.
  rewrite andb_true_iff, IHb, IHb0; auto; clear IHb IHb0.
@@ -722,7 +722,7 @@ Function ocaml_compare_aux
 
 Proof.
 intros; unfold cardinal_e_2; simpl;
-abstract (do 2 rewrite cons_cardinal_e; romega with *).
+abstract (do 2 rewrite cons_cardinal_e; lia).
 Defined.
 
 Definition ocaml_compare s1 s2 :=
@@ -921,7 +921,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Variable s s' s'': t.
  Variable x y : elt.
 
- Hint Resolve is_bst is_avl.
+ Hint Resolve is_bst is_avl : core.
 
  Lemma mem_1 : In x s -> mem x s = true.
  Proof. exact (mem_1 (is_bst s)). Qed.
@@ -975,7 +975,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Lemma add_2 : In y s -> In y (add x s).
  Proof. wrap add add_in. Qed.
  Lemma add_3 : ~ E.eq x y -> In y (add x s) -> In y s.
- Proof. wrap add add_in. elim H; auto. Qed.
+ Proof. wrap add add_in. elim H; auto with *. Qed.
 
  Lemma remove_1 : E.eq x y -> ~ In y (remove x s).
  Proof. wrap remove remove_in. Qed.

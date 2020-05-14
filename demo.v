@@ -28,7 +28,11 @@ Inductive Compare (X : Type) (lt eq : X -> X -> Prop) (x y : X) : Type :=
   | EQ : eq x y -> Compare lt eq x y
   | GT : lt y x -> Compare lt eq x y.
 
+Set Warnings "-extraction-inside-module".
+
 Extraction Compare.
+
+Set Warnings "+extraction-inside-module".
 
 Module Type OrderedType.
 
@@ -82,8 +86,8 @@ Module Z_as_OT <: OrderedType.
   Proof.
     case_eq (x ?= y); intros.
     apply EQ; unfold eq; apply Zcompare_Eq_eq; auto.
-    apply LT; unfold lt, Zlt; auto.
-    apply GT; unfold lt, Zlt; rewrite <- Zcompare_Gt_Lt_antisym; auto.
+    apply LT; unfold lt, Z.lt; auto.
+    apply GT; unfold lt, Z.lt; rewrite <- Zcompare_Gt_Lt_antisym; auto.
   Defined.
 
   End xyz.
@@ -331,10 +335,10 @@ Module Type Int.
 
  Notation "x == y" := (i2z x = i2z y)
    (at level 70, y at next level, no associativity) : Int_scope.
- Notation "x <= y" := (Zle (i2z x) (i2z y)): Int_scope.
- Notation "x < y" := (Zlt (i2z x) (i2z y)) : Int_scope.
- Notation "x >= y" := (Zge (i2z x) (i2z y)) : Int_scope.
- Notation "x > y" := (Zgt (i2z x) (i2z y)): Int_scope.
+ Notation "x <= y" := (Z.le (i2z x) (i2z y)): Int_scope.
+ Notation "x < y" := (Z.lt (i2z x) (i2z y)) : Int_scope.
+ Notation "x >= y" := (Z.ge (i2z x) (i2z y)) : Int_scope.
+ Notation "x > y" := (Z.gt (i2z x) (i2z y)): Int_scope.
 
  (* We also need some decidability facts. *) 
 
@@ -358,7 +362,7 @@ Module Type Int.
  Axiom i2z_opp : forall n, i2z (opp n) = -i2z n.
  Axiom i2z_minus : forall n p, i2z (minus n p) = i2z n - i2z p.
  Axiom i2z_mult : forall n p, i2z (mult n p) = i2z n * i2z p.
- Axiom i2z_max : forall n p, i2z (max n p) = Zmax (i2z n) (i2z p).
+ Axiom i2z_max : forall n p, i2z (max n p) = Z.max (i2z n) (i2z p).
 
 End Int. 
 (*/excerpt*)

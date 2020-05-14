@@ -41,6 +41,7 @@ Unset Strict Implicit.
 
 (** Notations and helper lemma about pairs *)
 
+Declare Scope pair_scope.
 Notation "s #1" := (fst s) (at level 9, format "s '#1'") : pair_scope.
 Notation "s #2" := (snd s) (at level 9, format "s '#2'") : pair_scope.
 
@@ -387,7 +388,7 @@ Fixpoint fold (A : Type) (f : elt -> A -> A)(s : tree) : A -> A :=
   | Leaf => a
   | Node l x r _ => fold f r (f x (fold f l a))
  end.
-Implicit Arguments fold [A].
+Arguments fold [A].
 
 
 (** * Subset *)
@@ -548,8 +549,8 @@ Module Proofs.
 
 (** * Automation and dedicated tactics *)
 
-Hint Constructors In bst.
-Hint Unfold lt_tree gt_tree.
+Hint Constructors In bst : core.
+Hint Unfold lt_tree gt_tree : core.
 
 Tactic Notation "factornode" ident(l) ident(x) ident(r) ident(h)
  "as" ident(s) :=
@@ -585,9 +586,9 @@ end.
 Lemma In_1 :
  forall s x y, X.eq x y -> In x s -> In y s.
 Proof.
- induction s; simpl; intuition_in; eauto.
+ induction s; simpl; intuition_in; eauto with *.
 Qed.
-Hint Immediate In_1.
+Hint Immediate In_1 : core.
 
 Lemma In_node_iff :
  forall l x r h y,
@@ -622,7 +623,7 @@ Proof.
  unfold gt_tree; intuition_in; order.
 Qed.
 
-Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node.
+Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node : core.
 
 Lemma lt_tree_not_in :
  forall (x : elt) (t : tree), lt_tree x t -> ~ In x t.
@@ -633,7 +634,7 @@ Qed.
 Lemma lt_tree_trans :
  forall x y, X.lt x y -> forall t, lt_tree x t -> lt_tree y t.
 Proof.
- eauto.
+ eauto with *.
 Qed.
 
 Lemma gt_tree_not_in :
@@ -645,10 +646,10 @@ Qed.
 Lemma gt_tree_trans :
  forall x y, X.lt y x -> forall t, gt_tree x t -> gt_tree y t.
 Proof.
- eauto.
+ eauto with *.
 Qed.
 
-Hint Resolve lt_tree_not_in lt_tree_trans gt_tree_not_in gt_tree_trans.
+Hint Resolve lt_tree_not_in lt_tree_trans gt_tree_not_in gt_tree_trans : core.
 
 (** * Inductions principles *)
 
@@ -685,7 +686,7 @@ Qed.
 Lemma is_empty_1 : forall s, Empty s -> is_empty s = true.
 Proof.
  destruct s as [|r x l h]; simpl; auto.
- intro H; elim (H x); auto.
+ intro H; elim (H x); auto with *.
 Qed.
 
 Lemma is_empty_2 : forall s, is_empty s = true -> Empty s.
@@ -719,7 +720,7 @@ Qed.
 
 Lemma singleton_2 : forall x y, X.eq x y -> In y (singleton x).
 Proof.
- unfold singleton; auto.
+ unfold singleton; auto with *.
 Qed.
 
 Lemma singleton_bst : forall x : elt, bst (singleton x).
@@ -743,7 +744,7 @@ Lemma create_bst :
 Proof.
  unfold create; auto.
 Qed.
-Hint Resolve create_bst.
+Hint Resolve create_bst : core.
 
 Lemma bal_in : forall l x r y,
  In y (bal l x r) <-> X.eq y x \/ In y l \/ In y r.
@@ -757,10 +758,10 @@ Lemma bal_bst : forall l x r, bst l -> bst r ->
 Proof.
  intros l x r; functional induction bal l x r; intros;
  inv bst; repeat apply create_bst; auto; unfold create;
- (apply lt_tree_node || apply gt_tree_node); auto;
- (eapply lt_tree_trans || eapply gt_tree_trans); eauto.
+ (apply lt_tree_node || apply gt_tree_node); auto with *;
+ (eapply lt_tree_trans || eapply gt_tree_trans); eauto with *.
 Qed.
-Hint Resolve bal_bst.
+Hint Resolve bal_bst : core.
 
 
 
@@ -771,7 +772,7 @@ Lemma add_in : forall s x y,
 Proof.
  intros s x; functional induction (add x s); auto; intros;
  try rewrite bal_in, IHt; intuition_in.
- eapply In_1; eauto.
+ eapply In_1; eauto with *.
 Qed.
 
 Lemma add_bst : forall s x, bst s -> bst (add x s).
@@ -783,16 +784,16 @@ Proof.
  intros.
  rewrite add_in in H.
  intuition.
- eauto.
+ eauto with *.
  inv bst; auto using bal_bst.
  (* gt_tree -> gt_tree (add ...) *)
  red; red in H3.
  intros.
  rewrite add_in in H.
  intuition.
- apply MX.lt_eq with x; auto.
+ apply MX.lt_eq with x; auto with *.
 Qed.
-Hint Resolve add_bst.
+Hint Resolve add_bst : core.
 
 
 
@@ -834,10 +835,10 @@ Lemma join_bst : forall l x r, bst l -> bst r ->
 Proof.
  join_tac; auto; inv bst; apply bal_bst; auto;
  clear Hrl Hlr; intro; intros; rewrite join_in in *.
- intuition; [ apply MX.lt_eq with x | ]; eauto.
- intuition; [ apply MX.eq_lt with x | ]; eauto.
+ intuition; [ apply MX.lt_eq with x | ]; eauto with *.
+ intuition; [ apply MX.eq_lt with x | ]; eauto with *.
 Qed.
-Hint Resolve join_bst.
+Hint Resolve join_bst : core.
 
 
 
@@ -874,9 +875,9 @@ Proof.
  specialize IHp with (1:=H0); rewrite e0 in IHp; simpl in IHp.
  intro y; rewrite bal_in; intuition;
   specialize (H2 m); rewrite remove_min_in, e0 in H2; simpl in H2;
-  [ apply MX.lt_eq with x | ]; eauto.
+  [ apply MX.lt_eq with x | ]; eauto with *.
 Qed.
-Hint Resolve remove_min_bst remove_min_gt_tree.
+Hint Resolve remove_min_bst remove_min_gt_tree : core.
 
 
 
@@ -902,10 +903,10 @@ Proof.
  change s2' with ((s2',m)#1); rewrite <-e1; eauto.
  intros y Hy.
  apply H1; auto.
- rewrite remove_min_in, e1; simpl; auto.
+ rewrite remove_min_in, e1; simpl; auto with *.
  change (gt_tree (s2',m)#2 (s2',m)#1); rewrite <-e1; eauto.
 Qed.
-Hint Resolve merge_bst.
+Hint Resolve merge_bst : core.
 
 
 
@@ -918,7 +919,7 @@ Proof.
  intuition_in.
  rewrite bal_in, IHt; clear e0 IHt; intuition; [order|order|intuition_in].
  rewrite merge_in; clear e0; intuition; [order|order|intuition_in].
- elim H4; eauto.
+ elim H4; eauto with *.
  rewrite bal_in, IHt; clear e0 IHt; intuition; [order|order|intuition_in].
 Qed.
 
@@ -930,19 +931,19 @@ Proof.
  apply bal_bst; auto.
  intro z; rewrite remove_in; auto; destruct 1; eauto.
  (* EQ *)
- eauto.
+ eauto with *.
  (* GT *)
  apply bal_bst; auto.
  intro z; rewrite remove_in; auto; destruct 1; eauto.
 Qed.
-Hint Resolve remove_bst.
+Hint Resolve remove_bst : core.
 
 
 (** * Minimum element *)
 
 Lemma min_elt_1 : forall s x, min_elt s = Some x -> In x s.
 Proof.
- intro s; functional induction (min_elt s); auto; inversion 1; auto.
+ intro s; functional induction (min_elt s); auto; inversion 1; auto with *.
 Qed.
 
 Lemma min_elt_2 : forall s x y, bst s ->
@@ -953,17 +954,17 @@ Proof.
  inversion_clear 2.
  inversion_clear 1.
  inversion 1; subst.
- inversion_clear 1; auto.
+ inversion_clear 1; auto with *.
  inversion_clear H5.
  inversion_clear 1.
  simpl.
  destruct l1.
  inversion 1; subst.
- assert (X.lt x y) by (apply H2; auto).
+ assert (X.lt x y) by (apply H2; auto with *).
  inversion_clear 1; auto; order.
- assert (X.lt x1 y) by auto.
+ assert (X.lt x1 y) by auto with *.
  inversion_clear 2; auto;
-   (assert (~ X.lt x1 x) by auto); order.
+   (assert (~ X.lt x1 x) by auto with *); order.
 Qed.
 
 Lemma min_elt_3 : forall s, min_elt s = None -> Empty s.
@@ -972,7 +973,7 @@ Proof.
  red; red; inversion 2.
  inversion 1.
  intro H0.
- destruct (IHo H0 _x2); auto.
+ destruct (IHo H0 _x2); auto with *.
 Qed.
 
 
@@ -981,7 +982,7 @@ Qed.
 
 Lemma max_elt_1 : forall s x, max_elt s = Some x -> In x s.
 Proof.
- intro s; functional induction (max_elt s); auto; inversion 1; auto.
+ intro s; functional induction (max_elt s); auto; inversion 1; auto with *.
 Qed.
 
 Lemma max_elt_2 : forall s x y, bst s ->
@@ -992,12 +993,12 @@ Proof.
  inversion_clear 2.
  inversion_clear 1.
  inversion 1; subst.
- inversion_clear 1; auto.
+ inversion_clear 1; auto with *.
  inversion_clear H5.
  inversion_clear 1.
- assert (X.lt y x1) by auto.
+ assert (X.lt y x1) by auto with *.
  inversion_clear 2; auto;
-  (assert (~ X.lt x x1) by auto); order.
+  (assert (~ X.lt x x1) by auto with *); order.
 Qed.
 
 Lemma max_elt_3 : forall s, max_elt s = None -> Empty s.
@@ -1005,7 +1006,7 @@ Proof.
  intro s; functional induction (max_elt s).
  red; auto.
  inversion 1.
- intros H0; destruct (IHo H0 _x2); auto.
+ intros H0; destruct (IHo H0 _x2); auto with *.
 Qed.
 
 
@@ -1059,10 +1060,10 @@ Proof.
  change (bst (s2',m)#1); rewrite <-e1; eauto.
  intros y Hy.
  apply H1; auto.
- rewrite remove_min_in, e1; simpl; auto.
- change (gt_tree (s2',m)#2 (s2',m)#1); rewrite <-e1; eauto.
+ now rewrite remove_min_in, e1; simpl; auto with *.
+ change (gt_tree (s2',m)#2 (s2',m)#1); rewrite <-e1; eauto with *.
 Qed.
-Hint Resolve concat_bst.
+Hint Resolve concat_bst : core.
 
 
 (** * Splitting *)
@@ -1134,7 +1135,7 @@ Proof.
  (* bst join *)
  apply join_bst; auto; intro y; [rewrite IHi1|rewrite IHi2]; intuition. (* In join *)
  rewrite join_in, IHi1, IHi2, H5, H6; intuition_in.
- apply In_1 with x1; auto.
+ apply In_1 with x1; auto with *.
  (* bst concat *)
  apply concat_bst; auto; intros y1 y2; rewrite IHi1, IHi2; intuition; order.
  (* In concat *)
@@ -1178,9 +1179,9 @@ Proof.
  (* In concat *)
  rewrite concat_in, IHi1, IHi2, H5, H6; intuition_in.
  elim H13.
- apply In_1 with x1; auto.
+ apply In_1 with x1; auto with *.
  (* bst join *)
- apply join_bst; auto; intro y; [rewrite IHi1|rewrite IHi2]; intuition. (* In join *)
+ apply join_bst; auto with *; intro y; [rewrite IHi1|rewrite IHi2]; intuition. (* In join *)
  rewrite join_in, IHi1, IHi2, H5, H6; auto.
  assert (~In x1 s2) by (rewrite <- H7; auto).
  intuition_in.
@@ -1264,7 +1265,7 @@ Proof.
  intros.
  inversion_clear H.
  order.
- destruct (elements_aux_in r acc x); intuition eauto.
+ destruct (elements_aux_in r acc x); intuition eauto with *.
 Qed.
 
 Lemma elements_sort : forall s : tree, bst s -> sort X.lt (elements s).
@@ -1272,11 +1273,11 @@ Proof.
  intros; unfold elements; apply elements_aux_sort; auto.
  intros; inversion H0.
 Qed.
-Hint Resolve elements_sort.
+Hint Resolve elements_sort : core.
 
 Lemma elements_nodup : forall s : tree, bst s -> NoDupA X.eq (elements s).
 Proof.
- auto.
+ auto with *.
 Qed.
 
 Lemma elements_aux_cardinal :
@@ -1464,7 +1465,7 @@ Proof.
  rewrite IHs1; try red; auto.
  rewrite IHs2; try red; auto.
  generalize (H0 t).
- destruct (f t); simpl; auto.
+ destruct (f t); simpl; auto with *.
 Qed.
 
 Lemma for_all_2 : forall s, compat_bool X.eq f ->
@@ -1497,7 +1498,7 @@ Proof.
  discriminate.
  destruct (orb_true_elim _ _ H0) as [H1|H1].
  destruct (orb_true_elim _ _ H1) as [H2|H2].
- exists t; auto.
+ now exists t; auto with *.
  destruct (IHs1 H H2); auto; exists x; intuition.
  destruct (IHs2 H H1); auto; exists x; intuition.
 Qed.
@@ -1510,7 +1511,7 @@ End F.
 
 Definition fold' (A : Type) (f : elt -> A -> A)(s : tree) :=
   L.fold f (elements s).
-Implicit Arguments fold' [A].
+Arguments fold' [A].
 
 Lemma fold_equiv_aux :
  forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
@@ -1556,7 +1557,7 @@ Lemma subsetl_12 : forall subset_l1 l1 x1 h1 s2,
 Proof.
  induction s2 as [|l2 IHl2 x2 r2 IHr2 h2]; simpl; intros.
  unfold Subset; intuition; try discriminate.
- assert (H': In x1 Leaf) by auto; inversion H'.
+ assert (H': In x1 Leaf) by auto with *; inversion H'.
  inversion_clear H0.
  specialize (IHl2 H H2 H1).
  specialize (IHr2 H H3 H1).
@@ -1575,9 +1576,9 @@ Proof.
 
  rewrite <-andb_lazy_alt, andb_true_iff, H1 by auto; clear H1 IHl2 IHr2.
  unfold Subset. intuition_in.
- assert (H':=mem_2 H6); apply In_1 with x1; auto.
+ now assert (H':=mem_2 H6); apply In_1 with x1; auto with *.
  apply mem_1; auto.
- assert (In x1 (Node l2 x2 r2 h2)) by auto; intuition_in; order.
+ assert (In x1 (Node l2 x2 r2 h2)) by auto with *; intuition_in; order.
 Qed.
 
 
@@ -1588,7 +1589,7 @@ Lemma subsetr_12 : forall subset_r1 r1 x1 h1 s2,
 Proof.
  induction s2 as [|l2 IHl2 x2 r2 IHr2 h2]; simpl; intros.
  unfold Subset; intuition; try discriminate.
- assert (H': In x1 Leaf) by auto; inversion H'.
+ assert (H': In x1 Leaf) by auto with *; inversion H'.
  inversion_clear H0.
  specialize (IHl2 H H2 H1).
  specialize (IHr2 H H3 H1).
@@ -1597,9 +1598,9 @@ Proof.
 
  rewrite <-andb_lazy_alt, andb_true_iff, H1 by auto;  clear H1 IHl2 IHr2.
  unfold Subset. intuition_in.
- assert (H':=mem_2 H1); apply In_1 with x1; auto.
+ now assert (H':=mem_2 H1); apply In_1 with x1; auto with *.
  apply mem_1; auto.
- assert (In x1 (Node l2 x2 r2 h2)) by auto; intuition_in; order.
+ assert (In x1 (Node l2 x2 r2 h2)) by auto with *; intuition_in; order.
 
  rewrite H1 by auto; clear H1 IHl2 IHr2.
  unfold Subset. intuition_in.
@@ -1620,7 +1621,7 @@ Proof.
  unfold Subset; intuition_in.
  destruct s2 as [|l2 x2 r2 h2]; simpl; intros.
  unfold Subset; intuition_in; try discriminate.
- assert (H': In x1 Leaf) by auto; inversion H'.
+ assert (H': In x1 Leaf) by auto with *; inversion H'.
  inv bst.
  destruct X.compare.
 
@@ -1683,7 +1684,7 @@ Lemma L_eq_eq :
 Proof.
  unfold Equal, L.eq, L.Equal; intros; do 2 rewrite <-elements_in; auto.
 Qed.
-Hint Resolve eq_L_eq L_eq_eq.
+Hint Resolve eq_L_eq L_eq_eq : core.
 
 Definition lt_trans (s s' s'' : t) (h : lt s s')
   (h' : lt s' s'') : lt s s'' := L.lt_trans h h'.
@@ -1705,7 +1706,7 @@ Proof.
  inversion_clear H1; generalize (H0 a); clear H0; intuition.
  apply InA_eqA with y; eauto with *.
 Qed.
-Hint Resolve L_eq_cons.
+Hint Resolve L_eq_cons : core.
 
 
 (** * A new comparison algorithm suggested by Xavier Leroy *)
@@ -1744,9 +1745,9 @@ Definition Cmp c :=
 Lemma cons_Cmp : forall c x1 x2 l1 l2, X.eq x1 x2 ->
  Cmp c l1 l2 -> Cmp c (x1::l1) (x2::l2).
 Proof.
- destruct c; simpl; auto.
+ destruct c; simpl; auto with *.
 Qed.
-Hint Resolve cons_Cmp.
+Hint Resolve cons_Cmp : core.
 
 Lemma compare_end_Cmp :
  forall e2, Cmp (compare_end e2) nil (flatten_e e2).
@@ -1893,7 +1894,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Variable s s' s'': t.
  Variable x y : elt.
 
- Hint Resolve is_bst.
+ Hint Resolve is_bst : core.
 
  Lemma mem_1 : In x s -> mem x s = true.
  Proof. exact (mem_1 (is_bst s)). Qed.
@@ -1925,7 +1926,7 @@ Module IntMake (I:Int)(X: OrderedType) <: S with Module E := X.
  Lemma add_2 : In y s -> In y (add x s).
  Proof. wrap add add_in. Qed.
  Lemma add_3 : ~ E.eq x y -> In y (add x s) -> In y s.
- Proof. wrap add add_in. elim H; auto. Qed.
+ Proof. wrap add add_in. elim H; auto with *. Qed.
 
  Lemma remove_1 : E.eq x y -> ~ In y (remove x s).
  Proof. wrap remove remove_in. Qed.

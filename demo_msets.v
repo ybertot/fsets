@@ -62,24 +62,30 @@ End OrderedType.
 Module Z_as_OT <: OrderedType.
 
   Definition t := Z.
-  Definition compare := Zcompare.
+  Definition compare := Z.compare.
 
   Definition eq := @eq Z.
-  Definition lt := Zlt.
+  Definition lt := Z.lt.
   Instance eq_equiv : Equivalence eq := {}.
   Instance lt_strorder : StrictOrder lt := {}.
   Instance lt_compat : Proper (eq==>eq==>iff) lt.
   Proof. intros x x' Hx y y' Hy; rewrite Hx, Hy; split; auto. Qed.
   Lemma compare_spec : forall x y, CompSpec eq lt x y (compare x y).
-  Proof. exact Zcompare_spec. Qed.
+  Proof. exact Z.compare_spec. Qed.
 
   Definition eq_dec : forall x y, { eq x y }+{ ~eq x y }.
-  Proof. exact Z_eq_dec. Qed.
+  Proof. exact Z.eq_dec. Qed.
 
 End Z_as_OT.
 (* /excerpt *)
 
+Set Warnings "-extraction-inside-module".
+Set Warnings "-extraction-opaque-accessed".
+
 Extraction Z_as_OT.
+
+Set Warnings "+extraction-inside-module".
+Set Warnings "+extraction-opaque-accessed".
 
 End THIS_ALREADY_EXISTS_IN_STDLIB_SO_LETS_NOT_INTERFERE.
 
@@ -322,10 +328,10 @@ Module Type Int.
 
  Notation "x == y" := (i2z x = i2z y)
    (at level 70, y at next level, no associativity) : Int_scope.
- Notation "x <= y" := (Zle (i2z x) (i2z y)): Int_scope.
- Notation "x < y" := (Zlt (i2z x) (i2z y)) : Int_scope.
- Notation "x >= y" := (Zge (i2z x) (i2z y)) : Int_scope.
- Notation "x > y" := (Zgt (i2z x) (i2z y)): Int_scope.
+ Notation "x <= y" := (Z.le (i2z x) (i2z y)): Int_scope.
+ Notation "x < y" := (Z.lt (i2z x) (i2z y)) : Int_scope.
+ Notation "x >= y" := (Z.ge (i2z x) (i2z y)) : Int_scope.
+ Notation "x > y" := (Z.gt (i2z x) (i2z y)): Int_scope.
 
  (* We also need some decidability facts. *) 
 
@@ -349,7 +355,7 @@ Module Type Int.
  Axiom i2z_opp : forall n, i2z (opp n) = -i2z n.
  Axiom i2z_minus : forall n p, i2z (minus n p) = i2z n - i2z p.
  Axiom i2z_mult : forall n p, i2z (mult n p) = i2z n * i2z p.
- Axiom i2z_max : forall n p, i2z (max n p) = Zmax (i2z n) (i2z p).
+ Axiom i2z_max : forall n p, i2z (max n p) = Z.max (i2z n) (i2z p).
 
 End Int.
 (*/excerpt*)

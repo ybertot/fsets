@@ -22,7 +22,8 @@
    structural recursive code.
 *)
 
-Require Import ZArith Int ROmega MSetInterface MSetAVL NPeano.
+Require Import ZArith Int MSetInterface MSetAVL NPeano.
+Require Import Lia.
 Require Import FunInd.
 
 Module AvlProofs (Import I:Int)(X:OrderedType).
@@ -31,7 +32,7 @@ Module Import II := MoreInt I.
 Local Open Scope pair_scope.
 Local Open Scope Int_scope.
 
-Ltac omega_max := i2z_refl; romega with Z.
+Ltac omega_max := i2z_refl; lia.
 Ltac mysubst :=
  match goal with
    | E : _=_ |- _ => rewrite E in *; clear E; mysubst
@@ -57,7 +58,7 @@ Instance avl_Avl s (Hs : avl s) : Avl s := Hs.
 
 (** * Automation and dedicated tactics *)
 
-Local Hint Constructors avl.
+Local Hint Constructors avl : core.
 
 (** A tactic for cleaning hypothesis after use of functional induction. *)
 
@@ -120,7 +121,7 @@ Lemma avl_node :
 Proof.
   auto_tc.
 Qed.
-Hint Resolve avl_node.
+Hint Resolve avl_node : core.
 
 (** * AVL trees have indeed logarithmic depth *)
 
@@ -779,12 +780,12 @@ Module Import Raw := AvlProofs I X.
 Import II.
 Local Open Scope pair_scope.
 Local Open Scope nat_scope.
-Local Hint Resolve MX.eq_refl MX.eq_trans MX.lt_trans @ok.
-Local Hint Immediate MX.eq_sym.
-Local Hint Unfold In lt_tree gt_tree.
-Local Hint Constructors InT bst.
-Local Hint Unfold Ok.
-Local Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node.
+Local Hint Resolve MX.eq_refl MX.eq_trans MX.lt_trans @ok : core.
+Local Hint Immediate MX.eq_sym : core.
+Local Hint Unfold In lt_tree gt_tree : core.
+Local Hint Constructors InT bst : core.
+Local Hint Unfold Ok : core.
+Local Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node : core.
 
 Ltac avl_nn' h :=
   let t := type of h in
@@ -799,14 +800,14 @@ Lemma bal_cardinal : forall l x r,
  cardinal (bal l x r) = S (cardinal l + cardinal r).
 Proof.
  intros l x r; functional induction bal l x r; intros; clearf;
- simpl; auto with arith; romega with *.
+ simpl; auto with arith; lia.
 Qed.
 
 Lemma add_cardinal : forall x s,
  cardinal (add x s) <= S (cardinal s).
 Proof.
  induct s x; simpl; auto with arith;
- rewrite bal_cardinal; romega with *.
+ rewrite bal_cardinal; lia.
 Qed.
 
 Lemma join_cardinal : forall l x r,
@@ -817,34 +818,34 @@ Proof.
  - simpl; destruct X.compare; simpl.
    * auto with arith.
    * generalize (bal_cardinal (add x ll) lx lr) (add_cardinal x ll);
-     romega with *.
+     lia.
    * generalize (bal_cardinal ll lx (add x lr)) (add_cardinal x lr);
-     romega with *.
+     lia.
  - generalize (bal_cardinal ll lx (join lr x (Node rh rl rx rr)))
-  (Hlr x (Node rh rl rx rr)); simpl; romega with *.
+  (Hlr x (Node rh rl rx rr)); simpl; lia.
  - simpl (S _) in *; generalize (bal_cardinal (join (Node lh ll lx lr) x rl) rx rr).
-   romega with *.
+   lia.
 Qed.
 
 Lemma split_cardinal_1 : forall x s,
  (cardinal (split x s)#l <= cardinal s)%nat.
 Proof.
  intros x s; functional induction split x s; simpl; auto.
- - romega with *.
+ - lia.
  - rewrite e1 in IHt0; simpl in *.
-   romega with *.
+   lia.
  - rewrite e1 in IHt0; simpl in *.
-   generalize (@join_cardinal l y rl); romega with *.
+   generalize (@join_cardinal l y rl); lia.
 Qed.
 
 Lemma split_cardinal_2 : forall x s,
  (cardinal (split x s)#r <= cardinal s)%nat.
 Proof.
  intros x s; functional induction split x s; simpl; auto.
- - romega with *.
+ - lia.
  - rewrite e1 in IHt0; simpl in *.
-   generalize (@join_cardinal rl y r); romega with *.
- - rewrite e1 in IHt0; simpl in *; romega with *.
+   generalize (@join_cardinal rl y r); lia.
+ - rewrite e1 in IHt0; simpl in *; lia.
 Qed.
 
 (** * [ocaml_union], an union faithful to the original ocaml code *)
@@ -855,7 +856,7 @@ Ltac ocaml_union_tac :=
  intros; unfold cardinal2; simpl fst in *; simpl snd in *;
  match goal with H: split ?x ?s = _ |- _ =>
   generalize (split_cardinal_1 x s) (split_cardinal_2 x s);
-  rewrite H; simpl; romega with *
+  rewrite H; simpl; lia
  end.
 
 Function ocaml_union (s : t * t) { measure cardinal2 s } : t  :=
@@ -982,12 +983,12 @@ Function ocaml_subset (s:t*t) { measure cardinal2 s } : bool :=
  end.
 
 Proof.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
- intros; unfold cardinal2; simpl; abstract romega with *.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
+ intros; unfold cardinal2; simpl; abstract lia.
 Defined.
 
 Ltac ocaml_subset_tac :=
@@ -1062,13 +1063,13 @@ Function ocaml_compare_aux
 
 Proof.
 intros; unfold cardinal_e_2; simpl;
-abstract (do 2 rewrite cons_cardinal_e; romega with * ).
+abstract (do 2 rewrite cons_cardinal_e; lia ).
 Defined.
 
 Definition ocaml_compare s1 s2 :=
  ocaml_compare_aux (cons s1 End, cons s2 End).
 
-Local Hint Constructors L.lt_list.
+Local Hint Constructors L.lt_list : core.
 
 Lemma ocaml_compare_aux_Cmp : forall e,
  Cmp (ocaml_compare_aux e) (flatten_e e#1) (flatten_e e#2).

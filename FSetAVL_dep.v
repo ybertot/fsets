@@ -25,7 +25,6 @@ Open Scope Z_scope.
 
 Global Set Asymmetric Patterns.
 Set Firstorder Depth 3.
-Unset Standard Proposition Elimination Names.
 
 Module Make (X: OrderedType) : Sdep with Module E := X.
 
@@ -55,7 +54,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
         forall (l r : tree) (h : Z) (y : elt),
         In_tree x r -> In_tree x (Node l y r h).
 
-  Hint Constructors In_tree.
+  Hint Constructors In_tree : core.
 
   (** [In_tree] is compatible with [X.eq] *)
 
@@ -64,7 +63,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     simple induction s; simpl in |- *; intuition.
     inversion_clear H0.
-    inversion_clear H2; intuition eauto.
+    inversion_clear H2; intuition eauto with *.
   Qed.
 
   (** [In_tree] is height-insensitive *)
@@ -86,7 +85,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Definition gt_tree (x : elt) (s : tree) :=
     forall y : elt, In_tree y s -> X.lt x y.
 
-  Hint Unfold lt_tree gt_tree.
+  Hint Unfold lt_tree gt_tree : core.
 
   (** Results about [lt_tree] and [gt_tree] *)
 
@@ -115,23 +114,23 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     unfold gt_tree in |- *; intuition.
     inversion_clear H2; intuition.
-    apply ME.lt_eq with y; auto.
+    apply ME.lt_eq with y; auto with *.
   Qed.
 
-  Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node.
+  Hint Resolve lt_leaf gt_leaf lt_tree_node gt_tree_node : core.
 
   Lemma lt_node_lt :
    forall (x y : elt) (l r : tree) (h : Z),
    lt_tree x (Node l y r h) -> E.lt y x.
   Proof.
-    intros; apply H; auto.
+    intros; apply H; auto with *.
   Qed.
 
   Lemma gt_node_gt :
    forall (x y : elt) (l r : tree) (h : Z),
    gt_tree x (Node l y r h) -> E.lt x y.
   Proof.
-    intros; apply H; auto.
+    intros; apply H; auto with *.
   Qed.
 
   Lemma lt_left :
@@ -166,29 +165,29 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
    forall (x : elt) (t : tree), lt_tree x t -> ~ In_tree x t.
   Proof.
     unfold lt_tree in |- *; intros; red in |- *; intros.
-    generalize (H x H0); intro; absurd (X.lt x x); auto.
+    generalize (H x H0); intro; absurd (X.lt x x); auto with *.
   Qed.
 
   Lemma lt_tree_trans :
    forall x y : elt, X.lt x y -> forall t : tree, lt_tree x t -> lt_tree y t.
   Proof.
-    unfold lt_tree in |- *; eauto.
+    unfold lt_tree in |- *; eauto with *.
   Qed.
 
   Lemma gt_tree_not_in :
    forall (x : elt) (t : tree), gt_tree x t -> ~ In_tree x t.
   Proof.
     unfold gt_tree in |- *; intros; red in |- *; intros.
-    generalize (H x H0); intro; absurd (X.lt x x); auto.
-  Qed.
+    generalize (H x H0); intro; absurd (X.lt x x); auto with *.
+Qed.
 
   Lemma gt_tree_trans :
    forall x y : elt, X.lt y x -> forall t : tree, gt_tree x t -> gt_tree y t.
   Proof.
-    unfold gt_tree in |- *; eauto.
+    unfold gt_tree in |- *; eauto with *.
   Qed.
 
-  Hint Resolve lt_tree_not_in lt_tree_trans gt_tree_not_in gt_tree_trans.
+  Hint Resolve lt_tree_not_in lt_tree_trans gt_tree_not_in gt_tree_trans : core.
 
   (** [bst t] : [t] is a binary search tree *)
 
@@ -198,7 +197,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
         forall (x : elt) (l r : tree) (h : Z),
         bst l -> bst r -> lt_tree x l -> gt_tree x r -> bst (Node l x r h).
 
-  Hint Constructors bst.
+  Hint Constructors bst : core.
 
   (** Results about [bst] *)
  
@@ -214,8 +213,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros x l r h H; inversion H; auto.
   Qed.
 
-  Implicit Arguments bst_left. Implicit Arguments bst_right.
-  Hint Resolve bst_left bst_right.
+  Arguments bst_left : default implicits.
+  Arguments bst_right : default implicits.
+  Hint Resolve bst_left bst_right : core.
 
   Lemma bst_height :
    forall (h h' : Z) (x : elt) (l r : tree),
@@ -223,7 +223,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     inversion 1; auto.
   Qed.
-  Hint Resolve bst_height.
+  Hint Resolve bst_height : core.
 
   (** * AVL trees *)
 
@@ -257,7 +257,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
         -2 <= height l - height r <= 2 ->
         height_of_node l r h -> avl (Node l x r h).
 
-  Hint Constructors avl.
+  Hint Constructors avl : core.
 
  (** Results about [avl] *)
 
@@ -273,8 +273,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros x l r c H; inversion_clear H; intuition.
   Qed.
 
-  Implicit Arguments avl_left. Implicit Arguments avl_right.
-  Hint Resolve avl_left avl_right.
+  Arguments avl_left : default implicits.
+  Arguments avl_right : default implicits.
+  Hint Resolve avl_left avl_right : core.
 
   Ltac MaxCase x y :=
     unfold max in |- *; case (Z_lt_ge_dec x y); simpl in |- *.
@@ -289,7 +290,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros; constructor; unfold height_of_node in |- *;
      MaxCase (height l) (height r); intuition.
   Qed.
-  Hint Resolve avl_node.
+  Hint Resolve avl_node : core.
 
   (** The [AVL] tactic *)
 
@@ -310,8 +311,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion 1; intuition.
   Qed.
 
-  Implicit Arguments height_non_negative. 
-  Implicit Arguments height_equation.
+  Arguments height_non_negative : default implicits.
+  Arguments height_equation : default implicits.
 
   (** If [h] is a proof of [avl (Node l x r h)], then tactic
       [AVL h] is adding all information about [h] to the context *)
@@ -335,13 +336,13 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     simple destruct s; auto.
   Qed.
-  Hint Resolve t_is_bst.
+  Hint Resolve t_is_bst : core.
 
   Lemma t_is_avl : forall s : t, avl s.
   Proof.
     simple destruct s; auto.
   Qed.
-  Hint Resolve t_is_avl.
+  Hint Resolve t_is_avl : core.
 
  (** * Logical appartness *)
 
@@ -364,10 +365,10 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     induction  the_tree0
      as [| the_tree0_1 Hrecthe_tree0_1 t0 the_tree0_0 Hrecthe_tree0_0 z];
      inversion_clear H0; intuition.
-    apply IsRoot; eauto.
+    apply IsRoot; eauto with *.
   Qed.
 
-  Hint Resolve eq_In.
+  Hint Resolve eq_In : core.
 
   (** * Empty set *)
 
@@ -391,7 +392,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      simpl in |- *; intros.
     left; auto.
     right; intuition.
-    apply (H t1); auto.
+    apply (H t1); auto with *.
   Qed.
 
   (** * Appartness *)
@@ -415,7 +416,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     left; auto.
     right; intro.
     inversion H1; intuition.
-    absurd (X.eq x t1); auto.
+    now absurd (X.eq x t1); auto with *.
     inversion Hs0.
     absurd (In_tree x t2); eauto.
     (* eq x t1 *)
@@ -426,7 +427,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     left; auto.
     right; intro.
     inversion H1; intuition.
-    absurd (X.eq t1 x); auto.
+    now absurd (X.eq t1 x); auto with *.
     inversion Hs0.
     absurd (In_tree x t0); eauto.
   Qed.
@@ -453,7 +454,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intro x;
      exists (t_intro (singleton_tree x) (singleton_bst x) (singleton_avl x)).
     unfold In, singleton_tree in |- *; simpl in |- *; intuition.
-    inversion_clear H; auto; inversion H0.
+    inversion_clear H; auto with *; inversion H0.
   Qed.
 
   (** * Helper functions *)
@@ -538,8 +539,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear bst_l; trivial.     
     inversion_clear bst_l; trivial. 
     clear H2; intro; intro; intuition; generalize (H5 y); intuition.
-    apply ME.lt_eq with x; auto. 
-    apply E.lt_trans with x; auto.
+    now apply ME.lt_eq with x; auto with *.
+    now apply E.lt_trans with x; auto with *.
     clear H5.
     generalize z H H0; clear z H H0; simpl in (value of hl);
      unfold hl, hr in |- *.
@@ -586,12 +587,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     case (create l' t3 r'); auto.
     inversion_clear bst_l; inversion_clear H0.
     intro; intro; generalize (l'_h2 y); clear l'_h2; intuition.
-    apply ME.eq_lt with t1; auto.
-    apply E.lt_trans with t1; [ apply H1 | apply H2 ]; auto.
+    now apply ME.eq_lt with t1; auto with *.
+    now apply E.lt_trans with t1; [ apply H1 | apply H2 ]; auto with *.
     inversion_clear bst_l; inversion_clear H0.
     intro; intro; generalize (r'_h2 y); clear r'_h2; intuition.
-    apply ME.lt_eq with x; auto.
-    apply E.lt_trans with x; [ apply Hl | apply Hr ]; auto.
+    now apply ME.lt_eq with x; auto with *.
+    now apply E.lt_trans with x; [ apply Hl | apply Hr ]; auto with *.
     generalize z Hh; clear z Hh; simpl in (value of hl);
      unfold hl, hr in |- *.
     simpl in z1; AVL avl_l; simpl in H.
@@ -635,8 +636,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear bst_r; trivial. 
     inversion_clear avl_r; trivial.
     clear H2; intro; intro; intuition; generalize (H5 y); intuition.
-    apply ME.eq_lt with x; auto. 
-    apply E.lt_trans with x; [ apply Hl | apply Hr ]; auto.
+    now apply ME.eq_lt with x; auto with *. 
+    now apply E.lt_trans with x; [ apply Hl | apply Hr ]; auto with *.
     inversion_clear bst_r; auto. 
     inversion_clear bst_r; auto. 
     clear H5.
@@ -684,12 +685,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     case (create l' t3 r'); auto.
     inversion_clear bst_r; inversion_clear H.
     intro; intro; generalize (l'_h2 y); clear l'_h2; intuition.
-    apply ME.eq_lt with x; auto.
-    apply E.lt_trans with x; [ apply Hl | apply Hr ]; auto.
+    now apply ME.eq_lt with x; auto with *.
+    now apply E.lt_trans with x; [ apply Hl | apply Hr ]; auto with *.
     inversion_clear bst_r; inversion_clear H.
     intro; intro; generalize (r'_h2 y); clear r'_h2; intuition.
-    apply ME.lt_eq with t1; auto.
-    apply E.lt_trans with t1; [ apply H1 | apply H2 ]; auto.
+    now apply ME.lt_eq with t1; auto with *.
+    now apply E.lt_trans with t1; [ apply H1 | apply H2 ]; auto with *.
     generalize z z0 Hh; clear z z0 Hh; simpl in (value of hr);
      unfold hl, hr in |- *.
     simpl in z2; AVL avl_r; simpl in H.
@@ -757,7 +758,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; trivial.
     inversion_clear H2; trivial.
     intro; intro; generalize (H5 y); clear H5; intuition.
-    apply ME.eq_lt with x; auto.
+    now apply ME.eq_lt with x; auto with *.
     inversion_clear H1; auto.
     inversion_clear H1; auto.
     clear H5; AVL H2; AVL H3; intuition.
@@ -771,7 +772,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* x = t1 *)
     clear H H0.
     exists (Node t0 t1 t2 z); simpl in |- *; intuition.
-    apply IsRoot; apply E.eq_trans with x; auto.
+    now apply IsRoot; apply E.eq_trans with x; auto with *.
     (* x > t1 *)
     clear H; case H0; clear H0.
     inversion_clear H1; trivial.
@@ -860,9 +861,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H2; trivial.
     inversion_clear H1; trivial.
     clear H0; intro; intro; generalize (H9 y); clear H9; intuition.
-    apply ME.lt_eq with x; auto.
-    inversion_clear H1; auto.
-    apply X.lt_trans with x; auto.
+    now apply ME.lt_eq with x; auto with *.
+    now inversion_clear H1; auto with *.
+    now apply X.lt_trans with x; auto with *.
     clear H9; AVL H2; intuition omega.
     intro s''; unfold height_of_node in |- *; simpl in |- *; intuition.
     exists s''; do 3 (split; trivial).
@@ -882,8 +883,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H4; trivial.
     inversion_clear H3; trivial.
     clear H0; intro; intro; generalize (H9 y); clear H9; intuition.
-    apply ME.eq_lt with x; auto.
-    apply X.lt_trans with x; auto.
+    now apply ME.eq_lt with x; auto with *.
+    now apply X.lt_trans with x; auto with *.
     inversion_clear H3; auto.
     clear H9; AVL H4; intuition omega.
     intro s''; unfold height_of_node in |- *; simpl in |- *; intuition.
@@ -1004,7 +1005,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     clear H5 H7 H11; AVL H2; AVL H4; AVL H9; omega.
     clear H0 H10 H8; intuition.
     generalize (H5 y) (H7 y) (H11 y); clear H5 H11; intuition.
-    apply ME.eq_lt with t1; auto.
+    apply ME.eq_lt with t1; auto with *.
     generalize (H7 m); inversion_clear H1; intuition.
     apply X.lt_trans with t1; auto.
     inversion_clear H1; apply H18; firstorder.
@@ -1108,11 +1109,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     clear H5 H9; AVL H2; AVL H3; AVL H7; omega.
     clear H0 H8 H6; intuition.
     generalize (H9 y) (H5 y); clear H5 H9; intuition.
-    apply (ME.eq_not_lt (x:=y) (y:=t1)); auto.
-    apply ME.eq_lt with x; auto.
+    apply (ME.eq_not_lt (x:=y) (y:=t1)); auto with *.
+    now apply ME.eq_lt with x; auto with *.
     apply (ME.lt_not_gt (x:=t1) (y:=y)); auto.
-    inversion_clear H1; apply H16; auto.
-    apply ME.eq_lt with x; auto.
+    now inversion_clear H1; apply H16; auto.
+    now apply ME.eq_lt with x; auto with *.
     generalize (H9 y) (H5 y); clear H5 H9; intuition.
     inversion_clear H8; generalize (H9 y) (H5 y); clear H5 H9; intuition.
     (* x = t1 *)
@@ -1129,14 +1130,14 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     clear H5; AVL H2; AVL H3; omega.
     clear H0; intro; generalize (H5 y); clear H5; intuition.
     apply (E.lt_not_eq (x:=y) (y:=t1)); auto.
-    inversion_clear H1; apply H10; auto.
-    apply X.eq_trans with x; auto.
+    now inversion_clear H1; apply H10; auto with *.
+    now apply X.eq_trans with x; auto with *.
     apply (E.lt_not_eq (x:=t1) (y:=y)); auto.
     inversion_clear H1; apply H11; auto.
-    apply X.eq_trans with x; auto.
+    now apply X.eq_trans with x; auto with *.
     inversion_clear H8; intuition.
     absurd (X.eq x y); auto.
-    apply X.eq_trans with t1; auto.
+    now apply X.eq_trans with t1; auto with *.
     (* t1 < x *)
     rename H0 into H2, H into H1; clear X.
     case X0; clear X0.
@@ -1190,9 +1191,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s1 = Leaf *)
     left; exists t0; intuition.
     inversion_clear H.
-    absurd (X.eq x t0); auto.
+    now absurd (X.eq x t0); auto with *.
     inversion H1.
-    inversion_clear Hs; absurd (E.lt x t0); auto.
+    now inversion_clear Hs; absurd (E.lt x t0); auto with *.
     (* s1 = Node c0 t1 t2 t3 *)
     case Hrecs1; clear Hrecs1.
     inversion Hs; auto.
@@ -1202,12 +1203,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (X.lt m t0).
     inversion_clear Hs; auto.
     inversion_clear H1; auto.
-    elim (X.lt_not_eq (x:=x) (y:=t0)); [ eauto | auto ].
+    now elim (X.lt_not_eq (x:=x) (y:=t0)); [ eauto with *| auto ].
     inversion_clear Hs.
-    elim (ME.lt_not_gt (x:=x) (y:=t0)); [ eauto | auto ].
+    now elim (ME.lt_not_gt (x:=x) (y:=t0)); [ eauto with * | auto ].
     (* non minimum for [s1] => absurd *)
     intro; right; intuition.
-    apply (n t2); auto.
+    now apply (n t2); auto with *.
   Qed.
 
   (** * Maximum element *)
@@ -1227,8 +1228,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* s0 = Leaf *)
     left; exists t0; intuition.
     inversion_clear H.
-    absurd (X.eq x t0); auto.
-    inversion_clear Hs; absurd (E.lt t0 x); auto.
+    now absurd (X.eq x t0); auto with *.
+    inversion_clear Hs; absurd (E.lt t0 x); auto with *.
     inversion H1.
     (* s0 = Node c0 t1 t2 t3 *)
     case Hrecs0; clear Hrecs0.
@@ -1239,12 +1240,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (X.lt t0 m).
     inversion_clear Hs; auto.
     inversion_clear H1; auto.
-    elim (X.lt_not_eq (x:=x) (y:=t0)); [ eauto | auto ].
+    now elim (X.lt_not_eq (x:=x) (y:=t0)); [ eauto with * | auto ].
     inversion_clear Hs.
-    elim (ME.lt_not_gt (x:=t0) (y:=x)); [ eauto | auto ].
+    now elim (ME.lt_not_gt (x:=t0) (y:=x)); [ eauto with *| auto ].
     (* non maximum for [s0] => absurd *)
     intro; right; intuition.
-    apply (n t2); auto.
+    apply (n t2); auto with *.
   Qed.
 
   (** * Any element *)
@@ -1384,7 +1385,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H10; firstorder.
     absurd (X.eq y t1); auto.
     apply E.lt_not_eq; apply X.lt_trans with x; auto.
-    inversion_clear H1; absurd (X.lt y t1); auto.
+    inversion_clear H1; absurd (X.lt y t1); auto with *.
     apply X.lt_trans with x; auto.
     firstorder.
     generalize (s'_y y); clear s'_y; firstorder.
@@ -1392,8 +1393,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply X.lt_trans with t1; inversion_clear H1; firstorder.
     inversion_clear H10; firstorder.
     inversion_clear H8; intuition.
-    absurd (X.eq x t1); auto.
-    absurd (X.lt x t1); inversion_clear H1; auto.
+    now absurd (X.eq x t1); auto with *.
+    now absurd (X.lt x t1); inversion_clear H1; auto with *.
     (* x = t1 *)
     rename H0 into H2, H into H1; clear X X0.
     exists (t0, (true, t2)); simpl in |- *.
@@ -1402,18 +1403,18 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     split. inversion_clear H1; trivial.
     split. inversion_clear H2; trivial.
     inversion_clear H1; firstorder.
-    apply ME.lt_eq with t1; auto.
+    now apply ME.lt_eq with t1; auto with *.
     inversion_clear H1; auto.
     absurd (X.eq y t1); auto.
     apply E.lt_not_eq; apply ME.lt_eq with x; auto.
     absurd (X.lt y x); auto.
-    apply ME.lt_not_gt; apply ME.eq_lt with t1; auto.
+    now apply ME.lt_not_gt; apply ME.eq_lt with t1; auto.
     apply ME.eq_lt with t1; auto.
     inversion_clear H1; auto.
     absurd (X.eq x t1); auto.
     apply E.lt_not_eq; apply ME.lt_eq with y; auto.
     absurd (X.lt x y); auto.
-    apply ME.lt_not_gt; apply ME.lt_eq with t1; auto.
+    now apply ME.lt_not_gt; apply ME.lt_eq with t1; auto with *.
     (* x > t1 *)
     rename H0 into H2, H into H1; clear X.
     case X0; clear X0.
@@ -1429,7 +1430,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     exists (s', (pres, rr)); inversion_clear H1; intuition.
     firstorder.
     generalize (s'_y y); clear s'_y; firstorder.
-    apply ME.eq_lt with t1; auto.
+    now apply ME.eq_lt with t1; auto with *.
     apply X.lt_trans with t1; auto.
     inversion_clear H13; firstorder.
     firstorder.
@@ -1441,8 +1442,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply ME.lt_not_gt; apply X.lt_trans with t1; auto.
     firstorder.
     inversion_clear H1; auto.
-    absurd (X.eq x t1); auto.
-    absurd (X.lt x t1); auto.
+    now absurd (X.eq x t1); auto with *.
+    absurd (X.lt x t1); auto with *.
   Qed.
 
   (** * Intersection
@@ -1504,9 +1505,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply eq_In_tree with t0; auto.
     inversion_clear H18; intuition.
     case (X.compare x t0); intuition.
-    absurd (X.lt t0 x); inversion_clear s1_bst; auto.
+    now absurd (X.lt t0 x); inversion_clear s1_bst; auto with *.
     case (X.compare x t0); intuition.
-    absurd (X.lt x t0); inversion_clear s1_bst; auto.
+    now absurd (X.lt x t0); inversion_clear s1_bst; auto with *.
     (* b = false *)
     case (concat inter_s1_1_l2 inter_s1_0_r2); auto.
     intuition.
@@ -1520,9 +1521,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     discriminate H19.
     inversion_clear H17; intuition.
     case (X.compare x t0); intuition.
-    absurd (X.lt t0 x); inversion_clear s1_bst; auto.
+    now absurd (X.lt t0 x); inversion_clear s1_bst; auto with *.
     case (X.compare x t0); intuition.
-    absurd (X.lt x t0); inversion_clear s1_bst; auto.
+    absurd (X.lt x t0); inversion_clear s1_bst; auto with *.
   Qed.
 
   (** * Difference
@@ -1587,7 +1588,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     clear a H3; generalize (a0 x) (H4 x); clear a0 H4; intuition.
     assert (X.lt t0 x); inversion_clear s1_bst; auto.
     inversion_clear H11; intuition.
-    elim H12; apply eq_In_tree with t0; auto.
+    now elim H12; apply eq_In_tree with t0; auto with *.
     apply H7; clear a0 H4; firstorder.
     apply H10; clear a H3; firstorder.
     (* b = false *)
@@ -1601,7 +1602,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply InLeft; firstorder.
     apply InRight; firstorder.
     generalize (s'_y x); clear s'_y; intuition.
-    assert (false = true). apply H7; apply eq_In_tree with x; auto.
+    assert (false = true). apply H7; apply eq_In_tree with x; auto with *.
     discriminate H12.
     clear a0 H4; generalize (a x) (H3 x); clear a H3; intuition.
     assert (X.lt x t0); inversion_clear s1_bst; auto.
@@ -1635,7 +1636,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     simple induction s; simpl in |- *; intuition.
   Qed.
-  Hint Resolve elements_tree_aux_acc_1.
+  Hint Resolve elements_tree_aux_acc_1 : core.
 
   Lemma elements_tree_aux_1 :
    forall (s : tree) (acc : list elt) (x : elt),
@@ -1652,7 +1653,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Proof.
     unfold elements_tree in |- *; intros; apply elements_tree_aux_1; auto.
   Qed.
-  Hint Resolve elements_tree_1.
+  Hint Resolve elements_tree_1 : core.
 
   Lemma elements_tree_aux_acc_2 :
    forall (s : tree) (acc : list elt) (x : elt),
@@ -1664,7 +1665,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H2; intuition.
     elim (H0 _ _ H3); intuition.
   Qed.
-  Hint Resolve elements_tree_aux_acc_2.
+  Hint Resolve elements_tree_aux_acc_2 : core.
 
   Lemma elements_tree_2 :
    forall (s : tree) (x : elt),
@@ -1674,7 +1675,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     elim (elements_tree_aux_acc_2 _ _ _ H); auto.
     intros; inversion H0.
   Qed.
-  Hint Resolve elements_tree_2.
+  Hint Resolve elements_tree_2 : core.
 
   Lemma elements_tree_aux_sort :
    forall s : tree,
@@ -1699,7 +1700,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply H9; auto.
     intuition.
     inversion_clear H4.
-    apply ME.lt_eq with t1; auto.
+    apply ME.lt_eq with t1; auto with *.
     inversion_clear H1.
     apply H8; auto.
     elim (elements_tree_aux_acc_2 _ _ _ H6); intuition.
@@ -1714,7 +1715,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros; unfold elements_tree in |- *; apply elements_tree_aux_sort; auto.
     intros; inversion H0.
   Qed.
-  Hint Resolve elements_tree_sort.
+  Hint Resolve elements_tree_sort : core.
 
   Definition elements :
     forall s : t,
@@ -1792,9 +1793,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply H2; auto.
     inversion_clear H6; auto.
     assert (X.lt t0 x).
-    apply ME.Sort_Inf_In with l0; auto.
+    now apply ME.Sort_Inf_In with l0; auto with *.
     elim (X.lt_not_eq (x:=t0) (y:=x)); auto.
-    apply X.eq_trans with a; auto.
+    now apply X.eq_trans with a; auto with *.
     apply le_trans with (length (t0 :: l0)).
     simpl in |- *; omega.
     apply (H (t0 :: l0)); auto.
@@ -1803,7 +1804,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H6; auto.
     assert (X.lt a x).
     apply ME.Sort_Inf_In with (t0 :: l0); auto.
-    elim (X.lt_not_eq (x:=a) (y:=x)); auto.
+    elim (X.lt_not_eq (x:=a) (y:=x)); auto with *.
   Qed.
 
   Lemma cardinal_subset :
@@ -1872,7 +1873,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     unfold height_of_node in H3.
     AVL H; AVL H0; AVL H1; simpl in H4; omega.
   Qed.
-  Implicit Arguments height_0.
+  Arguments height_0 : default implicits.
 
   (** * Union
 
@@ -1920,7 +1921,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* x' = Node t3 t4 t5 *)
     case (Z_ge_lt_dec z z0); intro.
     (* z >= z0 *)
-    case (Z_eq_dec z0 1); intro.
+    case (Z.eq_dec z0 1); intro.
     (* z0 = 1 *)
     clear H.
     case (add_tree t4 (Node t0 t1 t2 z)); simpl in |- *; auto.
@@ -1964,7 +1965,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H21; intuition.
     case (X.compare x0 t1); intuition.
     (* z < z0 *)
-    case (Z_eq_dec z 1); intro.
+    case (Z.eq_dec z 1); intro.
     (* z = 1 *)
     case (add_tree t1 (Node t3 t4 t5 z0)); simpl in |- *; auto.
     intros s' (s'_bst, (s'_avl, (s'_h, s'_y))).
@@ -2053,7 +2054,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros HP x; generalize (H9 x) (H10 HP x) (H12 HP x); clear H9 H10 H12;
      intuition.
     right; split.
-    apply IsRoot; auto.
+    now apply IsRoot; auto with *.
     unfold compat_P in HP; apply HP with t1; auto.
     inversion_clear H18; intuition.
     (* ~(P t1) *)
@@ -2139,7 +2140,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     elim (H24 H17); intros.
     elim (H21 H20); intros.
     elim (H18 H27); intros.
-    right; split; auto.
+    right; split; auto with *.
     apply (HP t1); auto.
     auto.
     right; decompose [and] H27; auto.
@@ -2148,7 +2149,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply H25; left; apply H22; left; apply H19; right; trivial.
     decompose [and] H20; clear H20.
     inversion_clear H27.
-    apply H25; left; apply H22; left; apply H19; left; auto.
+    now apply H25; left; apply H22; left; apply H19; left; auto with *.
     apply H25; left; apply H22; right; auto.
     apply H25; right; auto.
     elim (H14 H17); intros.
@@ -2159,9 +2160,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     elim H17; intros.
     gintuition.
     gintuition.
-    inversion_clear H17; gintuition; elim H33; apply (HP t1); auto.
+    now inversion_clear H17; gintuition; elim H33; apply (HP t1); auto with *.
     (* ~(P t1) *)
-    case (add_tree t1 accf); auto.
+    case (add_tree t1 accf); auto with *.
     intro accf'; intuition; clear H10 H12.
     case (H acct accf'); clear H; auto.
     inversion_clear H1; auto.
@@ -2192,7 +2193,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     elim (H14 H17); intros.
     elim (H11 H20); intros.
     elim (H18 H27); auto; intros.
-    right; split; auto; intro; apply f; apply (HP x); auto.
+    now right; split; auto with *; intro; apply f; apply (HP x); auto with *.
     right; decompose [and] H27; auto.
     right; decompose [and] H20; auto.
     gintuition.
@@ -2259,7 +2260,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     destruct x' as [| t3 t4 t5 z0]; simpl in |- *; intuition.
     (* x' = Leaf *)
     right; intros.
-    assert (In_tree t1 Leaf); auto.
+    assert (In_tree t1 Leaf); auto with *.
     inversion_clear H1.
     (* x' = Node t3 t4 t5 z0 *)
     case (X.compare t1 t4); intro.
@@ -2284,7 +2285,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; auto.
     inversion_clear H0; auto.
     elim (X.lt_not_eq (x:=t1) (y:=t4)); auto.
-    apply X.eq_trans with a; auto.
+    now apply X.eq_trans with a; auto with *.
     assert (X.lt a t1).
     inversion_clear s1_bst; apply H4; auto.
     elim (X.lt_not_eq (x:=a) (y:=t4)); auto.
@@ -2293,12 +2294,12 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     assert (X.lt t4 a).
     inversion_clear s2_bst; apply H5; auto.
     inversion_clear H0; auto.
-    elim (X.lt_not_eq (x:=t1) (y:=a)); auto.
+    elim (X.lt_not_eq (x:=t1) (y:=a)); auto with *.
     apply X.lt_trans with t4; auto.
     assert (X.lt a t1).
     inversion_clear s1_bst; apply H5; auto.
     elim (ME.lt_not_gt (x:=a) (y:=t1)); auto.
-    apply X.lt_trans with t4; auto.
+    now apply X.lt_trans with t4; auto.
     inversion_clear H3.
     (* t1 = t4 *)
     case (H t0 t3); auto; intros.
@@ -2322,11 +2323,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; auto.
     elim (X.lt_not_eq (x:=t1) (y:=a)); auto.
     inversion_clear s1_bst; apply H5; auto.
-    apply X.eq_trans with t4; auto.
+    now apply X.eq_trans with t4; auto with *.
     elim (ME.lt_not_gt (x:=a) (y:=t1)); auto.
     inversion_clear s2_bst.  
-    apply ME.lt_eq with t4; auto.
-    inversion_clear s1_bst; auto.
+    now apply ME.lt_eq with t4; auto with *.
+    now inversion_clear s1_bst; auto with *.
     (* ~(Subset t0 t3) *)
     clear H; right; intuition.
     apply f; intros.
@@ -2335,11 +2336,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; auto.
     elim (X.lt_not_eq (x:=a) (y:=t1)); auto.
     inversion_clear s1_bst; auto.
-    apply X.eq_trans with t4; auto.
+    now apply X.eq_trans with t4; auto with *.
     elim (ME.lt_not_gt (x:=a) (y:=t1)); auto.
-    inversion_clear s1_bst; auto.
+    now inversion_clear s1_bst; auto.
     inversion_clear s2_bst.  
-    apply ME.eq_lt with t4; auto.
+    now apply ME.eq_lt with t4; auto with *.
     (* t4 < t1 *)
     case (H (Node Leaf t1 t2 0) t5); auto; intros.
     simpl in *; omega.
@@ -2361,7 +2362,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H1; auto.
     inversion_clear H0; auto.
     elim (X.lt_not_eq (x:=t4) (y:=t1)); auto.
-    apply X.eq_trans with a; auto.
+    now apply X.eq_trans with a; auto with *.
     inversion_clear H1.
     elim (ME.lt_not_gt (x:=a) (y:=t1)); auto.
     apply ME.eq_lt with t4; auto.
@@ -2369,7 +2370,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H0; auto.
     elim (ME.lt_not_gt (x:=a) (y:=t4)); auto.
     inversion_clear s2_bst; auto.
-    apply ME.lt_eq with t1; auto.
+    now apply ME.lt_eq with t1; auto with *.
     inversion_clear H1.
     elim (ME.lt_not_gt (x:=a) (y:=t1)); auto.
     apply X.lt_trans with t4; inversion_clear s2_bst; auto.
@@ -2411,7 +2412,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     (* Node s1 t0 s0 z *)
     case (Pdec t0); intro.
     (* P t0 *)
-    clear Hrecs0 Hrecs1; left; intro; exists t0; auto.
+    clear Hrecs0 Hrecs1; left; intro; exists t0; auto with *.
     (* ~(P t0) *)
     case Hrecs1; clear Hrecs1; intro.
     left; intro; elim (e H); intuition; exists x; intuition.
@@ -2432,11 +2433,11 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     | Leaf => a
     | Node l x r _ => fold_tree A f r (f x (fold_tree A f l a))
     end.
-  Implicit Arguments fold_tree [A].
+  Arguments fold_tree [A].
 
   Definition fold_tree' (A : Type) (f : elt -> A -> A) 
     (s : tree) := L.fold f (elements_tree s).
-  Implicit Arguments fold_tree' [A].
+  Arguments fold_tree' [A].
 
   Lemma fold_tree_equiv_aux :
    forall (A : Type) (s : tree) (f : elt -> A -> A) (a : A) (acc : list elt),
@@ -2515,7 +2516,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      (H a).
     intuition.
   Qed.
-  Hint Resolve eq_L_eq L_eq_eq.
+  Hint Resolve eq_L_eq L_eq_eq : core.
 
   Definition lt (s1 s2 : t) : Prop :=
     L.lt (elements_tree s1) (elements_tree s2).
@@ -2584,7 +2585,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
         forall (x : elt) (s : tree) (l : list tree),
         In_tree_l x l -> In_tree_l x (s :: l).
 
-  Hint Constructors In_tree_l.
+  Hint Constructors In_tree_l : core.
 
   Inductive sorted_l : list tree -> Prop :=
     | SortedLNil : sorted_l nil
@@ -2596,7 +2597,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
          In_tree x s -> forall y : elt, In_tree_l y l -> X.lt x y) ->
         sorted_l (s :: l).
 
-  Hint Constructors sorted_l.
+  Hint Constructors sorted_l : core.
 
   Lemma sort_app :
    forall l1 l2 : list elt,
@@ -2711,7 +2712,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      Wf_nat.well_founded_lt_compat
       with
         (f := fun xx' : list tree * list tree =>
-              Zabs_nat (measure_l (fst xx') + measure_l (snd xx'))).
+              Z.abs_nat (measure_l (fst xx') + measure_l (snd xx'))).
     intros; apply Zabs.Zabs_nat_lt.
     Measure_l_0 (fst x0); Measure_l_0 (snd x0); Measure_l_0 (fst y);
      Measure_l_0 (snd y); intros; omega.
@@ -2787,7 +2788,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
   Qed.
 
   Hint Resolve lt_nil_elements_tree_Node lt_app lt_app_eq lt_eq_1 lt_eq_2
-    eq_eq_1 eq_eq_2 l_eq_cons.
+    eq_eq_1 eq_eq_2 l_eq_cons : core.
 
   Lemma elements_app :
    forall (s : tree) (acc : list elt),
@@ -2814,7 +2815,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     repeat rewrite app_ass; auto.
   Qed.
 
-  Hint Resolve compare_flatten.
+  Hint Resolve compare_flatten : core.
 
   (** same lemma, expressed differently *)
   Lemma compare_flatten_1 :
@@ -2828,7 +2829,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     repeat rewrite app_ass; auto.
   Qed.
 
-  Hint Resolve compare_flatten_1.
+  Hint Resolve compare_flatten_1 : core.
 
   (** invariant for [compare l1 l2]: [Leaf] may only occur on head
       of [l1] and [l2], and only when the other list is non-empty *)
@@ -2859,7 +2860,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
         no_leaf l1 ->
         no_leaf l2 -> l1 <> nil -> l2 <> nil -> leaf_invariant l1 l2.
 
-  Hint Constructors leaf_invariant.
+  Hint Constructors leaf_invariant : core.
 
   Lemma no_leaf_invariant :
    forall l1 l2 : list tree, no_leaf l1 -> no_leaf l2 -> leaf_invariant l1 l2.
@@ -2867,7 +2868,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     simple destruct l1; simple destruct l2; intuition.
   Qed.
 
-  Hint Resolve no_leaf_invariant.
+  Hint Resolve no_leaf_invariant : core.
 
   (** ** [compare_aux] and [compare] *) 
 
@@ -2935,7 +2936,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     intros; inversion_clear H5; auto.
     inversion_clear H.
     inversion_clear H6; auto.
-    apply ME.lt_eq with t1; auto.
+    now apply ME.lt_eq with t1; auto with *.
     inversion_clear H.
     apply X.lt_trans with t1; auto.
     inversion_clear H2; intuition.
@@ -2966,7 +2967,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     apply H4; auto.
     intros; inversion_clear H5; auto.
     inversion_clear H6; auto.
-    apply ME.lt_eq with t2; auto.
+    apply ME.lt_eq with t2; auto with *.
     inversion_clear H; auto.
     inversion_clear H5.
     apply X.lt_trans with t2; inversion_clear H; auto.
@@ -2995,9 +2996,9 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
      intuition.
     constructor 1; auto.
     constructor 2; auto.
-    constructor 3; auto.
+    now constructor 3; auto with *.
     (* t4 < t2 *)
-    constructor 3; auto.
+    now constructor 3; auto with *.
     (* (Node Leaf t2 t3)::l, (Node (Node t0 t1 t6) t4 t5)::l0) *)
     case
      (H (Node Leaf t2 t3 z :: l)
@@ -3015,7 +3016,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H.
     inversion_clear H5; auto.
     inversion_clear H; auto.
-    apply ME.lt_eq with t4; auto.
+    now apply ME.lt_eq with t4; auto with *.
     inversion_clear H5.
     apply X.lt_trans with t4; auto.
     inversion_clear H2; intuition.
@@ -3040,8 +3041,8 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H.
     inversion_clear H5; auto.
     inversion_clear H; auto.
-    apply ME.lt_eq with t2; auto.
-    inversion_clear H5.
+    now apply ME.lt_eq with t2; auto with *.
+    now inversion_clear H5.
     apply X.lt_trans with t2; auto.
     inversion_clear H2; intuition.
     constructor 1; rewrite <- compare_flatten_1; auto. 
@@ -3065,7 +3066,7 @@ Module Make (X: OrderedType) : Sdep with Module E := X.
     inversion_clear H.
     inversion_clear H5; auto.
     inversion_clear H; auto.
-    apply ME.lt_eq with t2; auto.
+    now apply ME.lt_eq with t2; auto with *.
     inversion_clear H5.
     apply X.lt_trans with t2; auto.
     inversion_clear H2; intuition.
@@ -3156,7 +3157,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
         forall (y : elt) (s : tree) (e : enumeration),
         In_tree_e x e -> In_tree_e x (More y s e).
 
-  Hint Constructors In_tree_e.
+  Hint Constructors In_tree_e : core.
 
   Inductive sorted_e : enumeration -> Prop :=
     | SortedEEnd : sorted_e End
@@ -3170,7 +3171,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
          In_tree y s -> forall z : elt, In_tree_e z e -> X.lt y z) ->
         sorted_e (More x s e).
 
-  Hint Constructors sorted_e.
+  Hint Constructors sorted_e : core.
 
   Lemma in_flatten_e :
    forall (x : elt) (e : enumeration), InA X.eq x (flatten_e e) -> In_tree_e x e.
@@ -3192,7 +3193,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     apply L.MX.ListIn_Inf.
     inversion_clear H0.
     intros; elim (in_app_or _ _ _ H0); intuition.
-    apply H4; apply in_flatten_e; auto.
+    apply H4; apply in_flatten_e; auto with *.
   Qed.
 
   (** key lemma for correctness *)
@@ -3264,7 +3265,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
      Wf_nat.well_founded_lt_compat
       with
         (f := fun xx' : enumeration * enumeration =>
-              Zabs_nat (measure_e (fst xx') + measure_e (snd xx'))).
+              Z.abs_nat (measure_e (fst xx') + measure_e (snd xx'))).
     intros; apply Zabs.Zabs_nat_lt.
     Measure_e_0 (fst x0); Measure_e_0 (snd x0); Measure_e_0 (fst y);
      Measure_e_0 (snd y); intros; omega.
@@ -3297,10 +3298,10 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     rename H1 into H3, H0 into H2, H into H1; clear X0.
     case (X (More t1 t2 e)); clear X; intuition.
     inversion_clear H1; auto.
-    constructor; inversion_clear H1; auto.
+    now constructor; inversion_clear H1; auto with *.
     inversion_clear H0; intuition.
     inversion_clear H1.
-    apply ME.lt_eq with t1; auto.
+    now apply ME.lt_eq with t1; auto with *.
     inversion_clear H1.
     apply X.lt_trans with t1; auto.
     exists x; intuition.
@@ -3348,7 +3349,7 @@ let compare s1 s2 = compare_aux (cons s1 End) (cons s2 End)
     apply l_eq_cons; auto.
     rewrite H5 in e6; rewrite H8 in e6; auto.
     constructor 3; simpl.
-    apply L.lt_cons_eq; auto.
+    apply L.lt_cons_eq; auto with *.
     rewrite H5 in l; rewrite H8 in l; auto.
     (* e > e3 *)
     constructor 3; simpl; auto.

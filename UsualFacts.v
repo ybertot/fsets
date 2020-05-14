@@ -3,7 +3,6 @@ Require Import OrderedTypeEx FSetFacts FSetProperties.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-Unset Standard Proposition Elimination Names.
 
 Module UsualFacts (E:UsualOrderedType)(M:S with Module E:=E).
 Module ME := OrderedTypeFacts E.  
@@ -81,9 +80,9 @@ elimtype False; rewrite (H1 t0); simpl; auto.
 elimtype False; rewrite <- (H1 a); simpl; auto.
 inversion_clear H; inversion_clear H0.
 assert (forall y, List.In y l -> E.lt a y).
- intros; eapply Sort_Inf_In with (l:=l); eauto.
+ now intros; eapply Sort_Inf_In with (l:=l); eauto with *.
 assert (forall y, List.In y l' -> E.lt t0 y).
- intros; eapply Sort_Inf_In with (l:=l'); eauto.
+ now intros; eapply Sort_Inf_In with (l:=l'); eauto with *.
 clear H3 H4.
 assert (a=t0).
  destruct (H1 a).

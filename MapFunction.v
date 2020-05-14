@@ -36,13 +36,13 @@ Module MapFunctionGen (M:S)(M':S).
  rewrite (PM.fold_1 ST (s:=s)); firstorder.
  rewrite (PM.fold_2 ST i C T NI AD); auto.
  unfold F; rewrite FM'.add_iff. unfold F in IHs1. rewrite IHs1; clear ST C T IHs1.
- assert (M.In x s2) by (rewrite (AD x); auto).
+ assert (M.In x s2) by (rewrite (AD x); auto with *).
  assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
  intuition.
  right; exists x; auto.
  right; destruct H1 as (b & ? & ?); exists b; auto.
  destruct H2 as (b & H1 & H2); rewrite (AD b) in H1; destruct H1.
- left; eauto.
+ left; eauto with *.
  right; right; exists b; auto.
 Qed.
 
@@ -66,7 +66,7 @@ Proof.
  induction s as [ s EM | s1 s2 IHs1 x NI AD] using PM.set_induction; intros.
  rewrite (PM.fold_1 ST (s:=s)), (PM.cardinal_1 EM); auto.
  rewrite (PM.fold_2 ST i C T NI AD); auto.
- assert (M.In x s2) by (rewrite (AD x); auto).
+ assert (M.In x s2) by (rewrite (AD x); auto with *).
  assert (M.Subset s1 s2) by (intros y Hy; rewrite (AD y); auto).
  unfold F; rewrite PM'.add_cardinal_2, IHs1, (PM.cardinal_2 NI AD); auto.
  rewrite map_In_aux; red; destruct 1 as [ | (b & ? & ?) ].
@@ -93,7 +93,7 @@ intros.
 red; intros.
 rewrite FM'.filter_iff, 2 map_In by auto.
 split; [intros [(b,Hb) F] | intros (b,Hb)]; try split; try exists b; 
- try rewrite FM.filter_iff in *; intuition; unfold compat_bool in *; eauto.
+ try rewrite FM.filter_iff in *; intuition; unfold compat_bool in *; eauto with *.
 Qed.
 
 End MapFunctionGen.
